@@ -1,0 +1,314 @@
+import { supabase } from "@/integrations/supabase/client";
+import { REWARD_PLANS, REFERRAL_BONUS_POINTS, getPlanPoints } from "@/config/plans";
+import type { Profile, Referral, ReferralStatus, AppRole } from "@/types/database";
+
+interface LeadData {
+  leadName: string;
+  leadPhone: string;
+}
+
+/**
+ * Register a new lead/referral
+ * Awards REFERRAL_BONUS_POINTS to the referrer immediately
+ */
+export async function registerLead(
+  referrerId: string,
+  referrerName: string,
+  leadData: LeadData
+): Promise<{ success: boolean; referralId?: string; error?: string }> {
+  try {
+    // Create the referral record
+    const { data: referral, error: referralError } = await supabase
+      .from('referrals')
+      .insert({
+        referrer_id: referrerId,
+        referrer_name: referrerName,
+        lead_name: leadData.leadName,
+        lead_phone: leadData.leadPhone,
+        status: 'new' as ReferralStatus
+      })
+      .select()
+      .single();
+
+    if (referralError) {
+      console.error('Error creating referral:', referralError);
+      return { success: false, error: referralError.message };
+    }
+
+    // Get current profile balance
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('wallet_balance, lifetime_points')
+      .eq('id', referrerId)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return { success: false, error: profileError.message };
+    }
+
+    // Update wallet with bonus points for registering a lead
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        wallet_balance: (profile.wallet_balance || 0) + REFERRAL_BONUS_POINTS,
+        lifetime_points: (profile.lifetime_points || 0) + REFERRAL_BONUS_POINTS
+      })
+      .eq('id', referrerId);
+
+    if (updateError) {
+      console.error('Error updating wallet:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    return { success: true, referralId: referral.id };
+  } catch (error) {
+    console.error('Error in registerLead:', error);
+    return { success: false, error: 'Erro ao registrar indicação' };
+  }
+}
+
+/**
+ * Update lead status to 'contacted'
+ */
+export async function markAsContacted(
+  referralId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({ status: 'contacted' as ReferralStatus })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error updating status:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in markAsContacted:', error);
+    return { success: false, error: 'Erro ao atualizar status' };
+  }
+}
+
+/**
+ * Confirm a conversion - awards plan points to the referrer
+ */
+export async function confirmConversion(
+  referralId: string,
+  planId: string
+): Promise<{ success: boolean; pointsAwarded?: number; error?: string }> {
+  try {
+    const planPoints = getPlanPoints(planId);
+    
+    if (planPoints === 0) {
+      return { success: false, error: 'Plano inválido' };
+    }
+
+    // Get the referral to find the referrer
+    const { data: referral, error: referralError } = await supabase
+      .from('referrals')
+      .select('referrer_id, status')
+      .eq('id', referralId)
+      .single();
+
+    if (referralError || !referral) {
+      console.error('Error fetching referral:', referralError);
+      return { success: false, error: 'Indicação não encontrada' };
+    }
+
+    if (referral.status === 'converted') {
+      return { success: false, error: 'Esta indicação já foi convertida' };
+    }
+
+    // Update the referral status
+    const { error: updateReferralError } = await supabase
+      .from('referrals')
+      .update({
+        status: 'converted' as ReferralStatus,
+        converted_plan_id: planId
+      })
+      .eq('id', referralId);
+
+    if (updateReferralError) {
+      console.error('Error updating referral:', updateReferralError);
+      return { success: false, error: updateReferralError.message };
+    }
+
+    // Get current profile balance
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('wallet_balance, lifetime_points')
+      .eq('id', referral.referrer_id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return { success: false, error: profileError.message };
+    }
+
+    // Update wallet with plan points
+    const { error: updateWalletError } = await supabase
+      .from('profiles')
+      .update({
+        wallet_balance: (profile.wallet_balance || 0) + planPoints,
+        lifetime_points: (profile.lifetime_points || 0) + planPoints
+      })
+      .eq('id', referral.referrer_id);
+
+    if (updateWalletError) {
+      console.error('Error updating wallet:', updateWalletError);
+      return { success: false, error: updateWalletError.message };
+    }
+
+    return { success: true, pointsAwarded: planPoints };
+  } catch (error) {
+    console.error('Error in confirmConversion:', error);
+    return { success: false, error: 'Erro ao confirmar conversão' };
+  }
+}
+
+/**
+ * Get ranking by role (barber or client)
+ * Rankings are based on lifetime_points (historical total)
+ */
+export async function getRanking(
+  role: 'barber' | 'client'
+): Promise<{ data: Profile[]; error?: string }> {
+  try {
+    // Get user IDs with the specified role
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', role as AppRole);
+
+    if (roleError) {
+      console.error('Error fetching roles:', roleError);
+      return { data: [], error: roleError.message };
+    }
+
+    if (!roleData || roleData.length === 0) {
+      return { data: [] };
+    }
+
+    const userIds = roleData.map(r => r.user_id);
+
+    // Get profiles for these users, ordered by lifetime_points
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('user_id', userIds)
+      .order('lifetime_points', { ascending: false });
+
+    if (profileError) {
+      console.error('Error fetching profiles:', profileError);
+      return { data: [], error: profileError.message };
+    }
+
+    return { data: profiles || [] };
+  } catch (error) {
+    console.error('Error in getRanking:', error);
+    return { data: [], error: 'Erro ao buscar ranking' };
+  }
+}
+
+/**
+ * Get all referrals (for admin/barber view)
+ */
+export async function getAllReferrals(): Promise<{ data: Referral[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('referrals')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching referrals:', error);
+      return { data: [], error: error.message };
+    }
+
+    return { data: data || [] };
+  } catch (error) {
+    console.error('Error in getAllReferrals:', error);
+    return { data: [], error: 'Erro ao buscar indicações' };
+  }
+}
+
+/**
+ * Get all clients (profiles without admin/barber roles)
+ */
+export async function getAllClients(): Promise<{ data: Profile[]; error?: string }> {
+  try {
+    const { data: clientRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'client' as AppRole);
+
+    if (roleError) {
+      console.error('Error fetching client roles:', roleError);
+      return { data: [], error: roleError.message };
+    }
+
+    if (!clientRoles || clientRoles.length === 0) {
+      return { data: [] };
+    }
+
+    const userIds = clientRoles.map(r => r.user_id);
+
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('user_id', userIds)
+      .order('name');
+
+    if (profileError) {
+      console.error('Error fetching client profiles:', profileError);
+      return { data: [], error: profileError.message };
+    }
+
+    return { data: profiles || [] };
+  } catch (error) {
+    console.error('Error in getAllClients:', error);
+    return { data: [], error: 'Erro ao buscar clientes' };
+  }
+}
+
+/**
+ * Get all barbers
+ */
+export async function getAllBarbers(): Promise<{ data: Profile[]; error?: string }> {
+  try {
+    const { data: barberRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'barber' as AppRole);
+
+    if (roleError) {
+      console.error('Error fetching barber roles:', roleError);
+      return { data: [], error: roleError.message };
+    }
+
+    if (!barberRoles || barberRoles.length === 0) {
+      return { data: [] };
+    }
+
+    const userIds = barberRoles.map(r => r.user_id);
+
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('user_id', userIds)
+      .order('name');
+
+    if (profileError) {
+      console.error('Error fetching barber profiles:', profileError);
+      return { data: [], error: profileError.message };
+    }
+
+    return { data: profiles || [] };
+  } catch (error) {
+    console.error('Error in getAllBarbers:', error);
+    return { data: [], error: 'Erro ao buscar barbeiros' };
+  }
+}
