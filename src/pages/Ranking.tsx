@@ -222,7 +222,7 @@ export default function Ranking() {
         {/* Full Rankings */}
         {isAdmin ? (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3 max-w-md">
               <TabsTrigger value="barbers">Barbeiros</TabsTrigger>
               <TabsTrigger value="clients">Clientes</TabsTrigger>
               <TabsTrigger value="leads">Leads</TabsTrigger>
