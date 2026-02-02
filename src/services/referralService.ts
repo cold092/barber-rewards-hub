@@ -213,6 +213,56 @@ export async function getRanking(
   }
 }
 
+export interface LeadRankingEntry {
+  referrerId: string;
+  referrerName: string;
+  leadCount: number;
+  points: number;
+}
+
+/**
+ * Get ranking for leads based on total referrals created
+ */
+export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; error?: string }> {
+  try {
+    const { data: referrals, error } = await supabase
+      .from('referrals')
+      .select('referrer_id, referrer_name');
+
+    if (error) {
+      console.error('Error fetching referrals for lead ranking:', error);
+      return { data: [], error: error.message };
+    }
+
+    if (!referrals || referrals.length === 0) {
+      return { data: [] };
+    }
+
+    const rankingMap = referrals.reduce<Record<string, LeadRankingEntry>>((acc, referral) => {
+      const referrerId = referral.referrer_id;
+      if (!acc[referrerId]) {
+        acc[referrerId] = {
+          referrerId,
+          referrerName: referral.referrer_name,
+          leadCount: 0,
+          points: 0
+        };
+      }
+
+      acc[referrerId].leadCount += 1;
+      acc[referrerId].points += REFERRAL_BONUS_POINTS;
+      return acc;
+    }, {});
+
+    const ranking = Object.values(rankingMap).sort((a, b) => b.points - a.points);
+
+    return { data: ranking };
+  } catch (error) {
+    console.error('Error in getLeadRanking:', error);
+    return { data: [], error: 'Erro ao buscar ranking de leads' };
+  }
+}
+
 /**
  * Get all referrals (for admin/barber view)
  */
