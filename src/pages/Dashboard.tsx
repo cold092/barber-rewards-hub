@@ -15,8 +15,9 @@ import { getAllReferrals, getRanking } from '@/services/referralService';
 import type { Referral, Profile } from '@/types/database';
 
 export default function Dashboard() {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, isBarber } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [myReferrals, setMyReferrals] = useState<Referral[]>([]);
   const [topBarbers, setTopBarbers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,20 +30,29 @@ export default function Dashboard() {
         getRanking('barber')
       ]);
       
-      setReferrals(referralsResult.data);
+      const allReferrals = referralsResult.data;
+      setReferrals(allReferrals);
+      
+      // Filter referrals by current user if barber
+      if (profile && isBarber) {
+        setMyReferrals(allReferrals.filter(r => r.referrer_id === profile.id));
+      }
+      
       setTopBarbers(barbersResult.data.slice(0, 5));
       setLoading(false);
     }
     
     loadData();
-  }, []);
+  }, [profile, isBarber]);
 
+  // Stats for current view (admin sees all, barber sees own)
+  const displayReferrals = isAdmin ? referrals : myReferrals;
   const stats = {
-    totalLeads: referrals.length,
-    converted: referrals.filter(r => r.status === 'converted').length,
-    pending: referrals.filter(r => r.status === 'new' || r.status === 'contacted').length,
-    conversionRate: referrals.length > 0 
-      ? Math.round((referrals.filter(r => r.status === 'converted').length / referrals.length) * 100)
+    totalLeads: displayReferrals.length,
+    converted: displayReferrals.filter(r => r.status === 'converted').length,
+    pending: displayReferrals.filter(r => r.status === 'new' || r.status === 'contacted').length,
+    conversionRate: displayReferrals.length > 0 
+      ? Math.round((displayReferrals.filter(r => r.status === 'converted').length / displayReferrals.length) * 100)
       : 0
   };
 
@@ -65,7 +75,9 @@ export default function Dashboard() {
             Olá, <span className="gold-text">{profile?.name?.split(' ')[0]}</span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Acompanhe suas indicações e métricas
+            {isAdmin 
+              ? 'Gerencie leads e acompanhe a performance da equipe'
+              : 'Cadastre indicações e acompanhe seus pontos'}
           </p>
         </div>
 
@@ -91,14 +103,14 @@ export default function Dashboard() {
           <Card className="glass-card border-border/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Leads
+                {isAdmin ? 'Total de Leads' : 'Minhas Indicações'}
               </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalLeads}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Indicações registradas
+                {isAdmin ? 'Indicações da equipe' : 'Leads que você indicou'}
               </p>
             </CardContent>
           </Card>
@@ -145,13 +157,15 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {referrals.length === 0 ? (
+              {displayReferrals.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  Nenhuma indicação registrada ainda
+                  {isAdmin 
+                    ? 'Nenhuma indicação registrada ainda' 
+                    : 'Você ainda não indicou ninguém. Comece agora!'}
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {referrals.slice(0, 5).map((referral) => (
+                  {displayReferrals.slice(0, 5).map((referral) => (
                     <div 
                       key={referral.id}
                       className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
@@ -159,7 +173,7 @@ export default function Dashboard() {
                       <div>
                         <p className="font-medium">{referral.lead_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          por {referral.referrer_name}
+                          {isAdmin ? `por ${referral.referrer_name}` : referral.lead_phone}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
