@@ -10,7 +10,8 @@ import {
   UserPlus,
   LogOut,
   Menu,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -19,18 +20,29 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
+interface NavItem {
+  path: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/leads', label: 'Leads', icon: Users },
   { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
+  { path: '/equipe', label: 'Gerenciar Equipe', icon: Settings, adminOnly: true },
 ];
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile, role, signOut } = useAuth();
+  const { profile, role, signOut, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Filter nav items based on role
+  const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   const handleSignOut = async () => {
     await signOut();
@@ -82,7 +94,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Button

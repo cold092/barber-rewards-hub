@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Leads from "./pages/Leads";
 import NewReferral from "./pages/NewReferral";
 import Ranking from "./pages/Ranking";
+import ManageTeam from "./pages/ManageTeam";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <Ranking />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/equipe"
+      element={
+        <ProtectedRoute>
+          <ManageTeam />
         </ProtectedRoute>
       }
     />
