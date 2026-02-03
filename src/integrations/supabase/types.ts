@@ -49,6 +49,7 @@ export type Database = {
       }
       referrals: {
         Row: {
+          contact_tag: string | null
           converted_plan_id: string | null
           created_at: string
           id: string
@@ -62,6 +63,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
           id?: string
@@ -75,6 +77,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
           id?: string

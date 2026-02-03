@@ -11,11 +11,10 @@ import {
   MessageCircle,
   CheckCircle,
   Clock,
-  Sparkles,
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, markAsContacted, confirmConversion } from '@/services/referralService';
+import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
 import { generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import type { Referral } from '@/types/database';
@@ -32,6 +31,12 @@ export default function Leads() {
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
+  const contactTagOptions = [
+    { value: 'sql', label: 'SQL', className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+    { value: 'mql', label: 'MQL', className: 'bg-sky-500/20 text-sky-400 border-sky-500/30' },
+    { value: 'cold', label: 'Frio', className: 'bg-slate-500/20 text-slate-200 border-slate-500/30' },
+    { value: 'scheduled', label: 'Marcou', className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' }
+  ];
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -75,6 +80,22 @@ export default function Leads() {
     setConvertDialogOpen(true);
   };
 
+  const handleTagChange = async (referral: Referral, value: string) => {
+    const nextTag = value === 'none' ? null : value;
+    const result = await updateContactTag(referral.id, nextTag);
+
+    if (result.success) {
+      setReferrals((prev) =>
+        prev.map((item) =>
+          item.id === referral.id ? { ...item, contact_tag: nextTag } : item
+        )
+      );
+      toast.success('Tag atualizada');
+    } else {
+      toast.error(result.error || 'Erro ao atualizar tag');
+    }
+  };
+
   const handleConvert = async () => {
     if (!selectedReferral || !selectedPlan) return;
     
@@ -104,6 +125,17 @@ export default function Leads() {
       case 'converted':
         return <Badge variant="outline" className="bg-success/20 text-success border-success/30">Convertido</Badge>;
     }
+  };
+
+  const getContactTagBadge = (tag: string | null) => {
+    if (!tag) return null;
+    const tagOption = contactTagOptions.find(option => option.value === tag);
+    if (!tagOption) return null;
+    return (
+      <Badge variant="outline" className={tagOption.className}>
+        {tagOption.label}
+      </Badge>
+    );
   };
 
   if (loading) {
@@ -192,7 +224,7 @@ export default function Leads() {
                     key={referral.id}
                     className="p-4 rounded-lg bg-secondary/50 space-y-3"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="font-semibold text-lg">{referral.lead_name}</p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -200,7 +232,15 @@ export default function Leads() {
                           {formatPhoneNumber(referral.lead_phone)}
                         </p>
                       </div>
-                      {getStatusBadge(referral.status)}
+                      <div className="flex flex-wrap justify-end gap-2">
+                        {getStatusBadge(referral.status)}
+                        {getContactTagBadge(referral.contact_tag)}
+                        {referral.status === 'converted' && referral.converted_plan_id && (
+                          <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                            {getPlanById(referral.converted_plan_id)?.label}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
@@ -212,14 +252,27 @@ export default function Leads() {
                       </span>
                     </div>
 
-                    {referral.status === 'converted' && referral.converted_plan_id && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        <span className="text-primary font-medium">
-                          {getPlanById(referral.converted_plan_id)?.label}
-                        </span>
+                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Tag de contato:</span>
+                        <Select
+                          value={referral.contact_tag ?? 'none'}
+                          onValueChange={(value) => handleTagChange(referral, value)}
+                        >
+                          <SelectTrigger className="h-8 w-36">
+                            <SelectValue placeholder="Sem tag" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sem tag</SelectItem>
+                            {contactTagOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
+                    </div>
 
                     {referral.status !== 'converted' && (
                       <div className="flex flex-wrap gap-2 pt-2">
