@@ -294,11 +294,6 @@ export async function registerLeadByLead(
       return { success: false, error: 'Lead indicador não encontrado' };
     }
 
-    if (leadError || !referringLead) {
-      console.error('Error fetching referring lead:', leadError);
-      return { success: false, error: 'Lead indicador não encontrado' };
-    }
-
     // Create the new referral linked to the referring lead
     const { data: referral, error: referralError } = await supabase
       .from('referrals')
@@ -322,7 +317,7 @@ export async function registerLeadByLead(
     const { error: updateError } = await supabase
       .from('referrals')
       .update({
-        lead_points: referringLead.lead_points + REFERRAL_BONUS_POINTS
+        lead_points: (referringLead.lead_points || 0) + REFERRAL_BONUS_POINTS
       })
       .eq('id', referringLeadId);
 
