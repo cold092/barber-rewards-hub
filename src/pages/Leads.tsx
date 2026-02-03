@@ -22,7 +22,8 @@ import type { Referral } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Leads() {
-  const { isAdmin } = useAuth();
+  const { role } = useAuth();
+  const canUseWhatsApp = role === 'admin';
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
@@ -223,16 +224,18 @@ export default function Leads() {
 
                     {referral.status !== 'converted' && (
                       <div className="flex flex-wrap gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-2"
-                          onClick={() => openWhatsApp(referral)}
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          WhatsApp
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
+                        {canUseWhatsApp && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => openWhatsApp(referral)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            WhatsApp
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
                         
                         {referral.status === 'new' && (
                           <Button
