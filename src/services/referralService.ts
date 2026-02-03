@@ -7,6 +7,11 @@ interface LeadData {
   leadPhone: string;
 }
 
+interface ClientData {
+  clientName: string;
+  clientPhone: string;
+}
+
 /**
  * Register a new lead/referral
  * Awards REFERRAL_BONUS_POINTS to the referrer immediately
@@ -65,6 +70,41 @@ export async function registerLead(
   } catch (error) {
     console.error('Error in registerLead:', error);
     return { success: false, error: 'Erro ao registrar indicação' };
+  }
+}
+
+/**
+ * Register a new client (existing customer)
+ */
+export async function registerClient(
+  referrerId: string,
+  referrerName: string,
+  clientData: ClientData
+): Promise<{ success: boolean; referralId?: string; error?: string }> {
+  try {
+    const { data: referral, error } = await supabase
+      .from('referrals')
+      .insert({
+        referrer_id: referrerId,
+        referrer_name: referrerName,
+        lead_name: clientData.clientName,
+        lead_phone: clientData.clientPhone,
+        status: 'converted' as ReferralStatus,
+        is_client: true,
+        client_since: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating client:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, referralId: referral.id };
+  } catch (error) {
+    console.error('Error in registerClient:', error);
+    return { success: false, error: 'Erro ao registrar cliente' };
   }
 }
 
@@ -176,7 +216,9 @@ export async function confirmConversion(
       .from('referrals')
       .update({
         status: 'converted' as ReferralStatus,
-        converted_plan_id: planId
+        converted_plan_id: planId,
+        is_client: true,
+        client_since: new Date().toISOString()
       })
       .eq('id', referralId);
 
@@ -254,7 +296,9 @@ export async function undoConversion(
       .from('referrals')
       .update({
         status: 'contacted' as ReferralStatus,
-        converted_plan_id: null
+        converted_plan_id: null,
+        is_client: false,
+        client_since: null
       })
       .eq('id', referralId);
 
@@ -443,6 +487,7 @@ export async function getAllLeadsAsReferrers(): Promise<{ data: { id: string; na
     const { data, error } = await supabase
       .from('referrals')
       .select('id, lead_name, lead_phone')
+      .eq('is_client', true)
       .order('lead_name');
 
     if (error) {

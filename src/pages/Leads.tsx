@@ -160,6 +160,15 @@ export default function Leads() {
     );
   };
 
+  const getClientBadge = (isClient: boolean) => {
+    if (!isClient) return null;
+    return (
+      <Badge variant="outline" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+        Cliente
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -257,6 +266,7 @@ export default function Leads() {
                       <div className="flex flex-wrap justify-end gap-2">
                         {getStatusBadge(referral.status)}
                         {getContactTagBadge(referral.contact_tag)}
+                        {getClientBadge(referral.is_client)}
                         {referral.status === 'converted' && referral.converted_plan_id && (
                           <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
                             {getPlanById(referral.converted_plan_id)?.label}

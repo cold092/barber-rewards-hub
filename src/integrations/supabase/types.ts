@@ -53,6 +53,8 @@ export type Database = {
           converted_plan_id: string | null
           created_at: string
           id: string
+          is_client: boolean
+          client_since: string | null
           lead_name: string
           lead_phone: string
           lead_points: number
@@ -67,6 +69,8 @@ export type Database = {
           converted_plan_id?: string | null
           created_at?: string
           id?: string
+          is_client?: boolean
+          client_since?: string | null
           lead_name: string
           lead_phone: string
           lead_points?: number
@@ -81,6 +85,8 @@ export type Database = {
           converted_plan_id?: string | null
           created_at?: string
           id?: string
+          is_client?: boolean
+          client_since?: string | null
           lead_name?: string
           lead_phone?: string
           lead_points?: number
