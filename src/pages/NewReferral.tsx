@@ -33,6 +33,11 @@ export default function NewReferral() {
 
   useEffect(() => {
     async function loadReferrers() {
+      if (!isAdmin) {
+        setLoadingReferrers(false);
+        return;
+      }
+
       setLoadingReferrers(true);
       
       // Load both barbers and clients as potential referrers
@@ -43,11 +48,6 @@ export default function NewReferral() {
       
       const allReferrers = [...barbersResult.data, ...clientsResult.data];
       setReferrers(allReferrers);
-      
-      // If current user is barber, pre-select them
-      if (profile && !isAdmin) {
-        setSelectedReferrerId(profile.id);
-      }
       
       setLoadingReferrers(false);
     }
@@ -64,8 +64,13 @@ export default function NewReferral() {
       return;
     }
 
+    if (!isAdmin && !profile) {
+      toast.error('Aguarde o carregamento do seu perfil');
+      return;
+    }
+
     const referrerId = isAdmin ? selectedReferrerId : profile?.id;
-    const referrer = referrers.find(r => r.id === referrerId);
+    const referrer = isAdmin ? referrers.find(r => r.id === referrerId) : profile;
     
     if (!referrerId || !referrer) {
       toast.error('Selecione quem está indicando');
@@ -210,7 +215,7 @@ export default function NewReferral() {
                 <Button
                   type="submit"
                   className="w-full gold-gradient gold-glow text-primary-foreground font-semibold h-12"
-                  disabled={loading || (isAdmin && !selectedReferrerId)}
+                  disabled={loading || (!isAdmin && !profile) || (isAdmin && (loadingReferrers || !selectedReferrerId))}
                 >
                   {loading ? 'Registrando...' : 'Registrar Indicação'}
                 </Button>
