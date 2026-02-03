@@ -109,6 +109,14 @@ export default function ManageTeam() {
     setLoading(true);
     
     try {
+      const { data: currentSessionData, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw sessionError;
+      }
+
+      const currentSession = currentSessionData.session;
+
       // Create the user using Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -131,6 +139,26 @@ export default function ManageTeam() {
 
       if (!authData.user) {
         throw new Error('Usuário não criado');
+      }
+
+      if (!currentSession) {
+        toast.error('Sessão do admin expirada. Faça login novamente.');
+        setLoading(false);
+        return;
+      }
+
+      if (currentSession.user.id !== authData.user.id) {
+        const { error: restoreError } = await supabase.auth.setSession({
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token
+        });
+
+        if (restoreError) {
+          console.error('Error restoring admin session:', restoreError);
+          toast.error('Erro ao restaurar sessão do admin');
+          setLoading(false);
+          return;
+        }
       }
 
       // Assign barber role (admin-only RPC with fallback)
