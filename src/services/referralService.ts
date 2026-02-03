@@ -109,7 +109,7 @@ export async function confirmConversion(
     // Get the referral to find the referrer
     const { data: referral, error: referralError } = await supabase
       .from('referrals')
-      .select('referrer_id, status')
+      .select('referrer_id, status, referred_by_lead_id')
       .eq('id', referralId)
       .single();
 
@@ -136,30 +136,55 @@ export async function confirmConversion(
       return { success: false, error: updateReferralError.message };
     }
 
-    // Get current profile balance
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('wallet_balance, lifetime_points')
-      .eq('id', referral.referrer_id)
-      .single();
+    if (referral.referred_by_lead_id) {
+      const { data: referringLead, error: leadError } = await supabase
+        .from('referrals')
+        .select('lead_points')
+        .eq('id', referral.referred_by_lead_id)
+        .single();
 
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return { success: false, error: profileError.message };
-    }
+      if (leadError || !referringLead) {
+        console.error('Error fetching referring lead:', leadError);
+        return { success: false, error: 'Lead indicador não encontrado' };
+      }
 
-    // Update wallet with plan points
-    const { error: updateWalletError } = await supabase
-      .from('profiles')
-      .update({
-        wallet_balance: (profile.wallet_balance || 0) + planPoints,
-        lifetime_points: (profile.lifetime_points || 0) + planPoints
-      })
-      .eq('id', referral.referrer_id);
+      const { error: updateLeadError } = await supabase
+        .from('referrals')
+        .update({
+          lead_points: (referringLead.lead_points || 0) + planPoints
+        })
+        .eq('id', referral.referred_by_lead_id);
 
-    if (updateWalletError) {
-      console.error('Error updating wallet:', updateWalletError);
-      return { success: false, error: updateWalletError.message };
+      if (updateLeadError) {
+        console.error('Error updating lead points:', updateLeadError);
+        return { success: false, error: updateLeadError.message };
+      }
+    } else {
+      // Get current profile balance
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('wallet_balance, lifetime_points')
+        .eq('id', referral.referrer_id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return { success: false, error: profileError.message };
+      }
+
+      // Update wallet with plan points
+      const { error: updateWalletError } = await supabase
+        .from('profiles')
+        .update({
+          wallet_balance: (profile.wallet_balance || 0) + planPoints,
+          lifetime_points: (profile.lifetime_points || 0) + planPoints
+        })
+        .eq('id', referral.referrer_id);
+
+      if (updateWalletError) {
+        console.error('Error updating wallet:', updateWalletError);
+        return { success: false, error: updateWalletError.message };
+      }
     }
 
     return { success: true, pointsAwarded: planPoints };
@@ -278,6 +303,7 @@ export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; erro
  * Register a lead referred by another lead (not a barber/client)
  */
 export async function registerLeadByLead(
+  referrerProfileId: string,
   referringLeadId: string,
   leadData: LeadData
 ): Promise<{ success: boolean; referralId?: string; error?: string }> {
@@ -294,16 +320,11 @@ export async function registerLeadByLead(
       return { success: false, error: 'Lead indicador não encontrado' };
     }
 
-    if (leadError || !referringLead) {
-      console.error('Error fetching referring lead:', leadError);
-      return { success: false, error: 'Lead indicador não encontrado' };
-    }
-
     // Create the new referral linked to the referring lead
     const { data: referral, error: referralError } = await supabase
       .from('referrals')
       .insert({
-        referrer_id: referringLead.id, // Use the lead's ID as referrer
+        referrer_id: referrerProfileId,
         referrer_name: referringLead.lead_name,
         lead_name: leadData.leadName,
         lead_phone: leadData.leadPhone,
@@ -322,7 +343,7 @@ export async function registerLeadByLead(
     const { error: updateError } = await supabase
       .from('referrals')
       .update({
-        lead_points: referringLead.lead_points + REFERRAL_BONUS_POINTS
+        lead_points: (referringLead.lead_points || 0) + REFERRAL_BONUS_POINTS
       })
       .eq('id', referringLeadId);
 
