@@ -115,7 +115,7 @@ export default function ManageTeam() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          data: { name }
+          data: { name, role: 'barber' }
         }
       });
 
@@ -136,10 +136,13 @@ export default function ManageTeam() {
       // Assign barber role
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'barber' as AppRole
-        });
+        .upsert(
+          {
+            user_id: authData.user.id,
+            role: 'barber' as AppRole
+          },
+          { onConflict: 'user_id,role' }
+        );
 
       if (roleError) {
         console.error('Error assigning role:', roleError);
