@@ -7,6 +7,11 @@ interface LeadData {
   leadPhone: string;
 }
 
+interface ClientData {
+  clientName: string;
+  clientPhone: string;
+}
+
 /**
  * Register a new lead/referral
  * Awards REFERRAL_BONUS_POINTS to the referrer immediately
@@ -69,6 +74,41 @@ export async function registerLead(
 }
 
 /**
+ * Register a new client (existing customer)
+ */
+export async function registerClient(
+  referrerId: string,
+  referrerName: string,
+  clientData: ClientData
+): Promise<{ success: boolean; referralId?: string; error?: string }> {
+  try {
+    const { data: referral, error } = await supabase
+      .from('referrals')
+      .insert({
+        referrer_id: referrerId,
+        referrer_name: referrerName,
+        lead_name: clientData.clientName,
+        lead_phone: clientData.clientPhone,
+        status: 'converted' as ReferralStatus,
+        is_client: true,
+        client_since: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating client:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, referralId: referral.id };
+  } catch (error) {
+    console.error('Error in registerClient:', error);
+    return { success: false, error: 'Erro ao registrar cliente' };
+  }
+}
+
+/**
  * Update lead status to 'contacted'
  */
 export async function markAsContacted(
@@ -89,6 +129,55 @@ export async function markAsContacted(
   } catch (error) {
     console.error('Error in markAsContacted:', error);
     return { success: false, error: 'Erro ao atualizar status' };
+  }
+}
+
+/**
+ * Revert lead status from 'contacted' back to 'new'
+ */
+export async function undoContacted(
+  referralId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({ status: 'new' as ReferralStatus })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error reverting status:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in undoContacted:', error);
+    return { success: false, error: 'Erro ao desfazer contato' };
+  }
+}
+
+/**
+ * Update lead contact tag (SQL, MQL, Frio, Marcou)
+ */
+export async function updateContactTag(
+  referralId: string,
+  contactTag: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({ contact_tag: contactTag })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error updating contact tag:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in updateContactTag:', error);
+    return { success: false, error: 'Erro ao atualizar tag de contato' };
   }
 }
 
@@ -127,7 +216,9 @@ export async function confirmConversion(
       .from('referrals')
       .update({
         status: 'converted' as ReferralStatus,
-        converted_plan_id: planId
+        converted_plan_id: planId,
+        is_client: true,
+        client_since: new Date().toISOString()
       })
       .eq('id', referralId);
 
@@ -191,6 +282,35 @@ export async function confirmConversion(
   } catch (error) {
     console.error('Error in confirmConversion:', error);
     return { success: false, error: 'Erro ao confirmar conversão' };
+  }
+}
+
+/**
+ * Revert a conversion (keeps lead as contacted and clears plan)
+ */
+export async function undoConversion(
+  referralId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({
+        status: 'contacted' as ReferralStatus,
+        converted_plan_id: null,
+        is_client: false,
+        client_since: null
+      })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error reverting conversion:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in undoConversion:', error);
+    return { success: false, error: 'Erro ao desfazer conversão' };
   }
 }
 
@@ -367,6 +487,7 @@ export async function getAllLeadsAsReferrers(): Promise<{ data: { id: string; na
     const { data, error } = await supabase
       .from('referrals')
       .select('id, lead_name, lead_phone')
+      .eq('is_client', true)
       .order('lead_name');
 
     if (error) {
