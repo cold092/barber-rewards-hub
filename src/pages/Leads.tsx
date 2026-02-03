@@ -5,26 +5,33 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Users, 
   Phone,
   MessageCircle,
   CheckCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
-import { generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
+import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
+import { downloadCsv } from '@/utils/export';
 import type { Referral } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 
+const MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
+
 export default function Leads() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isBarber, profile } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
+  const [messageTemplate, setMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
+  const [messageDraft, setMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
   
   // Conversion dialog state
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
@@ -41,12 +48,22 @@ export default function Leads() {
   const loadReferrals = async () => {
     setLoading(true);
     const result = await getAllReferrals();
-    setReferrals(result.data);
+    const data = result.data;
+    const filtered = isBarber && profile ? data.filter((item) => item.referrer_id === profile.id) : data;
+    setReferrals(filtered);
     setLoading(false);
   };
 
   useEffect(() => {
     loadReferrals();
+  }, [isBarber, profile]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
+    if (stored) {
+      setMessageTemplate(stored);
+      setMessageDraft(stored);
+    }
   }, []);
 
   const filteredReferrals = referrals.filter(r => {
@@ -80,7 +97,8 @@ export default function Leads() {
     const link = generateWhatsAppLink(
       referral.lead_name,
       referral.lead_phone,
-      referral.referrer_name
+      referral.referrer_name,
+      messageTemplate
     );
     window.open(link, '_blank');
   };
@@ -136,6 +154,41 @@ export default function Leads() {
     } else {
       toast.error(result.error || 'Erro ao desfazer conversão');
     }
+  };
+
+  const handleExport = () => {
+    if (filteredReferrals.length === 0) {
+      toast.error('Nenhum lead para exportar');
+      return;
+    }
+
+    const rows = [
+      ['Lead', 'Telefone', 'Status', 'Plano', 'Indicado por', 'Tag', 'Cliente', 'Criado em']
+    ];
+
+    filteredReferrals.forEach((referral) => {
+      rows.push([
+        referral.lead_name,
+        formatPhoneNumber(referral.lead_phone),
+        referral.status,
+        referral.converted_plan_id ? getPlanById(referral.converted_plan_id)?.label ?? '' : '',
+        referral.referrer_name,
+        referral.contact_tag ?? '',
+        referral.is_client ? 'Sim' : 'Não',
+        new Date(referral.created_at).toLocaleDateString('pt-BR')
+      ]);
+    });
+
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    downloadCsv(`relatorio-leads-${dateStamp}.csv`, rows);
+  };
+
+  const handleSaveMessage = () => {
+    const nextTemplate = messageDraft.trim() || DEFAULT_LEAD_MESSAGE;
+    setMessageTemplate(nextTemplate);
+    setMessageDraft(nextTemplate);
+    localStorage.setItem(MESSAGE_STORAGE_KEY, nextTemplate);
+    toast.success('Mensagem salva');
   };
 
   const getStatusBadge = (status: Referral['status']) => {
@@ -194,18 +247,46 @@ export default function Leads() {
           </div>
           
           {/* Filter */}
-          <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filtrar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="new">Novos</SelectItem>
-              <SelectItem value="contacted">Contatados</SelectItem>
-              <SelectItem value="converted">Convertidos</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </Button>
+            <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filtrar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="new">Novos</SelectItem>
+                <SelectItem value="contacted">Contatados</SelectItem>
+                <SelectItem value="converted">Convertidos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {isAdmin && (
+          <Card className="glass-card border-border/50">
+            <CardHeader>
+              <CardTitle className="font-display">Mensagem para lead</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Use <span className="font-semibold text-foreground">{'{leadName}'}</span> e{' '}
+                <span className="font-semibold text-foreground">{'{barberName}'}</span> para personalizar.
+              </p>
+              <Textarea
+                value={messageDraft}
+                onChange={(event) => setMessageDraft(event.target.value)}
+                className="min-h-[140px]"
+              />
+              <div className="flex justify-end">
+                <Button onClick={handleSaveMessage}>Salvar mensagem</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">

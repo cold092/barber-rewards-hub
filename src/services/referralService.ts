@@ -90,8 +90,7 @@ export async function registerClient(
         lead_name: clientData.clientName,
         lead_phone: clientData.clientPhone,
         status: 'converted' as ReferralStatus,
-        is_client: true,
-        client_since: new Date().toISOString()
+        is_client: true
       })
       .select()
       .single();
@@ -217,8 +216,7 @@ export async function confirmConversion(
       .update({
         status: 'converted' as ReferralStatus,
         converted_plan_id: planId,
-        is_client: true,
-        client_since: new Date().toISOString()
+        is_client: true
       })
       .eq('id', referralId);
 
@@ -297,8 +295,7 @@ export async function undoConversion(
       .update({
         status: 'contacted' as ReferralStatus,
         converted_plan_id: null,
-        is_client: false,
-        client_since: null
+        is_client: false
       })
       .eq('id', referralId);
 
