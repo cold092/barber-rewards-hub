@@ -115,7 +115,7 @@ export default function ManageTeam() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          data: { name }
+          data: { name, role: 'barber' }
         }
       });
 
@@ -133,17 +133,17 @@ export default function ManageTeam() {
         throw new Error('Usuário não criado');
       }
 
-      // Assign barber role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'barber' as AppRole
-        });
+      // Assign barber role (admin-only RPC)
+      const { error: roleError } = await supabase.rpc('assign_user_role', {
+        target_user_id: authData.user.id,
+        target_role: 'barber'
+      });
 
       if (roleError) {
         console.error('Error assigning role:', roleError);
-        // Role might be assigned by trigger, continue anyway
+        toast.error('Erro ao atribuir perfil de barbeiro');
+        setLoading(false);
+        return;
       }
 
       toast.success(`Barbeiro ${name} criado com sucesso!`);
