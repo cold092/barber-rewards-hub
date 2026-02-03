@@ -99,17 +99,48 @@ export default function NewReferral() {
       return;
     }
 
-    // Regular user referral
-    const referrerId = isAdmin ? selectedReferrerId : profile?.id;
-    const referrer = isAdmin ? referrers.find(r => r.id === referrerId) : profile;
-    
-    if (!referrerId || !referrer) {
-      toast.error('Selecione quem está indicando');
+    // Admin selecting a user referrer
+    if (isAdmin && referrerType === 'user') {
+      if (!selectedReferrerId) {
+        toast.error('Selecione quem está indicando');
+        setLoading(false);
+        return;
+      }
+      
+      const referrer = referrers.find(r => r.id === selectedReferrerId);
+      if (!referrer) {
+        toast.error('Indicador não encontrado');
+        setLoading(false);
+        return;
+      }
+      
+      const result = await registerLead(selectedReferrerId, referrer.name, {
+        leadName: leadName.trim(),
+        leadPhone: leadPhone.trim()
+      });
+      
+      setLoading(false);
+      
+      if (result.success) {
+        toast.success(
+          `Lead registrado! ${referrer.name} ganhou +${REFERRAL_BONUS_POINTS} pontos`,
+          { duration: 4000 }
+        );
+        navigate('/leads');
+      } else {
+        toast.error(result.error || 'Erro ao registrar lead');
+      }
+      return;
+    }
+
+    // Barber: auto-use their own profile
+    if (!profile) {
+      toast.error('Perfil não encontrado');
       setLoading(false);
       return;
     }
     
-    const result = await registerLead(referrerId, referrer.name, {
+    const result = await registerLead(profile.id, profile.name, {
       leadName: leadName.trim(),
       leadPhone: leadPhone.trim()
     });
@@ -118,7 +149,7 @@ export default function NewReferral() {
     
     if (result.success) {
       toast.success(
-        `Lead registrado! ${referrer.name} ganhou +${REFERRAL_BONUS_POINTS} pontos`,
+        `Lead registrado! Você ganhou +${REFERRAL_BONUS_POINTS} pontos`,
         { duration: 4000 }
       );
       navigate('/leads');
@@ -238,13 +269,15 @@ export default function NewReferral() {
                 </div>
               )}
 
-              {/* If barber, show who's registering */}
+              {/* Barber view: show their name, no selector needed */}
               {!isAdmin && profile && (
-                <div className="p-3 rounded-lg bg-secondary/50 flex items-center gap-3">
-                  <Users className="h-5 w-5 text-primary" />
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+                    <Users className="h-5 w-5 text-primary-foreground" />
+                  </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Indicador</p>
-                    <p className="font-medium">{profile.name}</p>
+                    <p className="text-sm text-muted-foreground">Indicando como</p>
+                    <p className="font-semibold text-primary">{profile.name}</p>
                   </div>
                 </div>
               )}
