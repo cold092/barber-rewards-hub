@@ -214,23 +214,28 @@ export async function getRanking(
 }
 
 export interface LeadRankingEntry {
-  referrerId: string;
-  referrerName: string;
+  leadId: string;
+  leadName: string;
+  leadPhone: string;
   leadCount: number;
   points: number;
 }
 
 /**
- * Get ranking for leads based on total referrals created
+ * Get ranking for leads based on how many other leads they referred
+ * Leads can refer other leads and earn points too
  */
 export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; error?: string }> {
   try {
+    // Get all referrals with their lead_points
     const { data: referrals, error } = await supabase
       .from('referrals')
-      .select('referrer_id, referrer_name');
+      .select('id, lead_name, lead_phone, lead_points, referred_by_lead_id')
+      .gt('lead_points', 0) // Only leads who have referred someone
+      .order('lead_points', { ascending: false });
 
     if (error) {
-      console.error('Error fetching referrals for lead ranking:', error);
+      console.error('Error fetching lead ranking:', error);
       return { data: [], error: error.message };
     }
 
@@ -238,28 +243,126 @@ export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; erro
       return { data: [] };
     }
 
-    const rankingMap = referrals.reduce<Record<string, LeadRankingEntry>>((acc, referral) => {
-      const referrerId = referral.referrer_id;
-      if (!acc[referrerId]) {
-        acc[referrerId] = {
-          referrerId,
-          referrerName: referral.referrer_name,
-          leadCount: 0,
-          points: 0
-        };
-      }
+    // Count how many leads each lead has referred
+    const { data: allReferrals, error: countError } = await supabase
+      .from('referrals')
+      .select('referred_by_lead_id');
 
-      acc[referrerId].leadCount += 1;
-      acc[referrerId].points += REFERRAL_BONUS_POINTS;
+    if (countError) {
+      console.error('Error counting referrals:', countError);
+    }
+
+    const leadCountMap = (allReferrals || []).reduce<Record<string, number>>((acc, ref) => {
+      if (ref.referred_by_lead_id) {
+        acc[ref.referred_by_lead_id] = (acc[ref.referred_by_lead_id] || 0) + 1;
+      }
       return acc;
     }, {});
 
-    const ranking = Object.values(rankingMap).sort((a, b) => b.points - a.points);
+    const ranking: LeadRankingEntry[] = referrals.map(ref => ({
+      leadId: ref.id,
+      leadName: ref.lead_name,
+      leadPhone: ref.lead_phone,
+      leadCount: leadCountMap[ref.id] || 0,
+      points: ref.lead_points
+    }));
 
     return { data: ranking };
   } catch (error) {
     console.error('Error in getLeadRanking:', error);
     return { data: [], error: 'Erro ao buscar ranking de leads' };
+  }
+}
+
+/**
+ * Register a lead referred by another lead (not a barber/client)
+ */
+export async function registerLeadByLead(
+  referringLeadId: string,
+  leadData: LeadData
+): Promise<{ success: boolean; referralId?: string; error?: string }> {
+  try {
+    // Get the referring lead info
+    const { data: referringLead, error: leadError } = await supabase
+      .from('referrals')
+      .select('id, lead_name, lead_points')
+      .eq('id', referringLeadId)
+      .single();
+
+    if (leadError || !referringLead) {
+      console.error('Error fetching referring lead:', leadError);
+      return { success: false, error: 'Lead indicador não encontrado' };
+    }
+
+    if (leadError || !referringLead) {
+      console.error('Error fetching referring lead:', leadError);
+      return { success: false, error: 'Lead indicador não encontrado' };
+    }
+
+    // Create the new referral linked to the referring lead
+    const { data: referral, error: referralError } = await supabase
+      .from('referrals')
+      .insert({
+        referrer_id: referringLead.id, // Use the lead's ID as referrer
+        referrer_name: referringLead.lead_name,
+        lead_name: leadData.leadName,
+        lead_phone: leadData.leadPhone,
+        status: 'new' as ReferralStatus,
+        referred_by_lead_id: referringLeadId
+      })
+      .select()
+      .single();
+
+    if (referralError) {
+      console.error('Error creating referral from lead:', referralError);
+      return { success: false, error: referralError.message };
+    }
+
+    // Award points to the referring lead
+    const { error: updateError } = await supabase
+      .from('referrals')
+      .update({
+        lead_points: referringLead.lead_points + REFERRAL_BONUS_POINTS
+      })
+      .eq('id', referringLeadId);
+
+    if (updateError) {
+      console.error('Error updating lead points:', updateError);
+      // Don't fail the whole operation, the referral was created
+    }
+
+    return { success: true, referralId: referral.id };
+  } catch (error) {
+    console.error('Error in registerLeadByLead:', error);
+    return { success: false, error: 'Erro ao registrar indicação' };
+  }
+}
+
+/**
+ * Get all leads that can refer other leads (for selection)
+ */
+export async function getAllLeadsAsReferrers(): Promise<{ data: { id: string; name: string; phone: string }[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('referrals')
+      .select('id, lead_name, lead_phone')
+      .order('lead_name');
+
+    if (error) {
+      console.error('Error fetching leads as referrers:', error);
+      return { data: [], error: error.message };
+    }
+
+    return {
+      data: (data || []).map(lead => ({
+        id: lead.id,
+        name: lead.lead_name,
+        phone: lead.lead_phone
+      }))
+    };
+  } catch (error) {
+    console.error('Error in getAllLeadsAsReferrers:', error);
+    return { data: [], error: 'Erro ao buscar leads' };
   }
 }
 

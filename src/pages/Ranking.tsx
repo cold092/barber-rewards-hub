@@ -123,7 +123,7 @@ export default function Ranking() {
       ) : (
         data.map((entry, index) => (
           <div
-            key={entry.referrerId}
+            key={entry.leadId}
             className={`
               flex items-center justify-between p-4 rounded-lg
               ${index === 0 ? 'bg-primary/10 border border-primary/30' : 'bg-secondary/50'}
@@ -139,10 +139,10 @@ export default function Ranking() {
               </div>
               <div>
                 <p className={`font-semibold ${index === 0 ? 'text-primary' : ''}`}>
-                  {entry.referrerName}
+                  {entry.leadName}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {entry.leadCount} indicações
+                  {entry.leadCount} indicações feitas
                 </p>
               </div>
             </div>
