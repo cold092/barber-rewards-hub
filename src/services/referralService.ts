@@ -93,6 +93,31 @@ export async function markAsContacted(
 }
 
 /**
+ * Update lead contact tag (SQL, MQL, Frio, Marcou)
+ */
+export async function updateContactTag(
+  referralId: string,
+  contactTag: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({ contact_tag: contactTag })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error updating contact tag:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in updateContactTag:', error);
+    return { success: false, error: 'Erro ao atualizar tag de contato' };
+  }
+}
+
+/**
  * Confirm a conversion - awards plan points to the referrer
  */
 export async function confirmConversion(

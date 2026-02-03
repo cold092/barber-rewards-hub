@@ -147,18 +147,22 @@ export default function ManageTeam() {
         return;
       }
 
-      if (currentSession.user.id !== authData.user.id) {
-        const { error: restoreError } = await supabase.auth.setSession({
-          access_token: currentSession.access_token,
-          refresh_token: currentSession.refresh_token
-        });
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
 
-        if (restoreError) {
-          console.error('Error restoring admin session:', restoreError);
-          toast.error('Erro ao restaurar sessão do admin');
-          setLoading(false);
-          return;
-        }
+      if (signOutError) {
+        console.error('Error clearing barber session:', signOutError);
+      }
+
+      const { error: restoreError } = await supabase.auth.setSession({
+        access_token: currentSession.access_token,
+        refresh_token: currentSession.refresh_token
+      });
+
+      if (restoreError) {
+        console.error('Error restoring admin session:', restoreError);
+        toast.error('Erro ao restaurar sessão do admin');
+        setLoading(false);
+        return;
       }
 
       // Assign barber role (admin-only RPC with fallback)
