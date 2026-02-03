@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Scissors, Mail, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import type { AppRole } from '@/types/database';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -23,6 +24,7 @@ const signupSchema = z.object({
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp, user } = useAuth();
   const [loading, setLoading] = useState(false);
   
@@ -34,6 +36,10 @@ export default function Auth() {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+
+  const roleParam = new URLSearchParams(location.search).get('role');
+  const signupRole: AppRole | undefined =
+    roleParam === 'barber' || roleParam === 'client' ? roleParam : undefined;
 
   // Redirect if already logged in
   if (user) {
@@ -80,7 +86,7 @@ export default function Auth() {
     }
     
     setLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupName);
+    const { error } = await signUp(signupEmail, signupPassword, signupName, signupRole);
     setLoading(false);
     
     if (error) {
