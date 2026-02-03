@@ -1,10 +1,24 @@
 /**
  * Generate WhatsApp link with pre-filled message
  */
+export const DEFAULT_LEAD_MESSAGE =
+  'Olá {leadName}! 👋\n\nO {barberName} te indicou para conhecer nossa barbearia! 💈\n\nVocê ganhou uma vantagem especial por ser uma indicação. Vamos agendar seu primeiro corte?';
+
+export const buildLeadMessage = (
+  template: string,
+  leadName: string,
+  barberName: string
+): string => {
+  return template
+    .replaceAll('{leadName}', leadName)
+    .replaceAll('{barberName}', barberName);
+};
+
 export function generateWhatsAppLink(
   leadName: string,
   leadPhone: string,
-  barberName: string
+  barberName: string,
+  template: string = DEFAULT_LEAD_MESSAGE
 ): string {
   // Clean phone number - remove non-digits
   const cleanPhone = leadPhone.replace(/\D/g, '');
@@ -15,7 +29,7 @@ export function generateWhatsAppLink(
     : `55${cleanPhone}`;
   
   // Create the message
-  const message = `Olá ${leadName}! 👋\n\nO ${barberName} te indicou para conhecer nossa barbearia! 💈\n\nVocê ganhou uma vantagem especial por ser uma indicação. Vamos agendar seu primeiro corte?`;
+  const message = buildLeadMessage(template, leadName, barberName);
   
   // Encode the message for URL
   const encodedMessage = encodeURIComponent(message);
