@@ -26,6 +26,7 @@ export interface Referral {
   lead_name: string;
   lead_phone: string;
   status: ReferralStatus;
+  contact_tag: string | null;
   converted_plan_id: string | null;
   created_at: string;
   updated_at: string;
