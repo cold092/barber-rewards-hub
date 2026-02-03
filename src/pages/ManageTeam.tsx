@@ -133,31 +133,31 @@ export default function ManageTeam() {
         throw new Error('Usuário não criado');
       }
 
-      // Assign barber role (admin-only RPC with fallback)
-      const { error: roleError } = await supabase.rpc('assign_user_role', {
-        target_user_id: authData.user.id,
-        target_role: 'barber'
-      });
+// Assign barber role (admin-only RPC with fallback)
+const { error: roleError } = await supabase.rpc('assign_user_role', {
+  target_user_id: authData.user.id,
+  target_role: 'barber'
+});
 
-      if (roleError) {
-        console.error('Error assigning role via RPC:', roleError);
-        const { error: fallbackError } = await supabase
-          .from('user_roles')
-          .upsert(
-            {
-              user_id: authData.user.id,
-              role: 'barber' as AppRole
-            },
-            { onConflict: 'user_id,role' }
-          );
+if (roleError) {
+  console.error('Error assigning role via RPC:', roleError);
+  const { error: fallbackError } = await supabaseS
+    .from('user_roles')
+    .upsert(
+      {
+        user_id: authData.user.id,
+        role: 'barber' as AppRole
+      },
+      { onConflict: 'user_id,role' }
+    );
 
-        if (fallbackError) {
-          console.error('Error assigning role via fallback:', fallbackError);
-          toast.error('Erro ao atribuir perfil de barbeiro');
-          setLoading(false);
-          return;
-        }
-      }
+  if (fallbackError) {
+    console.error('Error assigning role via fallback:', fallbackError);
+    toast.error('Erro ao atribuir perfil de barbeiro');
+    setLoading(false);
+    return;
+  }
+}
 
       toast.success(`Barbeiro ${name} criado com sucesso!`);
       
