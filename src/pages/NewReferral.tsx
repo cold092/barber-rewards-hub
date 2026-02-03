@@ -73,6 +73,12 @@ export default function NewReferral() {
 
     // If admin and referrer is a lead
     if (isAdmin && referrerType === 'lead') {
+      if (!profile) {
+        toast.error('Perfil não encontrado');
+        setLoading(false);
+        return;
+      }
+
       if (!selectedLeadReferrerId) {
         toast.error('Selecione o lead que está indicando');
         setLoading(false);
@@ -80,7 +86,7 @@ export default function NewReferral() {
       }
 
       const leadReferrer = leadReferrers.find(l => l.id === selectedLeadReferrerId);
-      const result = await registerLeadByLead(selectedLeadReferrerId, {
+      const result = await registerLeadByLead(profile.id, selectedLeadReferrerId, {
         leadName: leadName.trim(),
         leadPhone: leadPhone.trim()
       });
