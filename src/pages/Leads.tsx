@@ -223,16 +223,18 @@ export default function Leads() {
 
                     {referral.status !== 'converted' && (
                       <div className="flex flex-wrap gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-2"
-                          onClick={() => openWhatsApp(referral)}
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          WhatsApp
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => openWhatsApp(referral)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            WhatsApp
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
                         
                         {referral.status === 'new' && (
                           <Button

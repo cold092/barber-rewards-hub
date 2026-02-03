@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus, Phone, User, Users, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { registerLead, getAllBarbers, getAllClients, getAllLeadsAsReferrers, registerLeadByLead } from '@/services/referralService';
+import { registerLead, getAllClients, getAllLeadsAsReferrers, registerLeadByLead } from '@/services/referralService';
 import { REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { isValidPhone } from '@/utils/whatsapp';
 import type { Profile } from '@/types/database';
@@ -43,15 +43,13 @@ export default function NewReferral() {
 
       setLoadingReferrers(true);
       
-      // Load barbers, clients, and existing leads as potential referrers
-      const [barbersResult, clientsResult, leadsResult] = await Promise.all([
-        getAllBarbers(),
+      // Load clients and existing leads as potential referrers
+      const [clientsResult, leadsResult] = await Promise.all([
         getAllClients(),
         getAllLeadsAsReferrers()
       ]);
       
-      const allReferrers = [...barbersResult.data, ...clientsResult.data];
-      setReferrers(allReferrers);
+      setReferrers(clientsResult.data);
       setLeadReferrers(leadsResult.data);
       
       setLoadingReferrers(false);
@@ -204,7 +202,7 @@ export default function NewReferral() {
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="user" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        Barbeiro/Cliente
+                        Cliente
                       </TabsTrigger>
                       <TabsTrigger value="lead" className="flex items-center gap-2">
                         <Link className="h-4 w-4" />
