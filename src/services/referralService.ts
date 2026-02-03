@@ -93,6 +93,30 @@ export async function markAsContacted(
 }
 
 /**
+ * Revert lead status from 'contacted' back to 'new'
+ */
+export async function undoContacted(
+  referralId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({ status: 'new' as ReferralStatus })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error reverting status:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in undoContacted:', error);
+    return { success: false, error: 'Erro ao desfazer contato' };
+  }
+}
+
+/**
  * Update lead contact tag (SQL, MQL, Frio, Marcou)
  */
 export async function updateContactTag(
@@ -216,6 +240,33 @@ export async function confirmConversion(
   } catch (error) {
     console.error('Error in confirmConversion:', error);
     return { success: false, error: 'Erro ao confirmar conversão' };
+  }
+}
+
+/**
+ * Revert a conversion (keeps lead as contacted and clears plan)
+ */
+export async function undoConversion(
+  referralId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({
+        status: 'contacted' as ReferralStatus,
+        converted_plan_id: null
+      })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error reverting conversion:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in undoConversion:', error);
+    return { success: false, error: 'Erro ao desfazer conversão' };
   }
 }
 

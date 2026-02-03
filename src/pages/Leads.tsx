@@ -14,7 +14,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag } from '@/services/referralService';
+import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
 import { generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import type { Referral } from '@/types/database';
@@ -62,6 +62,17 @@ export default function Leads() {
       loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao atualizar status');
+    }
+  };
+
+  const handleUndoContact = async (referral: Referral) => {
+    const result = await undoContacted(referral.id);
+
+    if (result.success) {
+      toast.success('Contato desfeito');
+      loadReferrals();
+    } else {
+      toast.error(result.error || 'Erro ao desfazer contato');
     }
   };
 
@@ -113,6 +124,17 @@ export default function Leads() {
       loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao confirmar conversão');
+    }
+  };
+
+  const handleUndoConversion = async (referral: Referral) => {
+    const result = await undoConversion(referral.id);
+
+    if (result.success) {
+      toast.success('Conversão desfeita');
+      loadReferrals();
+    } else {
+      toast.error(result.error || 'Erro ao desfazer conversão');
     }
   };
 
@@ -300,6 +322,16 @@ export default function Leads() {
                             Marcar Contatado
                           </Button>
                         )}
+                        {referral.status === 'contacted' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleUndoContact(referral)}
+                          >
+                            Desfazer Contato
+                          </Button>
+                        )}
                         
                         <Button
                           size="sm"
@@ -308,6 +340,18 @@ export default function Leads() {
                         >
                           <CheckCircle className="h-4 w-4" />
                           Converter Venda
+                        </Button>
+                      </div>
+                    )}
+                    {referral.status === 'converted' && (
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-2 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleUndoConversion(referral)}
+                        >
+                          Desfazer Conversão
                         </Button>
                       </div>
                     )}
