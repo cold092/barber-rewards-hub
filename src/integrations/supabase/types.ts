@@ -54,6 +54,8 @@ export type Database = {
           id: string
           lead_name: string
           lead_phone: string
+          lead_points: number
+          referred_by_lead_id: string | null
           referrer_id: string
           referrer_name: string
           status: Database["public"]["Enums"]["referral_status"]
@@ -65,6 +67,8 @@ export type Database = {
           id?: string
           lead_name: string
           lead_phone: string
+          lead_points?: number
+          referred_by_lead_id?: string | null
           referrer_id: string
           referrer_name: string
           status?: Database["public"]["Enums"]["referral_status"]
@@ -76,12 +80,21 @@ export type Database = {
           id?: string
           lead_name?: string
           lead_phone?: string
+          lead_points?: number
+          referred_by_lead_id?: string | null
           referrer_id?: string
           referrer_name?: string
           status?: Database["public"]["Enums"]["referral_status"]
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "referrals_referred_by_lead_id_fkey"
+            columns: ["referred_by_lead_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "referrals_referrer_id_fkey"
             columns: ["referrer_id"]

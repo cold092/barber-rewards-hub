@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Phone, User, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserPlus, Phone, User, Users, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { registerLead, getAllBarbers, getAllClients } from '@/services/referralService';
+import { registerLead, getAllBarbers, getAllClients, getAllLeadsAsReferrers, registerLeadByLead } from '@/services/referralService';
 import { REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { isValidPhone } from '@/utils/whatsapp';
 import type { Profile } from '@/types/database';
-import { useEffect } from 'react';
 
 const leadSchema = z.object({
   leadName: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
@@ -28,8 +28,11 @@ export default function NewReferral() {
   const [leadName, setLeadName] = useState('');
   const [leadPhone, setLeadPhone] = useState('');
   const [selectedReferrerId, setSelectedReferrerId] = useState('');
+  const [selectedLeadReferrerId, setSelectedLeadReferrerId] = useState('');
   const [referrers, setReferrers] = useState<Profile[]>([]);
+  const [leadReferrers, setLeadReferrers] = useState<{ id: string; name: string; phone: string }[]>([]);
   const [loadingReferrers, setLoadingReferrers] = useState(true);
+  const [referrerType, setReferrerType] = useState<'user' | 'lead'>('user');
 
   useEffect(() => {
     async function loadReferrers() {
@@ -40,14 +43,16 @@ export default function NewReferral() {
 
       setLoadingReferrers(true);
       
-      // Load both barbers and clients as potential referrers
-      const [barbersResult, clientsResult] = await Promise.all([
+      // Load barbers, clients, and existing leads as potential referrers
+      const [barbersResult, clientsResult, leadsResult] = await Promise.all([
         getAllBarbers(),
-        getAllClients()
+        getAllClients(),
+        getAllLeadsAsReferrers()
       ]);
       
       const allReferrers = [...barbersResult.data, ...clientsResult.data];
       setReferrers(allReferrers);
+      setLeadReferrers(leadsResult.data);
       
       setLoadingReferrers(false);
     }
@@ -64,15 +69,45 @@ export default function NewReferral() {
       return;
     }
 
+    setLoading(true);
+
+    // If admin and referrer is a lead
+    if (isAdmin && referrerType === 'lead') {
+      if (!selectedLeadReferrerId) {
+        toast.error('Selecione o lead que está indicando');
+        setLoading(false);
+        return;
+      }
+
+      const leadReferrer = leadReferrers.find(l => l.id === selectedLeadReferrerId);
+      const result = await registerLeadByLead(selectedLeadReferrerId, {
+        leadName: leadName.trim(),
+        leadPhone: leadPhone.trim()
+      });
+      
+      setLoading(false);
+      
+      if (result.success) {
+        toast.success(
+          `Lead registrado! ${leadReferrer?.name} ganhou +${REFERRAL_BONUS_POINTS} pontos`,
+          { duration: 4000 }
+        );
+        navigate('/leads');
+      } else {
+        toast.error(result.error || 'Erro ao registrar lead');
+      }
+      return;
+    }
+
+    // Regular user referral
     const referrerId = isAdmin ? selectedReferrerId : profile?.id;
     const referrer = isAdmin ? referrers.find(r => r.id === referrerId) : profile;
     
     if (!referrerId || !referrer) {
       toast.error('Selecione quem está indicando');
+      setLoading(false);
       return;
     }
-    
-    setLoading(true);
     
     const result = await registerLead(referrerId, referrer.name, {
       leadName: leadName.trim(),
@@ -132,32 +167,74 @@ export default function NewReferral() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Referrer selection (only for admin) */}
               {isAdmin && (
-                <div className="space-y-2">
-                  <Label htmlFor="referrer">Quem está indicando?</Label>
-                  <Select
-                    value={selectedReferrerId}
-                    onValueChange={setSelectedReferrerId}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione o indicador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingReferrers ? (
-                        <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                      ) : referrers.length === 0 ? (
-                        <SelectItem value="empty" disabled>Nenhum usuário encontrado</SelectItem>
-                      ) : (
-                        referrers.map((referrer) => (
-                          <SelectItem key={referrer.id} value={referrer.id}>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              {referrer.name}
-                            </div>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <Label>Tipo de Indicador</Label>
+                  <Tabs value={referrerType} onValueChange={(v) => setReferrerType(v as 'user' | 'lead')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="user" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Barbeiro/Cliente
+                      </TabsTrigger>
+                      <TabsTrigger value="lead" className="flex items-center gap-2">
+                        <Link className="h-4 w-4" />
+                        Lead existente
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="user" className="mt-4">
+                      <Select
+                        value={selectedReferrerId}
+                        onValueChange={setSelectedReferrerId}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione o indicador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingReferrers ? (
+                            <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                          ) : referrers.length === 0 ? (
+                            <SelectItem value="empty" disabled>Nenhum usuário encontrado</SelectItem>
+                          ) : (
+                            referrers.map((referrer) => (
+                              <SelectItem key={referrer.id} value={referrer.id}>
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-muted-foreground" />
+                                  {referrer.name}
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </TabsContent>
+                    
+                    <TabsContent value="lead" className="mt-4">
+                      <Select
+                        value={selectedLeadReferrerId}
+                        onValueChange={setSelectedLeadReferrerId}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione o lead indicador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingReferrers ? (
+                            <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                          ) : leadReferrers.length === 0 ? (
+                            <SelectItem value="empty" disabled>Nenhum lead cadastrado ainda</SelectItem>
+                          ) : (
+                            leadReferrers.map((lead) => (
+                              <SelectItem key={lead.id} value={lead.id}>
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4 text-muted-foreground" />
+                                  {lead.name} ({lead.phone})
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               )}
 
@@ -210,7 +287,7 @@ export default function NewReferral() {
                 <Button
                   type="submit"
                   className="w-full gold-gradient gold-glow text-primary-foreground font-semibold h-12"
-                  disabled={loading || (isAdmin && (loadingReferrers || !selectedReferrerId))}
+                  disabled={loading || (isAdmin && referrerType === 'user' && (loadingReferrers || !selectedReferrerId)) || (isAdmin && referrerType === 'lead' && (loadingReferrers || !selectedLeadReferrerId))}
                 >
                   {loading ? 'Registrando...' : 'Registrar Indicação'}
                 </Button>
