@@ -68,9 +68,12 @@ export default function Leads() {
     }
   }, []);
 
+  const isClientReferral = (referral: Referral) =>
+    referral.is_client || referral.status === 'converted';
+
   const filteredReferrals = referrals.filter(r => {
     if (filter === 'all') return true;
-    if (filter === 'clients') return r.is_client;
+    if (filter === 'clients') return isClientReferral(r);
     return r.status === filter;
   });
 
@@ -201,6 +204,7 @@ export default function Leads() {
     ];
 
     filteredReferrals.forEach((referral) => {
+      const referralIsClient = isClientReferral(referral);
       rows.push([
         referral.lead_name,
         formatPhoneNumber(referral.lead_phone),
@@ -208,7 +212,7 @@ export default function Leads() {
         referral.converted_plan_id ? getPlanById(referral.converted_plan_id)?.label ?? '' : '',
         referral.referrer_name,
         referral.contact_tag ?? '',
-        referral.is_client ? 'Sim' : 'Não',
+        referralIsClient ? 'Sim' : 'Não',
         new Date(referral.created_at).toLocaleDateString('pt-BR')
       ]);
     });
@@ -352,7 +356,7 @@ export default function Leads() {
           <Card className="glass-card border-primary/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">
-                {referrals.filter(r => r.is_client).length}
+                {referrals.filter(isClientReferral).length}
               </p>
               <p className="text-xs text-muted-foreground">Clientes</p>
             </CardContent>
@@ -390,7 +394,7 @@ export default function Leads() {
                       <div className="flex flex-wrap justify-end gap-2">
                         {getStatusBadge(referral.status)}
                         {getContactTagBadge(referral.contact_tag)}
-                        {getClientBadge(referral.is_client)}
+                        {getClientBadge(isClientReferral(referral))}
                         {referral.status === 'converted' && referral.converted_plan_id && (
                           <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
                             {getPlanById(referral.converted_plan_id)?.label}
@@ -431,12 +435,12 @@ export default function Leads() {
                       {isAdmin && (
                         <Button
                           size="sm"
-                          variant={referral.is_client ? 'secondary' : 'outline'}
+                          variant={isClientReferral(referral) ? 'secondary' : 'outline'}
                           className="gap-2"
                           onClick={() => handleToggleClient(referral)}
                         >
                           <UserCheck className="h-4 w-4" />
-                          {referral.is_client ? 'Cliente ✓' : 'Marcar Cliente'}
+                          {isClientReferral(referral) ? 'Cliente ✓' : 'Marcar Cliente'}
                         </Button>
                       )}
                     </div>
