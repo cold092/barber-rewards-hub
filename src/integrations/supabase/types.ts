@@ -49,12 +49,9 @@ export type Database = {
       }
       referrals: {
         Row: {
-          contact_tag: string | null
           converted_plan_id: string | null
           created_at: string
           id: string
-          is_client: boolean
-          client_since: string | null
           lead_name: string
           lead_phone: string
           lead_points: number
@@ -65,12 +62,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
           id?: string
-          is_client?: boolean
-          client_since?: string | null
           lead_name: string
           lead_phone: string
           lead_points?: number
@@ -81,12 +75,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
           id?: string
-          is_client?: boolean
-          client_since?: string | null
           lead_name?: string
           lead_phone?: string
           lead_points?: number
