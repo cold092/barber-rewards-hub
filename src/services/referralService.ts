@@ -246,32 +246,32 @@ export async function confirmConversion(
         console.error('Error updating lead points:', updateLeadError);
         return { success: false, error: updateLeadError.message };
       }
-    } else {
-      // Get current profile balance
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('wallet_balance, lifetime_points')
-        .eq('id', referral.referrer_id)
-        .single();
+    }
 
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        return { success: false, error: profileError.message };
-      }
+    // Get current profile balance
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('wallet_balance, lifetime_points')
+      .eq('id', referral.referrer_id)
+      .single();
 
-      // Update wallet with plan points
-      const { error: updateWalletError } = await supabase
-        .from('profiles')
-        .update({
-          wallet_balance: (profile.wallet_balance || 0) + planPoints,
-          lifetime_points: (profile.lifetime_points || 0) + planPoints
-        })
-        .eq('id', referral.referrer_id);
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return { success: false, error: profileError.message };
+    }
 
-      if (updateWalletError) {
-        console.error('Error updating wallet:', updateWalletError);
-        return { success: false, error: updateWalletError.message };
-      }
+    // Update wallet with plan points
+    const { error: updateWalletError } = await supabase
+      .from('profiles')
+      .update({
+        wallet_balance: (profile.wallet_balance || 0) + planPoints,
+        lifetime_points: (profile.lifetime_points || 0) + planPoints
+      })
+      .eq('id', referral.referrer_id);
+
+    if (updateWalletError) {
+      console.error('Error updating wallet:', updateWalletError);
+      return { success: false, error: updateWalletError.message };
     }
 
     return { success: true, pointsAwarded: planPoints };
@@ -465,6 +465,30 @@ export async function registerLeadByLead(
     if (updateError) {
       console.error('Error updating lead points:', updateError);
       // Don't fail the whole operation, the referral was created
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('wallet_balance, lifetime_points')
+      .eq('id', referrerProfileId)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return { success: false, error: profileError.message };
+    }
+
+    const { error: updateWalletError } = await supabase
+      .from('profiles')
+      .update({
+        wallet_balance: (profile.wallet_balance || 0) + REFERRAL_BONUS_POINTS,
+        lifetime_points: (profile.lifetime_points || 0) + REFERRAL_BONUS_POINTS
+      })
+      .eq('id', referrerProfileId);
+
+    if (updateWalletError) {
+      console.error('Error updating wallet:', updateWalletError);
+      return { success: false, error: updateWalletError.message };
     }
 
     return { success: true, referralId: referral.id };
