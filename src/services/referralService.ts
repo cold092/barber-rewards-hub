@@ -246,32 +246,32 @@ export async function confirmConversion(
         console.error('Error updating lead points:', updateLeadError);
         return { success: false, error: updateLeadError.message };
       }
-    }
+    } else {
+      // Get current profile balance
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('wallet_balance, lifetime_points')
+        .eq('id', referral.referrer_id)
+        .single();
 
-    // Get current profile balance
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('wallet_balance, lifetime_points')
-      .eq('id', referral.referrer_id)
-      .single();
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return { success: false, error: profileError.message };
+      }
 
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return { success: false, error: profileError.message };
-    }
+      // Update wallet with plan points
+      const { error: updateWalletError } = await supabase
+        .from('profiles')
+        .update({
+          wallet_balance: (profile.wallet_balance || 0) + planPoints,
+          lifetime_points: (profile.lifetime_points || 0) + planPoints
+        })
+        .eq('id', referral.referrer_id);
 
-    // Update wallet with plan points
-    const { error: updateWalletError } = await supabase
-      .from('profiles')
-      .update({
-        wallet_balance: (profile.wallet_balance || 0) + planPoints,
-        lifetime_points: (profile.lifetime_points || 0) + planPoints
-      })
-      .eq('id', referral.referrer_id);
-
-    if (updateWalletError) {
-      console.error('Error updating wallet:', updateWalletError);
-      return { success: false, error: updateWalletError.message };
+      if (updateWalletError) {
+        console.error('Error updating wallet:', updateWalletError);
+        return { success: false, error: updateWalletError.message };
+      }
     }
 
     return { success: true, pointsAwarded: planPoints };
@@ -371,7 +371,6 @@ export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; erro
       .from('referrals')
       .select('id, lead_name, lead_phone, lead_points, referred_by_lead_id')
       .gt('lead_points', 0) // Only leads who have referred someone
-      .neq('status', 'converted')
       .order('lead_points', { ascending: false });
 
     if (error) {
@@ -467,30 +466,6 @@ export async function registerLeadByLead(
       // Don't fail the whole operation, the referral was created
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('wallet_balance, lifetime_points')
-      .eq('id', referrerProfileId)
-      .single();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return { success: false, error: profileError.message };
-    }
-
-    const { error: updateWalletError } = await supabase
-      .from('profiles')
-      .update({
-        wallet_balance: (profile.wallet_balance || 0) + REFERRAL_BONUS_POINTS,
-        lifetime_points: (profile.lifetime_points || 0) + REFERRAL_BONUS_POINTS
-      })
-      .eq('id', referrerProfileId);
-
-    if (updateWalletError) {
-      console.error('Error updating wallet:', updateWalletError);
-      return { success: false, error: updateWalletError.message };
-    }
-
     return { success: true, referralId: referral.id };
   } catch (error) {
     console.error('Error in registerLeadByLead:', error);
@@ -534,9 +509,7 @@ export async function getAllReferrals(): Promise<{ data: Referral[]; error?: str
   try {
     const { data, error } = await supabase
       .from('referrals')
-      .select(
-        'id, referrer_id, referrer_name, lead_name, lead_phone, status, contact_tag, converted_plan_id, created_at, updated_at'
-      )
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -544,7 +517,7 @@ export async function getAllReferrals(): Promise<{ data: Referral[]; error?: str
       return { data: [], error: error.message };
     }
 
-    return { data: (data || []) as Referral[] };
+    return { data: data || [] };
   } catch (error) {
     console.error('Error in getAllReferrals:', error);
     return { data: [], error: 'Erro ao buscar indicações' };

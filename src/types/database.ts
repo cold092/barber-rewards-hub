@@ -27,8 +27,8 @@ export interface Referral {
   lead_phone: string;
   status: ReferralStatus;
   contact_tag: string | null;
-  is_client?: boolean;
-  client_since?: string | null;
+  is_client: boolean;
+  client_since: string | null;
   converted_plan_id: string | null;
   referred_by_lead_id: string | null;
   lead_points: number;
