@@ -534,7 +534,9 @@ export async function getAllReferrals(): Promise<{ data: Referral[]; error?: str
   try {
     const { data, error } = await supabase
       .from('referrals')
-      .select('*')
+      .select(
+        'id, referrer_id, referrer_name, lead_name, lead_phone, status, contact_tag, converted_plan_id, created_at, updated_at'
+      )
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -542,7 +544,7 @@ export async function getAllReferrals(): Promise<{ data: Referral[]; error?: str
       return { data: [], error: error.message };
     }
 
-    return { data: data || [] };
+    return { data: (data || []) as Referral[] };
   } catch (error) {
     console.error('Error in getAllReferrals:', error);
     return { data: [], error: 'Erro ao buscar indicações' };
