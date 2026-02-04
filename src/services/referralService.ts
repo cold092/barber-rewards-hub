@@ -214,7 +214,9 @@ export async function confirmConversion(
       .from('referrals')
       .update({
         status: 'converted' as ReferralStatus,
-        converted_plan_id: planId
+        converted_plan_id: planId,
+        is_client: true,
+        client_since: new Date().toISOString()
       })
       .eq('id', referralId);
 
