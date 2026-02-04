@@ -9,12 +9,12 @@ import {
   Wallet,
   UserPlus,
   CheckCircle,
-  DollarSign
+  Clock,
+  BarChart3
 } from 'lucide-react';
 import { getAllReferrals, getRanking } from '@/services/referralService';
 import { REWARD_PLANS } from '@/config/plans';
 import { formatCurrencyBRL } from '@/utils/currency';
-import PlanDistributionChart from '@/components/dashboard/PlanDistributionChart';
 import type { Referral, Profile } from '@/types/database';
 
 export default function Dashboard() {
@@ -61,10 +61,18 @@ export default function Dashboard() {
   const convertedReferrals = displayReferrals.filter(
     (referral) => referral.status === 'converted' && referral.converted_plan_id
   );
-  const financialTotal = convertedReferrals.reduce((sum, referral) => {
-    const plan = REWARD_PLANS[referral.converted_plan_id || ''];
-    return sum + (plan?.price || 0);
-  }, 0);
+  const planFinancials = Object.entries(REWARD_PLANS).map(([planId, plan]) => {
+    const count = convertedReferrals.filter((referral) => referral.converted_plan_id === planId).length;
+    const total = count * plan.price;
+    return {
+      id: planId,
+      label: plan.label,
+      count,
+      total
+    };
+  });
+  const financialTotal = planFinancials.reduce((sum, plan) => sum + plan.total, 0);
+  const maxPlanTotal = Math.max(...planFinancials.map((plan) => plan.total), 1);
 
   if (loading) {
     return (
@@ -209,28 +217,40 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
-          {/* Financial Card */}
           <Card className="glass-card border-border/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-display">
-                <DollarSign className="h-5 w-5 text-primary" />
-                Receita Total
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Dashboard Financeiro
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Total em vendas</p>
+                <p className="text-2xl font-bold text-primary">
                   {formatCurrencyBRL(financialTotal)}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {stats.converted} vendas convertidas
-                </p>
+              </div>
+              <div className="space-y-3">
+                {planFinancials.map((plan) => (
+                  <div key={plan.id} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{plan.label}</span>
+                      <span className="text-muted-foreground">
+                        {formatCurrencyBRL(plan.total)} ({plan.count})
+                      </span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-secondary/60">
+                      <div
+                        className="h-2 rounded-full bg-primary"
+                        style={{ width: `${(plan.total / maxPlanTotal) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
-
-          {/* Plan Distribution Chart */}
-          <PlanDistributionChart referrals={displayReferrals} />
 
           {/* Top Barbers */}
           <Card className="glass-card border-border/50">

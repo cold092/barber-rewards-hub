@@ -10,8 +10,8 @@ export const buildLeadMessage = (
   barberName: string
 ): string => {
   return template
-    .replace(/{leadName}/g, leadName)
-    .replace(/{barberName}/g, barberName);
+    .replaceAll('{leadName}', leadName)
+    .replaceAll('{barberName}', barberName);
 };
 
 export function generateWhatsAppLink(

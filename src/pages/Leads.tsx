@@ -13,9 +13,7 @@ import {
   CheckCircle,
   Clock,
   ExternalLink,
-  Download,
-  Trash2,
-  UserCheck
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral, markAsClient } from '@/services/referralService';
@@ -31,7 +29,7 @@ export default function Leads() {
   const { isAdmin, isBarber, profile } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'clients'>('all');
+  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
   const [messageTemplate, setMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [messageDraft, setMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
   
@@ -159,37 +157,6 @@ export default function Leads() {
     }
   };
 
-  const handleDelete = async (referral: Referral) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o lead "${referral.lead_name}"?`)) {
-      return;
-    }
-
-    const result = await deleteReferral(referral.id);
-
-    if (result.success) {
-      toast.success('Lead excluído');
-      loadReferrals();
-    } else {
-      toast.error(result.error || 'Erro ao excluir lead');
-    }
-  };
-
-  const handleToggleClient = async (referral: Referral) => {
-    const nextIsClient = !referral.is_client;
-    const result = await markAsClient(referral.id, nextIsClient);
-
-    if (result.success) {
-      toast.success(nextIsClient ? 'Marcado como cliente' : 'Desmarcado como cliente');
-      setReferrals((prev) =>
-        prev.map((item) =>
-          item.id === referral.id ? { ...item, is_client: nextIsClient } : item
-        )
-      );
-    } else {
-      toast.error(result.error || 'Erro ao atualizar');
-    }
-  };
-
   const handleExport = () => {
     if (filteredReferrals.length === 0) {
       toast.error('Nenhum lead para exportar');
@@ -295,7 +262,6 @@ export default function Leads() {
                 <SelectItem value="new">Novos</SelectItem>
                 <SelectItem value="contacted">Contatados</SelectItem>
                 <SelectItem value="converted">Convertidos</SelectItem>
-                <SelectItem value="clients">Clientes</SelectItem>
               </SelectContent>
             </Select>
           </div>

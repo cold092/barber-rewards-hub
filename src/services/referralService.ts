@@ -371,6 +371,7 @@ export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; erro
       .from('referrals')
       .select('id, lead_name, lead_phone, lead_points, referred_by_lead_id')
       .gt('lead_points', 0) // Only leads who have referred someone
+      .neq('status', 'converted')
       .order('lead_points', { ascending: false });
 
     if (error) {
