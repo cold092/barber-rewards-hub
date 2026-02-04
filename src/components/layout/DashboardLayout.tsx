@@ -11,7 +11,9 @@ import {
   LogOut,
   Menu,
   X,
-  Settings
+  Settings,
+  FileText,
+  UserCheck
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -35,6 +37,12 @@ const navItems: NavItem[] = [
   { path: '/equipe', label: 'Gerenciar Equipe', icon: Settings, adminOnly: true },
 ];
 
+const reportItems = [
+  { label: 'Clientes convertidos', icon: UserCheck, view: 'converted-clients' },
+  { label: 'Total de clientes', icon: Users, view: 'clients' },
+  { label: 'Leads', icon: FileText, view: 'leads' }
+];
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,6 +51,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   
   // Filter nav items based on role
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+  const showReports = isAdmin;
+  const isReportActive = (view: string) =>
+    location.pathname === '/leads' && new URLSearchParams(location.search).get('view') === view;
 
   const handleSignOut = async () => {
     await signOut();
@@ -93,7 +104,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-4">
             {filteredNavItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -114,6 +125,33 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </Button>
               );
             })}
+            {showReports && (
+              <div className="space-y-1">
+                <p className="px-2 text-xs uppercase tracking-wide text-muted-foreground">
+                  Relatórios
+                </p>
+                {reportItems.map((item) => {
+                  const isActive = isReportActive(item.view);
+                  return (
+                    <Button
+                      key={item.view}
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-start gap-3 h-11",
+                        isActive && "bg-sidebar-accent text-primary"
+                      )}
+                      onClick={() => {
+                        navigate(`/leads?view=${item.view}`);
+                        setSidebarOpen(false);
+                      }}
+                    >
+                      <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                      {item.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
           </nav>
 
           {/* User Info & Logout */}
