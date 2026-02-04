@@ -89,7 +89,9 @@ export async function registerClient(
         referrer_name: referrerName,
         lead_name: clientData.clientName,
         lead_phone: clientData.clientPhone,
-        status: 'converted' as ReferralStatus
+        status: 'converted' as ReferralStatus,
+        is_client: true,
+        client_since: new Date().toISOString()
       })
       .select()
       .single();
@@ -430,8 +432,8 @@ export async function getClientReferralRanking(): Promise<{ data: ClientRankingE
   try {
     const { data: referrals, error } = await supabase
       .from('referrals')
-      .select('id, lead_name, lead_phone, lead_points')
-      .eq('is_client', true)
+      .select('id, lead_name, lead_phone, lead_points, status, is_client')
+      .or('is_client.eq.true,status.eq.converted')
       .order('lead_points', { ascending: false });
 
     if (error) {
