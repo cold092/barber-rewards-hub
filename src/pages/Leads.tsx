@@ -903,7 +903,6 @@ export default function Leads() {
               )}
             </CardContent>
           </Card>
-        </div>
       </div>
 
       {/* Conversion Dialog */}
