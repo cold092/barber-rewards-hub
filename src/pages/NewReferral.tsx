@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus, Phone, User, Users, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { registerLead, registerClient, getAllBarbers, getAllClients, getAllLeadsAsReferrers, registerLeadByLead } from '@/services/referralService';
+import { registerLead, registerClient, getAllBarbers, getAllLeadsAsReferrers, registerLeadByLead } from '@/services/referralService';
 import { REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { isValidPhone } from '@/utils/whatsapp';
 import type { Profile } from '@/types/database';
@@ -46,14 +46,12 @@ export default function NewReferral() {
       setLoadingReferrers(true);
       
       // Load barbers, clients, and existing leads as potential referrers
-      const [barbersResult, clientsResult, leadsResult] = await Promise.all([
+      const [barbersResult, leadsResult] = await Promise.all([
         getAllBarbers(),
-        getAllClients(),
         getAllLeadsAsReferrers()
       ]);
       
-      const allReferrers = [...barbersResult.data, ...clientsResult.data];
-      setReferrers(allReferrers);
+      setReferrers(barbersResult.data);
       setBarbers(barbersResult.data);
       setLeadReferrers(leadsResult.data);
       
@@ -164,14 +162,14 @@ export default function NewReferral() {
     // Admin selecting a user referrer (barber/client)
     if (isAdmin && referrerType === 'user') {
       if (!selectedReferrerId) {
-        toast.error('Selecione quem está indicando');
+        toast.error('Selecione o barbeiro responsável');
         setLoading(false);
         return;
       }
       
       const referrer = referrers.find(r => r.id === selectedReferrerId);
       if (!referrer) {
-        toast.error('Indicador não encontrado');
+        toast.error('Barbeiro não encontrado');
         setLoading(false);
         return;
       }
@@ -284,7 +282,7 @@ export default function NewReferral() {
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="user" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        Barbeiro/Cliente
+                        Barbeiro
                       </TabsTrigger>
                       <TabsTrigger value="lead" className="flex items-center gap-2">
                         <Link className="h-4 w-4" />
@@ -298,13 +296,13 @@ export default function NewReferral() {
                         onValueChange={setSelectedReferrerId}
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione o indicador" />
+                          <SelectValue placeholder="Selecione o barbeiro" />
                         </SelectTrigger>
                         <SelectContent>
                           {loadingReferrers ? (
                             <SelectItem value="loading" disabled>Carregando...</SelectItem>
                           ) : referrers.length === 0 ? (
-                            <SelectItem value="empty" disabled>Nenhum usuário encontrado</SelectItem>
+                            <SelectItem value="empty" disabled>Nenhum barbeiro encontrado</SelectItem>
                           ) : (
                             referrers.map((referrer) => (
                               <SelectItem key={referrer.id} value={referrer.id}>
