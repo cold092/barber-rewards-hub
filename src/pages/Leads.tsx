@@ -14,11 +14,10 @@ import {
   Clock,
   ExternalLink,
   Download,
-  Trash2,
-  UserCheck
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral, markAsClient } from '@/services/referralService';
+import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
 import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
@@ -68,11 +67,16 @@ export default function Leads() {
     }
   }, []);
 
+  const isClientReferral = (referral: Referral) =>
+    referral.is_client || referral.status === 'converted';
+
   const filteredReferrals = referrals.filter(r => {
     if (filter === 'all') return true;
-    if (filter === 'clients') return r.is_client;
+    if (filter === 'clients') return isClientReferral(r);
     return r.status === filter;
   });
+  const clientReferrals = filteredReferrals.filter(isClientReferral);
+  const leadReferrals = filteredReferrals.filter((referral) => !isClientReferral(referral));
 
   const handleContact = async (referral: Referral) => {
     const result = await markAsContacted(referral.id);
@@ -174,22 +178,6 @@ export default function Leads() {
     }
   };
 
-  const handleToggleClient = async (referral: Referral) => {
-    const nextIsClient = !referral.is_client;
-    const result = await markAsClient(referral.id, nextIsClient);
-
-    if (result.success) {
-      toast.success(nextIsClient ? 'Marcado como cliente' : 'Desmarcado como cliente');
-      setReferrals((prev) =>
-        prev.map((item) =>
-          item.id === referral.id ? { ...item, is_client: nextIsClient } : item
-        )
-      );
-    } else {
-      toast.error(result.error || 'Erro ao atualizar');
-    }
-  };
-
   const handleExport = () => {
     if (filteredReferrals.length === 0) {
       toast.error('Nenhum lead para exportar');
@@ -201,6 +189,7 @@ export default function Leads() {
     ];
 
     filteredReferrals.forEach((referral) => {
+      const referralIsClient = isClientReferral(referral);
       rows.push([
         referral.lead_name,
         formatPhoneNumber(referral.lead_phone),
@@ -208,7 +197,7 @@ export default function Leads() {
         referral.converted_plan_id ? getPlanById(referral.converted_plan_id)?.label ?? '' : '',
         referral.referrer_name,
         referral.contact_tag ?? '',
-        referral.is_client ? 'Sim' : 'Não',
+        referralIsClient ? 'Sim' : 'Não',
         new Date(referral.created_at).toLocaleDateString('pt-BR')
       ]);
     });
@@ -352,174 +341,338 @@ export default function Leads() {
           <Card className="glass-card border-primary/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">
-                {referrals.filter(r => r.is_client).length}
+                {referrals.filter(isClientReferral).length}
               </p>
               <p className="text-xs text-muted-foreground">Clientes</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Leads List */}
-        <Card className="glass-card border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-display">
-              <Users className="h-5 w-5 text-primary" />
-              Lista de Leads ({filteredReferrals.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredReferrals.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                Nenhum lead encontrado
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {filteredReferrals.map((referral) => (
-                  <div 
-                    key={referral.id}
-                    className="p-4 rounded-lg bg-secondary/50 space-y-3"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-lg">{referral.lead_name}</p>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {formatPhoneNumber(referral.lead_phone)}
-                        </p>
+        {/* Leads & Clients Lists */}
+        <div className="space-y-6">
+          <Card className="glass-card border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display">
+                <Users className="h-5 w-5 text-primary" />
+                Leads ({leadReferrals.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {leadReferrals.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Nenhum lead encontrado
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {leadReferrals.map((referral) => (
+                    <div 
+                      key={referral.id}
+                      className="p-4 rounded-lg bg-secondary/50 space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-lg">{referral.lead_name}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {formatPhoneNumber(referral.lead_phone)}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {getStatusBadge(referral.status)}
+                          {getContactTagBadge(referral.contact_tag)}
+                          {referral.status === 'converted' && referral.converted_plan_id && (
+                            <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                              {getPlanById(referral.converted_plan_id)?.label}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {getStatusBadge(referral.status)}
-                        {getContactTagBadge(referral.contact_tag)}
-                        {getClientBadge(referral.is_client)}
-                        {referral.status === 'converted' && referral.converted_plan_id && (
-                          <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
-                            {getPlanById(referral.converted_plan_id)?.label}
-                          </Badge>
-                        )}
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          Indicado por <span className="text-foreground">{referral.referrer_name}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          {new Date(referral.created_at).toLocaleDateString('pt-BR')}
+                        </span>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Indicado por <span className="text-foreground">{referral.referrer_name}</span>
-                      </span>
-                      <span className="text-muted-foreground">
-                        {new Date(referral.created_at).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Tag de contato:</span>
-                        <Select
-                          value={referral.contact_tag ?? 'none'}
-                          onValueChange={(value) => handleTagChange(referral, value)}
-                        >
-                          <SelectTrigger className="h-8 w-36">
-                            <SelectValue placeholder="Sem tag" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Sem tag</SelectItem>
-                            {contactTagOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Tag de contato:</span>
+                          <Select
+                            value={referral.contact_tag ?? 'none'}
+                            onValueChange={(value) => handleTagChange(referral, value)}
+                          >
+                            <SelectTrigger className="h-8 w-36">
+                              <SelectValue placeholder="Sem tag" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Sem tag</SelectItem>
+                              {contactTagOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant={referral.is_client ? 'secondary' : 'outline'}
-                          className="gap-2"
-                          onClick={() => handleToggleClient(referral)}
-                        >
-                          <UserCheck className="h-4 w-4" />
-                          {referral.is_client ? 'Cliente ✓' : 'Marcar Cliente'}
-                        </Button>
+
+                      {referral.status !== 'converted' && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => openWhatsApp(referral)}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              WhatsApp
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                          
+                          {referral.status === 'new' && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="gap-2"
+                              onClick={() => handleContact(referral)}
+                            >
+                              <Clock className="h-4 w-4" />
+                              Marcar Contatado
+                            </Button>
+                          )}
+                          {referral.status === 'contacted' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="gap-2 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleUndoContact(referral)}
+                            >
+                              Desfazer Contato
+                            </Button>
+                          )}
+                          
+                          <Button
+                            size="sm"
+                            className="gap-2 gold-gradient text-primary-foreground"
+                            onClick={() => openConvertDialog(referral)}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Converter Venda
+                          </Button>
+                        </div>
                       )}
-                    </div>
-
-                    {referral.status !== 'converted' && (
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {isAdmin && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => openWhatsApp(referral)}
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            WhatsApp
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                        
-                        {referral.status === 'new' && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="gap-2"
-                            onClick={() => handleContact(referral)}
-                          >
-                            <Clock className="h-4 w-4" />
-                            Marcar Contatado
-                          </Button>
-                        )}
-                        {referral.status === 'contacted' && (
+                      {referral.status === 'converted' && (
+                        <div className="flex flex-wrap gap-2 pt-2">
                           <Button
                             size="sm"
                             variant="ghost"
                             className="gap-2 text-muted-foreground hover:text-foreground"
-                            onClick={() => handleUndoContact(referral)}
+                            onClick={() => handleUndoConversion(referral)}
                           >
-                            Desfazer Contato
+                            Desfazer Conversão
                           </Button>
-                        )}
-                        
-                        <Button
-                          size="sm"
-                          className="gap-2 gold-gradient text-primary-foreground"
-                          onClick={() => openConvertDialog(referral)}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          Converter Venda
-                        </Button>
+                          {isAdmin && isClientReferral(referral) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => openWhatsApp(referral)}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              WhatsApp
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {/* Delete button - admin only */}
+                      {isAdmin && (
+                        <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(referral)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Excluir
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display">
+                <Users className="h-5 w-5 text-primary" />
+                Clientes ({clientReferrals.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {clientReferrals.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Nenhum cliente encontrado
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {clientReferrals.map((referral) => (
+                    <div 
+                      key={referral.id}
+                      className="p-4 rounded-lg bg-secondary/50 space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-lg">{referral.lead_name}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {formatPhoneNumber(referral.lead_phone)}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {getStatusBadge(referral.status)}
+                          {getContactTagBadge(referral.contact_tag)}
+                          {getClientBadge(isClientReferral(referral))}
+                          {referral.status === 'converted' && referral.converted_plan_id && (
+                            <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                              {getPlanById(referral.converted_plan_id)?.label}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {referral.status === 'converted' && (
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="gap-2 text-muted-foreground hover:text-foreground"
-                          onClick={() => handleUndoConversion(referral)}
-                        >
-                          Desfazer Conversão
-                        </Button>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          Indicado por <span className="text-foreground">{referral.referrer_name}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          {new Date(referral.created_at).toLocaleDateString('pt-BR')}
+                        </span>
                       </div>
-                    )}
-                    {/* Delete button - admin only */}
-                    {isAdmin && (
-                      <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(referral)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Excluir
-                        </Button>
+
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Tag de contato:</span>
+                          <Select
+                            value={referral.contact_tag ?? 'none'}
+                            onValueChange={(value) => handleTagChange(referral, value)}
+                          >
+                            <SelectTrigger className="h-8 w-36">
+                              <SelectValue placeholder="Sem tag" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Sem tag</SelectItem>
+                              {contactTagOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
+                      {referral.status !== 'converted' && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => openWhatsApp(referral)}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              WhatsApp
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                          
+                          {referral.status === 'new' && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="gap-2"
+                              onClick={() => handleContact(referral)}
+                            >
+                              <Clock className="h-4 w-4" />
+                              Marcar Contatado
+                            </Button>
+                          )}
+                          {referral.status === 'contacted' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="gap-2 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleUndoContact(referral)}
+                            >
+                              Desfazer Contato
+                            </Button>
+                          )}
+                          
+                          <Button
+                            size="sm"
+                            className="gap-2 gold-gradient text-primary-foreground"
+                            onClick={() => openConvertDialog(referral)}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Converter Venda
+                          </Button>
+                        </div>
+                      )}
+                      {referral.status === 'converted' && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleUndoConversion(referral)}
+                          >
+                            Desfazer Conversão
+                          </Button>
+                          {isAdmin && isClientReferral(referral) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => openWhatsApp(referral)}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              WhatsApp
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {/* Delete button - admin only */}
+                      {isAdmin && (
+                        <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(referral)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Excluir
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Conversion Dialog */}

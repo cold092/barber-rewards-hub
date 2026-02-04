@@ -3,15 +3,14 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Crown, Star } from 'lucide-react';
-import { getLeadRanking, getRanking, type LeadRankingEntry } from '@/services/referralService';
+import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Profile } from '@/types/database';
 
 export default function Ranking() {
   const { isAdmin } = useAuth();
   const [barberRanking, setBarberRanking] = useState<Profile[]>([]);
-  const [clientRanking, setClientRanking] = useState<Profile[]>([]);
-  const [leadRanking, setLeadRanking] = useState<LeadRankingEntry[]>([]);
+  const [clientRanking, setClientRanking] = useState<ClientRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('barbers');
 
@@ -19,15 +18,13 @@ export default function Ranking() {
     async function loadRankings() {
       setLoading(true);
       
-      const [barbersResult, clientsResult, leadsResult] = await Promise.all([
+      const [barbersResult, clientsResult] = await Promise.all([
         getRanking('barber'),
-        isAdmin ? getRanking('client') : Promise.resolve({ data: [] }),
-        isAdmin ? getLeadRanking() : Promise.resolve({ data: [] })
+        isAdmin ? getClientReferralRanking() : Promise.resolve({ data: [] })
       ]);
       
       setBarberRanking(barbersResult.data);
       setClientRanking(clientsResult.data);
-      setLeadRanking(leadsResult.data);
       setLoading(false);
     }
     
@@ -114,16 +111,16 @@ export default function Ranking() {
     </div>
   );
 
-  const LeadRankingList = ({ data }: { data: LeadRankingEntry[] }) => (
+  const ClientRankingList = ({ data }: { data: ClientRankingEntry[] }) => (
     <div className="space-y-3">
       {data.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">
-          Nenhum lead pontuado ainda
+          Nenhum cliente no ranking ainda
         </p>
       ) : (
         data.map((entry, index) => (
-          <div
-            key={entry.leadId}
+          <div 
+            key={entry.clientId}
             className={`
               flex items-center justify-between p-4 rounded-lg
               ${index === 0 ? 'bg-primary/10 border border-primary/30' : 'bg-secondary/50'}
@@ -139,10 +136,10 @@ export default function Ranking() {
               </div>
               <div>
                 <p className={`font-semibold ${index === 0 ? 'text-primary' : ''}`}>
-                  {entry.leadName}
+                  {entry.clientName}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {entry.leadCount} indicações feitas
+                  {entry.referralCount} indicações feitas
                 </p>
               </div>
             </div>
@@ -222,10 +219,9 @@ export default function Ranking() {
         {/* Full Rankings */}
         {isAdmin ? (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsList className="grid w-full grid-cols-2 max-w-md">
               <TabsTrigger value="barbers">Barbeiros</TabsTrigger>
               <TabsTrigger value="clients">Clientes</TabsTrigger>
-              <TabsTrigger value="leads">Leads</TabsTrigger>
             </TabsList>
             
             <TabsContent value="barbers">
@@ -251,21 +247,7 @@ export default function Ranking() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RankingList data={clientRanking} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="leads">
-              <Card className="glass-card border-border/50 mt-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-display">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    Ranking de Leads
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <LeadRankingList data={leadRanking} />
+                  <ClientRankingList data={clientRanking} />
                 </CardContent>
               </Card>
             </TabsContent>
