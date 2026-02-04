@@ -4,6 +4,9 @@
 export const DEFAULT_LEAD_MESSAGE =
   'Olá {leadName}! 👋\n\nO {barberName} te indicou para conhecer nossa barbearia! 💈\n\nVocê ganhou uma vantagem especial por ser uma indicação. Vamos agendar seu primeiro corte?';
 
+export const DEFAULT_CLIENT_MESSAGE =
+  'Olá {leadName}! 👋\n\nPassando para agradecer sua confiança com a nossa barbearia. 💈\n\nSe quiser, posso te enviar novidades e vantagens exclusivas do nosso clube.';
+
 export const buildLeadMessage = (
   template: string,
   leadName: string,

@@ -6,6 +6,8 @@ export interface RewardPlan {
   type: 'corte' | 'completo';
 }
 
+export type RewardPlanOverrides = Record<string, Pick<RewardPlan, 'points' | 'price'>>;
+
 export const REWARD_PLANS: Record<string, RewardPlan> = {
   // Prata (Entrada)
   'prata_corte': { label: 'Prata - Corte', points: 30, price: 45, tier: 'prata', type: 'corte' },
@@ -21,12 +23,58 @@ export const REWARD_PLANS: Record<string, RewardPlan> = {
 // Points awarded just for registering a lead
 export const REFERRAL_BONUS_POINTS = 10;
 
+export const PLAN_OVERRIDES_STORAGE_KEY = 'rewardPlanOverrides';
+
+const loadPlanOverrides = (): RewardPlanOverrides => {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  const stored = window.localStorage.getItem(PLAN_OVERRIDES_STORAGE_KEY);
+  if (!stored) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(stored) as RewardPlanOverrides;
+    return parsed ?? {};
+  } catch {
+    return {};
+  }
+};
+
+const applyOverrides = (planId: string, plan: RewardPlan): RewardPlan => {
+  const overrides = loadPlanOverrides();
+  const override = overrides[planId];
+  if (!override) {
+    return plan;
+  }
+  return {
+    ...plan,
+    points: Number.isFinite(override.points) ? override.points : plan.points,
+    price: Number.isFinite(override.price) ? override.price : plan.price
+  };
+};
+
+export const getRewardPlans = (): Record<string, RewardPlan> => {
+  return Object.fromEntries(
+    Object.entries(REWARD_PLANS).map(([planId, plan]) => [
+      planId,
+      applyOverrides(planId, plan)
+    ])
+  );
+};
+
 export const getPlanById = (planId: string): RewardPlan | undefined => {
-  return REWARD_PLANS[planId];
+  const plan = REWARD_PLANS[planId];
+  if (!plan) {
+    return undefined;
+  }
+  return applyOverrides(planId, plan);
 };
 
 export const getPlanPoints = (planId: string): number => {
-  return REWARD_PLANS[planId]?.points ?? 0;
+  return getPlanById(planId)?.points ?? 0;
 };
 
 export const getTierColor = (tier: 'prata' | 'gold' | 'vip'): string => {
