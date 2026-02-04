@@ -89,9 +89,7 @@ export async function registerClient(
         referrer_name: referrerName,
         lead_name: clientData.clientName,
         lead_phone: clientData.clientPhone,
-        status: 'converted' as ReferralStatus,
-        is_client: true,
-        client_since: new Date().toISOString()
+        status: 'converted' as ReferralStatus
       })
       .select()
       .single();
@@ -216,9 +214,7 @@ export async function confirmConversion(
       .from('referrals')
       .update({
         status: 'converted' as ReferralStatus,
-        converted_plan_id: planId,
-        is_client: true,
-        client_since: new Date().toISOString()
+        converted_plan_id: planId
       })
       .eq('id', referralId);
 
@@ -296,9 +292,7 @@ export async function undoConversion(
       .from('referrals')
       .update({
         status: 'contacted' as ReferralStatus,
-        converted_plan_id: null,
-        is_client: false,
-        client_since: null
+        converted_plan_id: null
       })
       .eq('id', referralId);
 
@@ -377,6 +371,7 @@ export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; erro
       .from('referrals')
       .select('id, lead_name, lead_phone, lead_points, referred_by_lead_id')
       .gt('lead_points', 0) // Only leads who have referred someone
+      .neq('status', 'converted')
       .order('lead_points', { ascending: false });
 
     if (error) {
@@ -487,7 +482,7 @@ export async function getAllLeadsAsReferrers(): Promise<{ data: { id: string; na
     const { data, error } = await supabase
       .from('referrals')
       .select('id, lead_name, lead_phone')
-      .eq('is_client', true)
+      .eq('status', 'converted')
       .order('lead_name');
 
     if (error) {
