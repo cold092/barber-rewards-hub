@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -23,6 +24,7 @@ import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@
 import { downloadCsv } from '@/utils/export';
 import type { Referral } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 const MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 
@@ -30,9 +32,11 @@ export default function Leads() {
   const { isAdmin, isBarber, profile } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'clients'>('all');
+  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
+  const [listType, setListType] = useState<'leads' | 'clients'>('leads');
   const [messageTemplate, setMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [messageDraft, setMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Conversion dialog state
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
@@ -70,10 +74,46 @@ export default function Leads() {
   const isClientReferral = (referral: Referral) =>
     referral.is_client || referral.status === 'converted';
 
-  const filteredReferrals = referrals.filter(r => {
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    const statusParam = searchParams.get('status');
+
+    if (viewParam === 'clients' || viewParam === 'converted-clients') {
+      setListType('clients');
+    } else if (viewParam === 'leads') {
+      setListType('leads');
+    }
+
+    if (statusParam === 'new' || statusParam === 'contacted' || statusParam === 'converted') {
+      setFilter(statusParam);
+    } else if (viewParam === 'converted-clients') {
+      setFilter('converted');
+    } else if (!statusParam) {
+      setFilter('all');
+    }
+  }, [searchParams]);
+
+  const updateSearchParams = (nextView?: string, nextStatus?: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (nextView) {
+      params.set('view', nextView);
+    } else {
+      params.delete('view');
+    }
+    if (nextStatus && nextStatus !== 'all') {
+      params.set('status', nextStatus);
+    } else {
+      params.delete('status');
+    }
+    setSearchParams(params);
+  };
+
+  const allClientReferrals = referrals.filter(isClientReferral);
+  const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral));
+  const baseReferrals = listType === 'clients' ? allClientReferrals : allLeadReferrals;
+  const filteredReferrals = baseReferrals.filter((referral) => {
     if (filter === 'all') return true;
-    if (filter === 'clients') return isClientReferral(r);
-    return r.status === filter;
+    return referral.status === filter;
   });
   const clientReferrals = filteredReferrals.filter(isClientReferral);
   const leadReferrals = filteredReferrals.filter((referral) => !isClientReferral(referral));
@@ -180,7 +220,7 @@ export default function Leads() {
 
   const handleExport = () => {
     if (filteredReferrals.length === 0) {
-      toast.error('Nenhum lead para exportar');
+      toast.error(listType === 'clients' ? 'Nenhum cliente para exportar' : 'Nenhum lead para exportar');
       return;
     }
 
@@ -275,7 +315,16 @@ export default function Leads() {
               <Download className="h-4 w-4" />
               Exportar CSV
             </Button>
-            <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
+            <Select
+              value={filter}
+              onValueChange={(v: typeof filter) => {
+                setFilter(v);
+                updateSearchParams(
+                  listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
+                  v
+                );
+              }}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Filtrar" />
               </SelectTrigger>
@@ -284,7 +333,6 @@ export default function Leads() {
                 <SelectItem value="new">Novos</SelectItem>
                 <SelectItem value="contacted">Contatados</SelectItem>
                 <SelectItem value="converted">Convertidos</SelectItem>
-                <SelectItem value="clients">Clientes</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -349,52 +397,58 @@ export default function Leads() {
         </div>
 
         {/* Leads & Clients Lists */}
-        <div className="space-y-6">
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-display">
-                <Users className="h-5 w-5 text-primary" />
-                Leads ({leadReferrals.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {leadReferrals.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Nenhum lead encontrado
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {leadReferrals.map((referral) => (
-                    <div 
-                      key={referral.id}
-                      className="p-4 rounded-lg bg-secondary/50 space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-semibold text-lg">{referral.lead_name}</p>
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {formatPhoneNumber(referral.lead_phone)}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {getStatusBadge(referral.status)}
-                          {getContactTagBadge(referral.contact_tag)}
-                          {referral.status === 'converted' && referral.converted_plan_id && (
-                            <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
-                              {getPlanById(referral.converted_plan_id)?.label}
-                            </Badge>
-                          )}
-                        </div>
+        <Card className="glass-card border-border/50">
+          <CardHeader className="space-y-4">
+            <CardTitle className="flex items-center gap-2 font-display">
+              <Users className="h-5 w-5 text-primary" />
+              {listType === 'clients' ? `Clientes (${filteredReferrals.length})` : `Leads (${filteredReferrals.length})`}
+            </CardTitle>
+            <Tabs
+              value={listType}
+              onValueChange={(value) => {
+                const nextListType = value as 'leads' | 'clients';
+                setListType(nextListType);
+                updateSearchParams(
+                  nextListType === 'clients' && filter === 'converted' ? 'converted-clients' : nextListType,
+                  filter
+                );
+              }}
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="leads">Leads</TabsTrigger>
+                <TabsTrigger value="clients">Clientes</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardHeader>
+          <CardContent>
+            {filteredReferrals.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                {listType === 'clients' ? 'Nenhum cliente encontrado' : 'Nenhum lead encontrado'}
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {filteredReferrals.map((referral) => (
+                  <div 
+                    key={referral.id}
+                    className="p-4 rounded-lg bg-secondary/50 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-semibold text-lg">{referral.lead_name}</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {formatPhoneNumber(referral.lead_phone)}
+                        </p>
                       </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Indicado por <span className="text-foreground">{referral.referrer_name}</span>
-                        </span>
-                        <span className="text-muted-foreground">
-                          {new Date(referral.created_at).toLocaleDateString('pt-BR')}
-                        </span>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        {getStatusBadge(referral.status)}
+                        {getContactTagBadge(referral.contact_tag)}
+                        {getClientBadge(isClientReferral(referral))}
+                        {referral.status === 'converted' && referral.converted_plan_id && (
+                          <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                            {getPlanById(referral.converted_plan_id)?.label}
+                          </Badge>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -418,6 +472,7 @@ export default function Leads() {
                           </Select>
                         </div>
                       </div>
+                    </div>
 
                       {referral.status !== 'converted' && (
                         <div className="flex flex-wrap gap-2 pt-2">
@@ -549,14 +604,29 @@ export default function Leads() {
                           )}
                         </div>
                       </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Indicado por <span className="text-foreground">{referral.referrer_name}</span>
-                        </span>
-                        <span className="text-muted-foreground">
-                          {new Date(referral.created_at).toLocaleDateString('pt-BR')}
-                        </span>
+                    )}
+                    {referral.status === 'converted' && (
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-2 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleUndoConversion(referral)}
+                        >
+                          Desfazer Conversão
+                        </Button>
+                        {isAdmin && isClientReferral(referral) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => openWhatsApp(referral)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            WhatsApp
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-sm">
