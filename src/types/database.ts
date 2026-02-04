@@ -30,6 +30,8 @@ export interface Referral {
   is_client?: boolean;
   client_since: string | null;
   converted_plan_id: string | null;
+  referred_by_lead_id: string | null;
+  lead_points: number;
   created_at: string;
   updated_at: string;
 }

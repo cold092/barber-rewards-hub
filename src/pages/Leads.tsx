@@ -16,7 +16,7 @@ import {
   Download
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion } from '@/services/referralService';
+import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral, markAsClient } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
 import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
@@ -68,6 +68,7 @@ export default function Leads() {
 
   const filteredReferrals = referrals.filter(r => {
     if (filter === 'all') return true;
+    if (filter === 'clients') return r.is_client;
     return r.status === filter;
   });
 
@@ -289,7 +290,7 @@ export default function Leads() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card className="glass-card border-blue-500/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-blue-400">
@@ -312,6 +313,14 @@ export default function Leads() {
                 {referrals.filter(r => r.status === 'converted').length}
               </p>
               <p className="text-xs text-muted-foreground">Convertidos</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-card border-primary/20">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-primary">
+                {referrals.filter(r => r.is_client).length}
+              </p>
+              <p className="text-xs text-muted-foreground">Clientes</p>
             </CardContent>
           </Card>
         </div>
@@ -385,6 +394,17 @@ export default function Leads() {
                           </SelectContent>
                         </Select>
                       </div>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant={referral.is_client ? 'secondary' : 'outline'}
+                          className="gap-2"
+                          onClick={() => handleToggleClient(referral)}
+                        >
+                          <UserCheck className="h-4 w-4" />
+                          {referral.is_client ? 'Cliente ✓' : 'Marcar Cliente'}
+                        </Button>
+                      )}
                     </div>
 
                     {referral.status !== 'converted' && (
@@ -443,6 +463,20 @@ export default function Leads() {
                           onClick={() => handleUndoConversion(referral)}
                         >
                           Desfazer Conversão
+                        </Button>
+                      </div>
+                    )}
+                    {/* Delete button - admin only */}
+                    {isAdmin && (
+                      <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(referral)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Excluir
                         </Button>
                       </div>
                     )}

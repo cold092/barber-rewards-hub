@@ -602,3 +602,55 @@ export async function getAllBarbers(): Promise<{ data: Profile[]; error?: string
     return { data: [], error: 'Erro ao buscar barbeiros' };
   }
 }
+
+/**
+ * Delete a referral (admin only)
+ */
+export async function deleteReferral(
+  referralId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .delete()
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error deleting referral:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in deleteReferral:', error);
+    return { success: false, error: 'Erro ao excluir indicação' };
+  }
+}
+
+/**
+ * Mark a lead as an existing client
+ */
+export async function markAsClient(
+  referralId: string,
+  isClient: boolean
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({
+        is_client: isClient,
+        client_since: isClient ? new Date().toISOString() : null
+      })
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error marking as client:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in markAsClient:', error);
+    return { success: false, error: 'Erro ao marcar como cliente' };
+  }
+}
