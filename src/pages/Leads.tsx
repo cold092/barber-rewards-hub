@@ -7,6 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { 
   Users, 
   Phone,
@@ -15,18 +24,22 @@ import {
   Clock,
   ExternalLink,
   Download,
-  Trash2
+  Trash2,
+  Menu
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
-import { REWARD_PLANS, getPlanById } from '@/config/plans';
-import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
+import { getPlanById, getRewardPlans, PLAN_OVERRIDES_STORAGE_KEY, REWARD_PLANS } from '@/config/plans';
+import { DEFAULT_CLIENT_MESSAGE, DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
 import type { Referral } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 
-const MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
+const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
+const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
+
+type PlanDraft = Record<string, { points: string; price: string }>;
 
 export default function Leads() {
   const { isAdmin, isBarber, profile } = useAuth();
@@ -34,8 +47,12 @@ export default function Leads() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
-  const [messageTemplate, setMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
-  const [messageDraft, setMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
+  const [leadMessageTemplate, setLeadMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
+  const [leadMessageDraft, setLeadMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
+  const [clientMessageTemplate, setClientMessageTemplate] = useState(DEFAULT_CLIENT_MESSAGE);
+  const [clientMessageDraft, setClientMessageDraft] = useState(DEFAULT_CLIENT_MESSAGE);
+  const [planDraft, setPlanDraft] = useState<PlanDraft>({});
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Conversion dialog state
@@ -64,11 +81,26 @@ export default function Leads() {
   }, [isBarber, profile]);
 
   useEffect(() => {
-    const stored = localStorage.getItem(MESSAGE_STORAGE_KEY);
-    if (stored) {
-      setMessageTemplate(stored);
-      setMessageDraft(stored);
+    const storedLeadMessage = localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY);
+    if (storedLeadMessage) {
+      setLeadMessageTemplate(storedLeadMessage);
+      setLeadMessageDraft(storedLeadMessage);
     }
+
+    const storedClientMessage = localStorage.getItem(CLIENT_MESSAGE_STORAGE_KEY);
+    if (storedClientMessage) {
+      setClientMessageTemplate(storedClientMessage);
+      setClientMessageDraft(storedClientMessage);
+    }
+
+    const plans = getRewardPlans();
+    const initialDraft: PlanDraft = Object.fromEntries(
+      Object.entries(plans).map(([planId, plan]) => [
+        planId,
+        { points: String(plan.points), price: String(plan.price) }
+      ])
+    );
+    setPlanDraft(initialDraft);
   }, []);
 
   const isClientReferral = (referral: Referral) =>
@@ -141,11 +173,12 @@ export default function Leads() {
   };
 
   const openWhatsApp = (referral: Referral) => {
+    const template = isClientReferral(referral) ? clientMessageTemplate : leadMessageTemplate;
     const link = generateWhatsAppLink(
       referral.lead_name,
       referral.lead_phone,
       referral.referrer_name,
-      messageTemplate
+      template
     );
     window.open(link, '_blank');
   };
@@ -246,13 +279,61 @@ export default function Leads() {
     downloadCsv(`relatorio-leads-${dateStamp}.csv`, rows);
   };
 
-  const handleSaveMessage = () => {
-    const nextTemplate = messageDraft.trim() || DEFAULT_LEAD_MESSAGE;
-    setMessageTemplate(nextTemplate);
-    setMessageDraft(nextTemplate);
-    localStorage.setItem(MESSAGE_STORAGE_KEY, nextTemplate);
-    toast.success('Mensagem salva');
+  const handleSaveLeadMessage = () => {
+    const nextTemplate = leadMessageDraft.trim() || DEFAULT_LEAD_MESSAGE;
+    setLeadMessageTemplate(nextTemplate);
+    setLeadMessageDraft(nextTemplate);
+    localStorage.setItem(LEAD_MESSAGE_STORAGE_KEY, nextTemplate);
+    toast.success('Mensagem para leads salva');
   };
+
+  const handleSaveClientMessage = () => {
+    const nextTemplate = clientMessageDraft.trim() || DEFAULT_CLIENT_MESSAGE;
+    setClientMessageTemplate(nextTemplate);
+    setClientMessageDraft(nextTemplate);
+    localStorage.setItem(CLIENT_MESSAGE_STORAGE_KEY, nextTemplate);
+    toast.success('Mensagem para clientes salva');
+  };
+
+  const handleSavePlans = () => {
+    const nextOverrides = Object.fromEntries(
+      Object.entries(planDraft).map(([planId, values]) => {
+        const basePlan = REWARD_PLANS[planId];
+        const pointsValue = values.points.trim();
+        const priceValue = values.price.trim();
+        const points = pointsValue === '' ? basePlan.points : Number(pointsValue);
+        const price = priceValue === '' ? basePlan.price : Number(priceValue);
+        return [
+          planId,
+          {
+            points: Number.isFinite(points) ? points : basePlan.points,
+            price: Number.isFinite(price) ? price : basePlan.price
+          }
+        ];
+      })
+    );
+    localStorage.setItem(PLAN_OVERRIDES_STORAGE_KEY, JSON.stringify(nextOverrides));
+    const nextDraft: PlanDraft = Object.fromEntries(
+      Object.entries(nextOverrides).map(([planId, values]) => [
+        planId,
+        { points: String(values.points), price: String(values.price) }
+      ])
+    );
+    setPlanDraft(nextDraft);
+    toast.success('Planos atualizados');
+  };
+
+  const handlePlanDraftChange = (planId: string, field: 'points' | 'price', value: string) => {
+    setPlanDraft((prev) => ({
+      ...prev,
+      [planId]: {
+        ...prev[planId],
+        [field]: value
+      }
+    }));
+  };
+
+  const rewardPlans = getRewardPlans();
 
   const getStatusBadge = (status: Referral['status']) => {
     switch (status) {
@@ -315,6 +396,132 @@ export default function Leads() {
               <Download className="h-4 w-4" />
               Exportar CSV
             </Button>
+            {isAdmin && (
+              <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Menu className="h-4 w-4" />
+                      Configurações
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Configurações</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setConfigDialogOpen(true)}>
+                      Abrir painel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DialogContent className="glass-card max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Configurações</DialogTitle>
+                    <DialogDescription>
+                      Ajuste planos e mensagens para leads e clientes.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Planos (pontuação e valores)</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Altere os pontos e valores exibidos para conversões.
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        {Object.entries(rewardPlans).map(([planId, plan]) => (
+                          <div
+                            key={planId}
+                            className="flex flex-col gap-3 rounded-lg border border-border/50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div>
+                              <p className="font-medium">{plan.label}</p>
+                              <p className="text-xs text-muted-foreground uppercase">
+                                {plan.tier} • {plan.type}
+                              </p>
+                            </div>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">Pontos</span>
+                                <Input
+                                  type="number"
+                                  value={planDraft[planId]?.points ?? String(plan.points)}
+                                  onChange={(event) =>
+                                    handlePlanDraftChange(planId, 'points', event.target.value)
+                                  }
+                                  className="h-9 w-24"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">Valor</span>
+                                <Input
+                                  type="number"
+                                  value={planDraft[planId]?.price ?? String(plan.price)}
+                                  onChange={(event) =>
+                                    handlePlanDraftChange(planId, 'price', event.target.value)
+                                  }
+                                  className="h-9 w-28"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-end">
+                        <Button onClick={handleSavePlans}>Salvar planos</Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Mensagens</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Use <span className="font-semibold text-foreground">{'{leadName}'}</span> e{' '}
+                          <span className="font-semibold text-foreground">{'{barberName}'}</span> para personalizar.
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Mensagem para leads</p>
+                          <Textarea
+                            value={leadMessageDraft}
+                            onChange={(event) => setLeadMessageDraft(event.target.value)}
+                            className="min-h-[120px]"
+                          />
+                          <div className="flex justify-end">
+                            <Button variant="outline" onClick={handleSaveLeadMessage}>
+                              Salvar mensagem de leads
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Mensagem para clientes</p>
+                          <Textarea
+                            value={clientMessageDraft}
+                            onChange={(event) => setClientMessageDraft(event.target.value)}
+                            className="min-h-[120px]"
+                          />
+                          <div className="flex justify-end">
+                            <Button variant="outline" onClick={handleSaveClientMessage}>
+                              Salvar mensagem de clientes
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
+                      Fechar
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
             <Select
               value={filter}
               onValueChange={(v: typeof filter) => {
@@ -337,28 +544,6 @@ export default function Leads() {
             </Select>
           </div>
         </div>
-
-        {isAdmin && (
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="font-display">Mensagem para lead</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Use <span className="font-semibold text-foreground">{'{leadName}'}</span> e{' '}
-                <span className="font-semibold text-foreground">{'{barberName}'}</span> para personalizar.
-              </p>
-              <Textarea
-                value={messageDraft}
-                onChange={(event) => setMessageDraft(event.target.value)}
-                className="min-h-[140px]"
-              />
-              <div className="flex justify-end">
-                <Button onClick={handleSaveMessage}>Salvar mensagem</Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -761,7 +946,7 @@ export default function Leads() {
                 <SelectValue placeholder="Selecione o plano" />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(REWARD_PLANS).map(([id, plan]) => (
+                {Object.entries(rewardPlans).map(([id, plan]) => (
                   <SelectItem key={id} value={id}>
                     <div className="flex items-center justify-between w-full gap-4">
                       <span>{plan.label}</span>
