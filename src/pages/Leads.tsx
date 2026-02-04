@@ -474,6 +474,18 @@ export default function Leads() {
                         >
                           Desfazer Conversão
                         </Button>
+                        {isAdmin && isClientReferral(referral) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => openWhatsApp(referral)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            WhatsApp
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     )}
                     {/* Delete button - admin only */}
