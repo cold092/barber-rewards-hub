@@ -789,30 +789,6 @@ export default function Leads() {
                           )}
                         </div>
                       </div>
-                    )}
-                    {referral.status === 'converted' && (
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="gap-2 text-muted-foreground hover:text-foreground"
-                          onClick={() => handleUndoConversion(referral)}
-                        >
-                          Desfazer Conversão
-                        </Button>
-                        {isAdmin && isClientReferral(referral) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => openWhatsApp(referral)}
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            WhatsApp
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-sm">
                         <div className="flex items-center gap-2">
@@ -927,7 +903,6 @@ export default function Leads() {
               )}
             </CardContent>
           </Card>
-        </div>
       </div>
 
       {/* Conversion Dialog */}
