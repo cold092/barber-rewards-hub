@@ -13,10 +13,12 @@ import {
   CheckCircle,
   Clock,
   ExternalLink,
-  Download
+  Download,
+  Trash2,
+  UserCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion } from '@/services/referralService';
+import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral, markAsClient } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
 import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
@@ -153,6 +155,37 @@ export default function Leads() {
       loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao desfazer conversão');
+    }
+  };
+
+  const handleDelete = async (referral: Referral) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o lead "${referral.lead_name}"?`)) {
+      return;
+    }
+
+    const result = await deleteReferral(referral.id);
+
+    if (result.success) {
+      toast.success('Lead excluído');
+      loadReferrals();
+    } else {
+      toast.error(result.error || 'Erro ao excluir lead');
+    }
+  };
+
+  const handleToggleClient = async (referral: Referral) => {
+    const nextIsClient = !referral.is_client;
+    const result = await markAsClient(referral.id, nextIsClient);
+
+    if (result.success) {
+      toast.success(nextIsClient ? 'Marcado como cliente' : 'Desmarcado como cliente');
+      setReferrals((prev) =>
+        prev.map((item) =>
+          item.id === referral.id ? { ...item, is_client: nextIsClient } : item
+        )
+      );
+    } else {
+      toast.error(result.error || 'Erro ao atualizar');
     }
   };
 
@@ -385,6 +418,17 @@ export default function Leads() {
                           </SelectContent>
                         </Select>
                       </div>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant={referral.is_client ? 'secondary' : 'outline'}
+                          className="gap-2"
+                          onClick={() => handleToggleClient(referral)}
+                        >
+                          <UserCheck className="h-4 w-4" />
+                          {referral.is_client ? 'Cliente ✓' : 'Marcar Cliente'}
+                        </Button>
+                      )}
                     </div>
 
                     {referral.status !== 'converted' && (
@@ -443,6 +487,20 @@ export default function Leads() {
                           onClick={() => handleUndoConversion(referral)}
                         >
                           Desfazer Conversão
+                        </Button>
+                      </div>
+                    )}
+                    {/* Delete button - admin only */}
+                    {isAdmin && (
+                      <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(referral)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Excluir
                         </Button>
                       </div>
                     )}
