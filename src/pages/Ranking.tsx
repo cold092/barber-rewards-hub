@@ -3,14 +3,14 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Crown, Star } from 'lucide-react';
-import { getRanking } from '@/services/referralService';
+import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Profile } from '@/types/database';
 
 export default function Ranking() {
   const { isAdmin } = useAuth();
   const [barberRanking, setBarberRanking] = useState<Profile[]>([]);
-  const [clientRanking, setClientRanking] = useState<Profile[]>([]);
+  const [clientRanking, setClientRanking] = useState<ClientRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('barbers');
 
@@ -20,7 +20,7 @@ export default function Ranking() {
       
       const [barbersResult, clientsResult] = await Promise.all([
         getRanking('barber'),
-        isAdmin ? getRanking('client') : Promise.resolve({ data: [] })
+        isAdmin ? getClientReferralRanking() : Promise.resolve({ data: [] })
       ]);
       
       setBarberRanking(barbersResult.data);
@@ -102,6 +102,50 @@ export default function Ranking() {
             <div className="text-right">
               <p className={`text-xl font-bold ${index === 0 ? 'gold-text' : 'text-foreground'}`}>
                 {profile.lifetime_points}
+              </p>
+              <p className="text-xs text-muted-foreground">pontos</p>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const ClientRankingList = ({ data }: { data: ClientRankingEntry[] }) => (
+    <div className="space-y-3">
+      {data.length === 0 ? (
+        <p className="text-muted-foreground text-center py-8">
+          Nenhum cliente no ranking ainda
+        </p>
+      ) : (
+        data.map((entry, index) => (
+          <div 
+            key={entry.clientId}
+            className={`
+              flex items-center justify-between p-4 rounded-lg
+              ${index === 0 ? 'bg-primary/10 border border-primary/30' : 'bg-secondary/50'}
+              transition-all hover:scale-[1.01]
+            `}
+          >
+            <div className="flex items-center gap-4">
+              <div className={`
+                w-10 h-10 rounded-full flex items-center justify-center font-bold
+                ${getRankStyle(index)}
+              `}>
+                {index < 3 ? getRankIcon(index) : index + 1}
+              </div>
+              <div>
+                <p className={`font-semibold ${index === 0 ? 'text-primary' : ''}`}>
+                  {entry.clientName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {entry.referralCount} indicações feitas
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className={`text-xl font-bold ${index === 0 ? 'gold-text' : 'text-foreground'}`}>
+                {entry.points}
               </p>
               <p className="text-xs text-muted-foreground">pontos</p>
             </div>
@@ -203,7 +247,7 @@ export default function Ranking() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RankingList data={clientRanking} />
+                  <ClientRankingList data={clientRanking} />
                 </CardContent>
               </Card>
             </TabsContent>
