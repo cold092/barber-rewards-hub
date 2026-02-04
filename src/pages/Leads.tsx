@@ -115,6 +115,8 @@ export default function Leads() {
     if (filter === 'all') return true;
     return referral.status === filter;
   });
+  const clientReferrals = filteredReferrals.filter(isClientReferral);
+  const leadReferrals = filteredReferrals.filter((referral) => !isClientReferral(referral));
 
   const handleContact = async (referral: Referral) => {
     const result = await markAsContacted(referral.id);
@@ -533,25 +535,26 @@ export default function Leads() {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Tag de contato:</span>
-                        <Select
-                          value={referral.contact_tag ?? 'none'}
-                          onValueChange={(value) => handleTagChange(referral, value)}
-                        >
-                          <SelectTrigger className="h-8 w-36">
-                            <SelectValue placeholder="Sem tag" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Sem tag</SelectItem>
-                            {contactTagOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Tag de contato:</span>
+                          <Select
+                            value={referral.contact_tag ?? 'none'}
+                            onValueChange={(value) => handleTagChange(referral, value)}
+                          >
+                            <SelectTrigger className="h-8 w-36">
+                              <SelectValue placeholder="Sem tag" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Sem tag</SelectItem>
+                              {contactTagOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
 
@@ -569,13 +572,99 @@ export default function Leads() {
                           Excluir
                         </Button>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
+                      {referral.status !== 'converted' && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => openWhatsApp(referral)}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              WhatsApp
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                          
+                          {referral.status === 'new' && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="gap-2"
+                              onClick={() => handleContact(referral)}
+                            >
+                              <Clock className="h-4 w-4" />
+                              Marcar Contatado
+                            </Button>
+                          )}
+                          {referral.status === 'contacted' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="gap-2 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleUndoContact(referral)}
+                            >
+                              Desfazer Contato
+                            </Button>
+                          )}
+                          
+                          <Button
+                            size="sm"
+                            className="gap-2 gold-gradient text-primary-foreground"
+                            onClick={() => openConvertDialog(referral)}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Converter Venda
+                          </Button>
+                        </div>
+                      )}
+                      {referral.status === 'converted' && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleUndoConversion(referral)}
+                          >
+                            Desfazer Conversão
+                          </Button>
+                          {isAdmin && isClientReferral(referral) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => openWhatsApp(referral)}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              WhatsApp
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {/* Delete button - admin only */}
+                      {isAdmin && (
+                        <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(referral)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Excluir
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Conversion Dialog */}
