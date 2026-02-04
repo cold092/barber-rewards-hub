@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -14,16 +15,16 @@ import {
   Clock,
   ExternalLink,
   Download,
-  Trash2,
-  UserCheck
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral, markAsClient } from '@/services/referralService';
+import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
 import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
 import type { Referral } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 const MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 
@@ -31,9 +32,11 @@ export default function Leads() {
   const { isAdmin, isBarber, profile } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'clients'>('all');
+  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
+  const [listType, setListType] = useState<'leads' | 'clients'>('leads');
   const [messageTemplate, setMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [messageDraft, setMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Conversion dialog state
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
@@ -68,10 +71,49 @@ export default function Leads() {
     }
   }, []);
 
-  const filteredReferrals = referrals.filter(r => {
+  const isClientReferral = (referral: Referral) =>
+    referral.is_client || referral.status === 'converted';
+
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    const statusParam = searchParams.get('status');
+
+    if (viewParam === 'clients' || viewParam === 'converted-clients') {
+      setListType('clients');
+    } else if (viewParam === 'leads') {
+      setListType('leads');
+    }
+
+    if (statusParam === 'new' || statusParam === 'contacted' || statusParam === 'converted') {
+      setFilter(statusParam);
+    } else if (viewParam === 'converted-clients') {
+      setFilter('converted');
+    } else if (!statusParam) {
+      setFilter('all');
+    }
+  }, [searchParams]);
+
+  const updateSearchParams = (nextView?: string, nextStatus?: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (nextView) {
+      params.set('view', nextView);
+    } else {
+      params.delete('view');
+    }
+    if (nextStatus && nextStatus !== 'all') {
+      params.set('status', nextStatus);
+    } else {
+      params.delete('status');
+    }
+    setSearchParams(params);
+  };
+
+  const allClientReferrals = referrals.filter(isClientReferral);
+  const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral));
+  const baseReferrals = listType === 'clients' ? allClientReferrals : allLeadReferrals;
+  const filteredReferrals = baseReferrals.filter((referral) => {
     if (filter === 'all') return true;
-    if (filter === 'clients') return r.is_client;
-    return r.status === filter;
+    return referral.status === filter;
   });
 
   const handleContact = async (referral: Referral) => {
@@ -174,25 +216,9 @@ export default function Leads() {
     }
   };
 
-  const handleToggleClient = async (referral: Referral) => {
-    const nextIsClient = !referral.is_client;
-    const result = await markAsClient(referral.id, nextIsClient);
-
-    if (result.success) {
-      toast.success(nextIsClient ? 'Marcado como cliente' : 'Desmarcado como cliente');
-      setReferrals((prev) =>
-        prev.map((item) =>
-          item.id === referral.id ? { ...item, is_client: nextIsClient } : item
-        )
-      );
-    } else {
-      toast.error(result.error || 'Erro ao atualizar');
-    }
-  };
-
   const handleExport = () => {
     if (filteredReferrals.length === 0) {
-      toast.error('Nenhum lead para exportar');
+      toast.error(listType === 'clients' ? 'Nenhum cliente para exportar' : 'Nenhum lead para exportar');
       return;
     }
 
@@ -201,6 +227,7 @@ export default function Leads() {
     ];
 
     filteredReferrals.forEach((referral) => {
+      const referralIsClient = isClientReferral(referral);
       rows.push([
         referral.lead_name,
         formatPhoneNumber(referral.lead_phone),
@@ -208,7 +235,7 @@ export default function Leads() {
         referral.converted_plan_id ? getPlanById(referral.converted_plan_id)?.label ?? '' : '',
         referral.referrer_name,
         referral.contact_tag ?? '',
-        referral.is_client ? 'Sim' : 'Não',
+        referralIsClient ? 'Sim' : 'Não',
         new Date(referral.created_at).toLocaleDateString('pt-BR')
       ]);
     });
@@ -286,7 +313,16 @@ export default function Leads() {
               <Download className="h-4 w-4" />
               Exportar CSV
             </Button>
-            <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
+            <Select
+              value={filter}
+              onValueChange={(v: typeof filter) => {
+                setFilter(v);
+                updateSearchParams(
+                  listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
+                  v
+                );
+              }}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Filtrar" />
               </SelectTrigger>
@@ -295,7 +331,6 @@ export default function Leads() {
                 <SelectItem value="new">Novos</SelectItem>
                 <SelectItem value="contacted">Contatados</SelectItem>
                 <SelectItem value="converted">Convertidos</SelectItem>
-                <SelectItem value="clients">Clientes</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -352,33 +387,46 @@ export default function Leads() {
           <Card className="glass-card border-primary/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">
-                {referrals.filter(r => r.is_client).length}
+                {referrals.filter(isClientReferral).length}
               </p>
               <p className="text-xs text-muted-foreground">Clientes</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Leads List */}
+        {/* Leads & Clients Lists */}
         <Card className="glass-card border-border/50">
-          <CardHeader>
+          <CardHeader className="space-y-4">
             <CardTitle className="flex items-center gap-2 font-display">
               <Users className="h-5 w-5 text-primary" />
-              Lista de Leads ({filteredReferrals.length})
+              {listType === 'clients' ? `Clientes (${filteredReferrals.length})` : `Leads (${filteredReferrals.length})`}
             </CardTitle>
+            <Tabs
+              value={listType}
+              onValueChange={(value) => {
+                const nextListType = value as 'leads' | 'clients';
+                setListType(nextListType);
+                updateSearchParams(
+                  nextListType === 'clients' && filter === 'converted' ? 'converted-clients' : nextListType,
+                  filter
+                );
+              }}
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="leads">Leads</TabsTrigger>
+                <TabsTrigger value="clients">Clientes</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent>
             {filteredReferrals.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                Nenhum lead encontrado
+                {listType === 'clients' ? 'Nenhum cliente encontrado' : 'Nenhum lead encontrado'}
               </p>
             ) : (
               <div className="space-y-4">
                 {filteredReferrals.map((referral) => (
-                  <div 
-                    key={referral.id}
-                    className="p-4 rounded-lg bg-secondary/50 space-y-3"
-                  >
+                  <div key={referral.id} className="p-4 rounded-lg bg-secondary/50 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="font-semibold text-lg">{referral.lead_name}</p>
@@ -390,7 +438,7 @@ export default function Leads() {
                       <div className="flex flex-wrap justify-end gap-2">
                         {getStatusBadge(referral.status)}
                         {getContactTagBadge(referral.contact_tag)}
-                        {getClientBadge(referral.is_client)}
+                        {getClientBadge(isClientReferral(referral))}
                         {referral.status === 'converted' && referral.converted_plan_id && (
                           <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
                             {getPlanById(referral.converted_plan_id)?.label}
@@ -398,7 +446,7 @@ export default function Leads() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
                         Indicado por <span className="text-foreground">{referral.referrer_name}</span>
@@ -428,17 +476,6 @@ export default function Leads() {
                           </SelectContent>
                         </Select>
                       </div>
-                      {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant={referral.is_client ? 'secondary' : 'outline'}
-                          className="gap-2"
-                          onClick={() => handleToggleClient(referral)}
-                        >
-                          <UserCheck className="h-4 w-4" />
-                          {referral.is_client ? 'Cliente ✓' : 'Marcar Cliente'}
-                        </Button>
-                      )}
                     </div>
 
                     {referral.status !== 'converted' && (
@@ -455,7 +492,7 @@ export default function Leads() {
                             <ExternalLink className="h-3 w-3" />
                           </Button>
                         )}
-                        
+
                         {referral.status === 'new' && (
                           <Button
                             size="sm"
@@ -477,7 +514,7 @@ export default function Leads() {
                             Desfazer Contato
                           </Button>
                         )}
-                        
+
                         <Button
                           size="sm"
                           className="gap-2 gold-gradient text-primary-foreground"
@@ -498,6 +535,18 @@ export default function Leads() {
                         >
                           Desfazer Conversão
                         </Button>
+                        {isAdmin && isClientReferral(referral) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => openWhatsApp(referral)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            WhatsApp
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     )}
                     {/* Delete button - admin only */}
