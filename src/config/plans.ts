@@ -1,20 +1,21 @@
 export interface RewardPlan {
   label: string;
   points: number;
+  price: number;
   tier: 'prata' | 'gold' | 'vip';
   type: 'corte' | 'completo';
 }
 
 export const REWARD_PLANS: Record<string, RewardPlan> = {
   // Prata (Entrada)
-  'prata_corte': { label: 'Prata - Corte', points: 30, tier: 'prata', type: 'corte' },
-  'prata_completo': { label: 'Prata - Completo', points: 50, tier: 'prata', type: 'completo' },
+  'prata_corte': { label: 'Prata - Corte', points: 30, price: 45, tier: 'prata', type: 'corte' },
+  'prata_completo': { label: 'Prata - Completo', points: 50, price: 70, tier: 'prata', type: 'completo' },
   // Gold (Intermediário)
-  'gold_corte': { label: 'Gold - Corte', points: 80, tier: 'gold', type: 'corte' },
-  'gold_completo': { label: 'Gold - Completo', points: 120, tier: 'gold', type: 'completo' },
+  'gold_corte': { label: 'Gold - Corte', points: 80, price: 110, tier: 'gold', type: 'corte' },
+  'gold_completo': { label: 'Gold - Completo', points: 120, price: 160, tier: 'gold', type: 'completo' },
   // VIP (Premium)
-  'vip_corte': { label: 'VIP - Corte', points: 200, tier: 'vip', type: 'corte' },
-  'vip_completo': { label: 'VIP - Completo', points: 400, tier: 'vip', type: 'completo' } // Jackpot
+  'vip_corte': { label: 'VIP - Corte', points: 200, price: 220, tier: 'vip', type: 'corte' },
+  'vip_completo': { label: 'VIP - Completo', points: 400, price: 320, tier: 'vip', type: 'completo' } // Jackpot
 };
 
 // Points awarded just for registering a lead
