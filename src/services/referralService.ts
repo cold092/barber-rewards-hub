@@ -89,7 +89,9 @@ export async function registerClient(
         referrer_name: referrerName,
         lead_name: clientData.clientName,
         lead_phone: clientData.clientPhone,
-        status: 'converted' as ReferralStatus
+        status: 'converted' as ReferralStatus,
+        is_client: true,
+        client_since: new Date().toISOString()
       })
       .select()
       .single();
@@ -214,7 +216,9 @@ export async function confirmConversion(
       .from('referrals')
       .update({
         status: 'converted' as ReferralStatus,
-        converted_plan_id: planId
+        converted_plan_id: planId,
+        is_client: true,
+        client_since: new Date().toISOString()
       })
       .eq('id', referralId);
 
@@ -360,6 +364,14 @@ export interface LeadRankingEntry {
   points: number;
 }
 
+export interface ClientRankingEntry {
+  clientId: string;
+  clientName: string;
+  clientPhone: string;
+  referralCount: number;
+  points: number;
+}
+
 /**
  * Get ranking for leads based on how many other leads they referred
  * Leads can refer other leads and earn points too
@@ -410,6 +422,56 @@ export async function getLeadRanking(): Promise<{ data: LeadRankingEntry[]; erro
   } catch (error) {
     console.error('Error in getLeadRanking:', error);
     return { data: [], error: 'Erro ao buscar ranking de leads' };
+  }
+}
+
+/**
+ * Get ranking for clients that are marked in referrals
+ */
+export async function getClientReferralRanking(): Promise<{ data: ClientRankingEntry[]; error?: string }> {
+  try {
+    const { data: referrals, error } = await supabase
+      .from('referrals')
+      .select('id, lead_name, lead_phone, lead_points, status, is_client')
+      .or('is_client.eq.true,status.eq.converted')
+      .order('lead_points', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching client referral ranking:', error);
+      return { data: [], error: error.message };
+    }
+
+    if (!referrals || referrals.length === 0) {
+      return { data: [] };
+    }
+
+    const { data: allReferrals, error: countError } = await supabase
+      .from('referrals')
+      .select('referred_by_lead_id');
+
+    if (countError) {
+      console.error('Error counting client referrals:', countError);
+    }
+
+    const referralCountMap = (allReferrals || []).reduce<Record<string, number>>((acc, ref) => {
+      if (ref.referred_by_lead_id) {
+        acc[ref.referred_by_lead_id] = (acc[ref.referred_by_lead_id] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    const ranking: ClientRankingEntry[] = referrals.map(ref => ({
+      clientId: ref.id,
+      clientName: ref.lead_name,
+      clientPhone: ref.lead_phone,
+      referralCount: referralCountMap[ref.id] || 0,
+      points: ref.lead_points
+    }));
+
+    return { data: ranking };
+  } catch (error) {
+    console.error('Error in getClientReferralRanking:', error);
+    return { data: [], error: 'Erro ao buscar ranking de clientes' };
   }
 }
 

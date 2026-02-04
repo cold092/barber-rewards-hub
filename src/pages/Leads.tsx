@@ -14,11 +14,10 @@ import {
   Clock,
   ExternalLink,
   Download,
-  Trash2,
-  UserCheck
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral, markAsClient } from '@/services/referralService';
+import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
 import { REWARD_PLANS, getPlanById } from '@/config/plans';
 import { DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
@@ -68,9 +67,12 @@ export default function Leads() {
     }
   }, []);
 
+  const isClientReferral = (referral: Referral) =>
+    referral.is_client || referral.status === 'converted';
+
   const filteredReferrals = referrals.filter(r => {
     if (filter === 'all') return true;
-    if (filter === 'clients') return r.is_client;
+    if (filter === 'clients') return isClientReferral(r);
     return r.status === filter;
   });
 
@@ -174,22 +176,6 @@ export default function Leads() {
     }
   };
 
-  const handleToggleClient = async (referral: Referral) => {
-    const nextIsClient = !referral.is_client;
-    const result = await markAsClient(referral.id, nextIsClient);
-
-    if (result.success) {
-      toast.success(nextIsClient ? 'Marcado como cliente' : 'Desmarcado como cliente');
-      setReferrals((prev) =>
-        prev.map((item) =>
-          item.id === referral.id ? { ...item, is_client: nextIsClient } : item
-        )
-      );
-    } else {
-      toast.error(result.error || 'Erro ao atualizar');
-    }
-  };
-
   const handleExport = () => {
     if (filteredReferrals.length === 0) {
       toast.error('Nenhum lead para exportar');
@@ -201,6 +187,7 @@ export default function Leads() {
     ];
 
     filteredReferrals.forEach((referral) => {
+      const referralIsClient = isClientReferral(referral);
       rows.push([
         referral.lead_name,
         formatPhoneNumber(referral.lead_phone),
@@ -208,7 +195,7 @@ export default function Leads() {
         referral.converted_plan_id ? getPlanById(referral.converted_plan_id)?.label ?? '' : '',
         referral.referrer_name,
         referral.contact_tag ?? '',
-        referral.is_client ? 'Sim' : 'Não',
+        referralIsClient ? 'Sim' : 'Não',
         new Date(referral.created_at).toLocaleDateString('pt-BR')
       ]);
     });
@@ -352,7 +339,7 @@ export default function Leads() {
           <Card className="glass-card border-primary/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">
-                {referrals.filter(r => r.is_client).length}
+                {referrals.filter(isClientReferral).length}
               </p>
               <p className="text-xs text-muted-foreground">Clientes</p>
             </CardContent>
@@ -390,7 +377,7 @@ export default function Leads() {
                       <div className="flex flex-wrap justify-end gap-2">
                         {getStatusBadge(referral.status)}
                         {getContactTagBadge(referral.contact_tag)}
-                        {getClientBadge(referral.is_client)}
+                        {getClientBadge(isClientReferral(referral))}
                         {referral.status === 'converted' && referral.converted_plan_id && (
                           <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
                             {getPlanById(referral.converted_plan_id)?.label}
@@ -428,17 +415,6 @@ export default function Leads() {
                           </SelectContent>
                         </Select>
                       </div>
-                      {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant={referral.is_client ? 'secondary' : 'outline'}
-                          className="gap-2"
-                          onClick={() => handleToggleClient(referral)}
-                        >
-                          <UserCheck className="h-4 w-4" />
-                          {referral.is_client ? 'Cliente ✓' : 'Marcar Cliente'}
-                        </Button>
-                      )}
                     </div>
 
                     {referral.status !== 'converted' && (
@@ -498,6 +474,18 @@ export default function Leads() {
                         >
                           Desfazer Conversão
                         </Button>
+                        {isAdmin && isClientReferral(referral) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => openWhatsApp(referral)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            WhatsApp
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     )}
                     {/* Delete button - admin only */}
