@@ -31,7 +31,7 @@ export default function Leads() {
   const { isAdmin, isBarber, profile } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
+  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'clients'>('all');
   const [messageTemplate, setMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [messageDraft, setMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
   
@@ -70,6 +70,7 @@ export default function Leads() {
 
   const filteredReferrals = referrals.filter(r => {
     if (filter === 'all') return true;
+    if (filter === 'clients') return r.is_client;
     return r.status === filter;
   });
 
@@ -294,6 +295,7 @@ export default function Leads() {
                 <SelectItem value="new">Novos</SelectItem>
                 <SelectItem value="contacted">Contatados</SelectItem>
                 <SelectItem value="converted">Convertidos</SelectItem>
+                <SelectItem value="clients">Clientes</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -322,7 +324,7 @@ export default function Leads() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card className="glass-card border-blue-500/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-blue-400">
@@ -345,6 +347,14 @@ export default function Leads() {
                 {referrals.filter(r => r.status === 'converted').length}
               </p>
               <p className="text-xs text-muted-foreground">Convertidos</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-card border-primary/20">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-primary">
+                {referrals.filter(r => r.is_client).length}
+              </p>
+              <p className="text-xs text-muted-foreground">Clientes</p>
             </CardContent>
           </Card>
         </div>
