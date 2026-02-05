@@ -12,7 +12,7 @@ import { UserPlus, Phone, User, Users, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { registerLead, registerClient, getAllBarbers, getAllLeadsAsReferrers, registerLeadByLead, getBarberLeadsAsReferrers } from '@/services/referralService';
-import { REFERRAL_BONUS_POINTS } from '@/config/plans';
+import { BARBER_REFERRAL_CONVERSION_PERCENT, REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { isValidPhone } from '@/utils/whatsapp';
 import type { Profile } from '@/types/database';
 
@@ -549,7 +549,8 @@ export default function NewReferral() {
                 <p className="text-sm text-muted-foreground mt-1">
                   Cliente cadastrado pode indicar novos leads<br />
                   Ao indicar: +{REFERRAL_BONUS_POINTS} pontos imediatos<br />
-                  Ao converter: +30 a +400 pontos (depende do plano vendido)
+                  Ao converter: +30 a +400 pontos (depende do plano vendido)<br />
+                  Indicação de cliente convertida: barbeiro ganha {BARBER_REFERRAL_CONVERSION_PERCENT}% dos pontos
                 </p>
               </div>
             </div>
