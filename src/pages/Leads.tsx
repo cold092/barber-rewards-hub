@@ -285,6 +285,7 @@ export default function Leads() {
     setLeadMessageDraft(nextTemplate);
     localStorage.setItem(LEAD_MESSAGE_STORAGE_KEY, nextTemplate);
     toast.success('Mensagem para leads salva');
+    setConfigDialogOpen(false);
   };
 
   const handleSaveClientMessage = () => {
@@ -293,6 +294,7 @@ export default function Leads() {
     setClientMessageDraft(nextTemplate);
     localStorage.setItem(CLIENT_MESSAGE_STORAGE_KEY, nextTemplate);
     toast.success('Mensagem para clientes salva');
+    setConfigDialogOpen(false);
   };
 
   const handleSavePlans = () => {
@@ -321,6 +323,7 @@ export default function Leads() {
     );
     setPlanDraft(nextDraft);
     toast.success('Planos atualizados');
+    setConfigDialogOpen(false);
   };
 
   const handlePlanDraftChange = (planId: string, field: 'points' | 'price', value: string) => {
@@ -414,7 +417,7 @@ export default function Leads() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <DialogContent className="glass-card max-w-3xl">
+                <DialogContent className="glass-card w-[min(95vw,48rem)] max-w-3xl max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="font-display">Configurações</DialogTitle>
                     <DialogDescription>
@@ -751,158 +754,6 @@ export default function Leads() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-display">
-                <Users className="h-5 w-5 text-primary" />
-                Clientes ({clientReferrals.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {clientReferrals.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Nenhum cliente encontrado
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {clientReferrals.map((referral) => (
-                    <div 
-                      key={referral.id}
-                      className="p-4 rounded-lg bg-secondary/50 space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-semibold text-lg">{referral.lead_name}</p>
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {formatPhoneNumber(referral.lead_phone)}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {getStatusBadge(referral.status)}
-                          {getContactTagBadge(referral.contact_tag)}
-                          {getClientBadge(isClientReferral(referral))}
-                          {referral.status === 'converted' && referral.converted_plan_id && (
-                            <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
-                              {getPlanById(referral.converted_plan_id)?.label}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">Tag de contato:</span>
-                          <Select
-                            value={referral.contact_tag ?? 'none'}
-                            onValueChange={(value) => handleTagChange(referral, value)}
-                          >
-                            <SelectTrigger className="h-8 w-36">
-                              <SelectValue placeholder="Sem tag" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">Sem tag</SelectItem>
-                              {contactTagOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      {referral.status !== 'converted' && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          {isAdmin && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-2"
-                              onClick={() => openWhatsApp(referral)}
-                            >
-                              <MessageCircle className="h-4 w-4" />
-                              WhatsApp
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          )}
-                          
-                          {referral.status === 'new' && (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="gap-2"
-                              onClick={() => handleContact(referral)}
-                            >
-                              <Clock className="h-4 w-4" />
-                              Marcar Contatado
-                            </Button>
-                          )}
-                          {referral.status === 'contacted' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="gap-2 text-muted-foreground hover:text-foreground"
-                              onClick={() => handleUndoContact(referral)}
-                            >
-                              Desfazer Contato
-                            </Button>
-                          )}
-                          
-                          <Button
-                            size="sm"
-                            className="gap-2 gold-gradient text-primary-foreground"
-                            onClick={() => openConvertDialog(referral)}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Converter Venda
-                          </Button>
-                        </div>
-                      )}
-                      {referral.status === 'converted' && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="gap-2 text-muted-foreground hover:text-foreground"
-                            onClick={() => handleUndoConversion(referral)}
-                          >
-                            Desfazer Conversão
-                          </Button>
-                          {isAdmin && isClientReferral(referral) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-2"
-                              onClick={() => openWhatsApp(referral)}
-                            >
-                              <MessageCircle className="h-4 w-4" />
-                              WhatsApp
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                      {/* Delete button - admin only */}
-                      {isAdmin && (
-                        <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDelete(referral)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Excluir
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
       </div>
 
       {/* Conversion Dialog */}
