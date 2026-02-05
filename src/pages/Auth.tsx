@@ -9,8 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Scissors, Mail, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import type { AppRole } from '@/types/database';
-
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
@@ -36,10 +34,6 @@ export default function Auth() {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
-
-  const roleParam = new URLSearchParams(location.search).get('role');
-  const signupRole: AppRole | undefined =
-    roleParam === 'barber' || roleParam === 'client' ? roleParam : undefined;
 
   // Redirect if already logged in
   if (user) {
@@ -86,7 +80,7 @@ export default function Auth() {
     }
     
     setLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupName, signupRole);
+    const { error } = await signUp(signupEmail, signupPassword, signupName);
     setLoading(false);
     
     if (error) {
