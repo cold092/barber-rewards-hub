@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
-import { REWARD_PLANS, REFERRAL_BONUS_POINTS, getPlanPoints } from "@/config/plans";
+import {
+  REWARD_PLANS,
+  REFERRAL_BONUS_POINTS,
+  getPlanPoints,
+  getBarberReferralSharePoints
+} from "@/config/plans";
 import type { Profile, Referral, ReferralStatus, AppRole } from "@/types/database";
 
 interface LeadData {
@@ -190,6 +195,7 @@ export async function confirmConversion(
 ): Promise<{ success: boolean; pointsAwarded?: number; error?: string }> {
   try {
     const planPoints = getPlanPoints(planId);
+    const barberSharePoints = getBarberReferralSharePoints(planId);
     
     if (planPoints === 0) {
       return { success: false, error: 'Plano inválido' };
@@ -249,6 +255,32 @@ export async function confirmConversion(
       if (updateLeadError) {
         console.error('Error updating lead points:', updateLeadError);
         return { success: false, error: updateLeadError.message };
+      }
+
+      if (barberSharePoints > 0) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('wallet_balance, lifetime_points')
+          .eq('id', referral.referrer_id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          return { success: false, error: profileError.message };
+        }
+
+        const { error: updateWalletError } = await supabase
+          .from('profiles')
+          .update({
+            wallet_balance: (profile.wallet_balance || 0) + barberSharePoints,
+            lifetime_points: (profile.lifetime_points || 0) + barberSharePoints
+          })
+          .eq('id', referral.referrer_id);
+
+        if (updateWalletError) {
+          console.error('Error updating wallet:', updateWalletError);
+          return { success: false, error: updateWalletError.message };
+        }
       }
     } else {
       // Get current profile balance
