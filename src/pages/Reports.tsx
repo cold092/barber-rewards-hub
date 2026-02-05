@@ -3,13 +3,17 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAllReferrals } from '@/services/referralService';
+import { getAllBarbers, getAllReferrals } from '@/services/referralService';
 import PlanDistributionChart from '@/components/dashboard/PlanDistributionChart';
 import StatusDistributionChart from '@/components/dashboard/StatusDistributionChart';
+import { getPlanById } from '@/config/plans';
+import { formatCurrencyBRL } from '@/utils/currency';
 import type { Referral } from '@/types/database';
+import type { Profile } from '@/types/database';
 
 type ReportType = 'all' | 'leads' | 'clients' | 'converted';
 type ReportRange = 'all' | '7d' | '30d' | 'month';
+type ReportBarber = 'all' | string;
 
 const isClientReferral = (referral: Referral) => referral.is_client || referral.status === 'converted';
 
@@ -36,15 +40,21 @@ const isWithinRange = (dateString: string, range: ReportRange) => {
 export default function Reports() {
   const { isAdmin } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [barbers, setBarbers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [reportType, setReportType] = useState<ReportType>('all');
   const [reportRange, setReportRange] = useState<ReportRange>('all');
+  const [reportBarber, setReportBarber] = useState<ReportBarber>('all');
 
   useEffect(() => {
     async function loadReferrals() {
       setLoading(true);
-      const result = await getAllReferrals();
-      setReferrals(result.data);
+      const [referralsResult, barbersResult] = await Promise.all([
+        getAllReferrals(),
+        getAllBarbers()
+      ]);
+      setReferrals(referralsResult.data);
+      setBarbers(barbersResult.data);
       setLoading(false);
     }
 
@@ -55,17 +65,21 @@ export default function Reports() {
 
   const filteredReferrals = useMemo(() => {
     const rangeFiltered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
+    const barberFiltered =
+      reportBarber === 'all'
+        ? rangeFiltered
+        : rangeFiltered.filter((referral) => referral.referrer_id === reportBarber);
     switch (reportType) {
       case 'leads':
-        return rangeFiltered.filter((referral) => !isClientReferral(referral));
+        return barberFiltered.filter((referral) => !isClientReferral(referral));
       case 'clients':
-        return rangeFiltered.filter((referral) => isClientReferral(referral));
+        return barberFiltered.filter((referral) => isClientReferral(referral));
       case 'converted':
-        return rangeFiltered.filter((referral) => referral.status === 'converted');
+        return barberFiltered.filter((referral) => referral.status === 'converted');
       default:
-        return rangeFiltered;
+        return barberFiltered;
     }
-  }, [referrals, reportRange, reportType]);
+  }, [referrals, reportBarber, reportRange, reportType]);
 
   const totals = useMemo(() => {
     return {
@@ -74,6 +88,16 @@ export default function Reports() {
       leads: filteredReferrals.filter((referral) => !isClientReferral(referral)).length,
       clients: filteredReferrals.filter((referral) => isClientReferral(referral)).length
     };
+  }, [filteredReferrals]);
+
+  const revenueTotal = useMemo(() => {
+    return filteredReferrals.reduce((sum, referral) => {
+      if (referral.status !== 'converted' || !referral.converted_plan_id) {
+        return sum;
+      }
+      const plan = getPlanById(referral.converted_plan_id);
+      return sum + (plan?.price || 0);
+    }, 0);
   }, [filteredReferrals]);
 
   if (!isAdmin) {
@@ -112,7 +136,7 @@ export default function Reports() {
           <CardHeader>
             <CardTitle className="font-display">Filtros</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
+          <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Tipo</p>
               <Select value={reportType} onValueChange={(value) => setReportType(value as ReportType)}>
@@ -141,10 +165,26 @@ export default function Reports() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Barbeiro</p>
+              <Select value={reportBarber} onValueChange={(value) => setReportBarber(value as ReportBarber)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {barbers.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card className="glass-card border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
@@ -175,6 +215,14 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-success">{totals.converted}</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-card border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Receita</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-primary">{formatCurrencyBRL(revenueTotal)}</p>
             </CardContent>
           </Card>
         </div>

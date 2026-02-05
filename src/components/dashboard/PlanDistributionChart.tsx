@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChartIcon } from 'lucide-react';
-import { REWARD_PLANS } from '@/config/plans';
+import { getRewardPlans } from '@/config/plans';
 import { formatCurrencyBRL } from '@/utils/currency';
 import type { Referral } from '@/types/database';
 
@@ -20,7 +20,8 @@ export default function PlanDistributionChart({ referrals }: PlanDistributionCha
     (referral) => referral.status === 'converted' && referral.converted_plan_id
   );
 
-  const planData = Object.entries(REWARD_PLANS).map(([planId, plan]) => {
+  const rewardPlans = getRewardPlans();
+  const planData = Object.entries(rewardPlans).map(([planId, plan]) => {
     const count = convertedReferrals.filter((referral) => referral.converted_plan_id === planId).length;
     return {
       id: planId,
