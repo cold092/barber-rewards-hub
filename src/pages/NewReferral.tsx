@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus, Phone, User, Users, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { registerLead, registerClient, getAllBarbers, getAllLeadsAsReferrers, registerLeadByLead } from '@/services/referralService';
+import { registerLead, registerClient, getAllBarbers, getAllLeadsAsReferrers, registerLeadByLead, getBarberLeadsAsReferrers } from '@/services/referralService';
 import { REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { isValidPhone } from '@/utils/whatsapp';
 import type { Profile } from '@/types/database';
@@ -32,28 +32,32 @@ export default function NewReferral() {
   const [referrers, setReferrers] = useState<Profile[]>([]);
   const [barbers, setBarbers] = useState<Profile[]>([]);
   const [leadReferrers, setLeadReferrers] = useState<{ id: string; name: string; phone: string }[]>([]);
+  const [barberClients, setBarberClients] = useState<{ id: string; name: string; phone: string }[]>([]);
   const [loadingReferrers, setLoadingReferrers] = useState(true);
   const [referrerType, setReferrerType] = useState<'user' | 'lead'>('user');
+  const [barberReferrerType, setBarberReferrerType] = useState<'self' | 'client'>('self');
+  const [selectedBarberClientId, setSelectedBarberClientId] = useState('');
   const [entryType, setEntryType] = useState<'lead' | 'client'>('lead');
 
   useEffect(() => {
     async function loadReferrers() {
-      if (!isAdmin) {
-        setLoadingReferrers(false);
-        return;
-      }
-
       setLoadingReferrers(true);
       
-      // Load barbers, clients, and existing leads as potential referrers
-      const [barbersResult, leadsResult] = await Promise.all([
-        getAllBarbers(),
-        getAllLeadsAsReferrers()
-      ]);
-      
-      setReferrers(barbersResult.data);
-      setBarbers(barbersResult.data);
-      setLeadReferrers(leadsResult.data);
+      if (isAdmin) {
+        // Admin: Load barbers and all leads as referrers
+        const [barbersResult, leadsResult] = await Promise.all([
+          getAllBarbers(),
+          getAllLeadsAsReferrers()
+        ]);
+        
+        setReferrers(barbersResult.data);
+        setBarbers(barbersResult.data);
+        setLeadReferrers(leadsResult.data);
+      } else if (profile) {
+        // Barber: Load only their own clients as possible referrers
+        const clientsResult = await getBarberLeadsAsReferrers(profile.id);
+        setBarberClients(clientsResult.data);
+      }
       
       setLoadingReferrers(false);
     }
@@ -193,13 +197,42 @@ export default function NewReferral() {
       return;
     }
 
-    // Barber: auto-use their own profile
+    // Barber: check if referrer is self or a client
     if (!profile) {
       toast.error('Perfil não encontrado');
       setLoading(false);
       return;
     }
     
+    // If barber selected a client as referrer
+    if (barberReferrerType === 'client') {
+      if (!selectedBarberClientId) {
+        toast.error('Selecione o cliente que está indicando');
+        setLoading(false);
+        return;
+      }
+
+      const clientReferrer = barberClients.find(c => c.id === selectedBarberClientId);
+      const result = await registerLeadByLead(profile.id, selectedBarberClientId, {
+        leadName: leadName.trim(),
+        leadPhone: leadPhone.trim()
+      });
+      
+      setLoading(false);
+      
+      if (result.success) {
+        toast.success(
+          `Lead registrado! ${clientReferrer?.name} ganhou +${REFERRAL_BONUS_POINTS} pontos`,
+          { duration: 4000 }
+        );
+        navigate('/leads');
+      } else {
+        toast.error(result.error || 'Erro ao registrar lead');
+      }
+      return;
+    }
+
+    // Barber registering as self
     const result = await registerLead(profile.id, profile.name, {
       leadName: leadName.trim(),
       leadPhone: leadPhone.trim()
@@ -347,14 +380,72 @@ export default function NewReferral() {
                 </div>
               )}
 
-              {/* Barber view: show their name, no selector needed */}
-              {!isAdmin && profile && (
+              {/* Barber view: can select self or one of their clients */}
+              {!isAdmin && profile && entryType === 'lead' && (
+                <div className="space-y-4">
+                  <Label>Quem está indicando?</Label>
+                  <Tabs value={barberReferrerType} onValueChange={(v) => setBarberReferrerType(v as 'self' | 'client')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="self" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Eu mesmo
+                      </TabsTrigger>
+                      <TabsTrigger value="client" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Meu cliente
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="self" className="mt-4">
+                      <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+                          <Users className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Indicando como</p>
+                          <p className="font-semibold text-primary">{profile.name}</p>
+                        </div>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="client" className="mt-4">
+                      <Select
+                        value={selectedBarberClientId}
+                        onValueChange={setSelectedBarberClientId}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione o cliente indicador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingReferrers ? (
+                            <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                          ) : barberClients.length === 0 ? (
+                            <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
+                          ) : (
+                            barberClients.map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4 text-muted-foreground" />
+                                  {client.name} ({client.phone})
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              )}
+              
+              {/* Barber view for client registration: just show their name */}
+              {!isAdmin && profile && entryType === 'client' && (
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
                     <Users className="h-5 w-5 text-primary-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Indicando como</p>
+                    <p className="text-sm text-muted-foreground">Registrando como barbeiro</p>
                     <p className="font-semibold text-primary">{profile.name}</p>
                   </div>
                 </div>
@@ -431,7 +522,8 @@ export default function NewReferral() {
                       entryType === 'lead' &&
                       ((referrerType === 'user' && (loadingReferrers || !selectedReferrerId)) ||
                         (referrerType === 'lead' && (loadingReferrers || !selectedLeadReferrerId)))) ||
-                    (isAdmin && entryType === 'client' && (loadingReferrers || !selectedReferrerId))
+                    (isAdmin && entryType === 'client' && (loadingReferrers || !selectedReferrerId)) ||
+                    (!isAdmin && entryType === 'lead' && barberReferrerType === 'client' && (loadingReferrers || !selectedBarberClientId))
                   }
                 >
                   {loading
