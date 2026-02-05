@@ -10,6 +10,7 @@ import { getPlanById } from '@/config/plans';
 import { formatCurrencyBRL } from '@/utils/currency';
 import type { Referral } from '@/types/database';
 import type { Profile } from '@/types/database';
+import ConversionTrendChart from '@/components/dashboard/ConversionTrendChart';
 
 type ReportType = 'all' | 'leads' | 'clients' | 'converted';
 type ReportRange = 'all' | '7d' | '30d' | 'month';
@@ -100,6 +101,35 @@ export default function Reports() {
     }, 0);
   }, [filteredReferrals]);
 
+  const averageTicket = useMemo(() => {
+    if (totals.converted === 0) {
+      return 0;
+    }
+    return revenueTotal / totals.converted;
+  }, [revenueTotal, totals.converted]);
+
+  const revenueByBarber = useMemo(() => {
+    const barberMap = new Map<string, { id: string; name: string; revenue: number; converted: number }>();
+    barbers.forEach((barber) => {
+      barberMap.set(barber.id, { id: barber.id, name: barber.name, revenue: 0, converted: 0 });
+    });
+
+    filteredReferrals.forEach((referral) => {
+      if (referral.status !== 'converted' || !referral.converted_plan_id) {
+        return;
+      }
+      const plan = getPlanById(referral.converted_plan_id);
+      const entry = barberMap.get(referral.referrer_id);
+      if (!entry) {
+        return;
+      }
+      entry.revenue += plan?.price || 0;
+      entry.converted += 1;
+    });
+
+    return Array.from(barberMap.values()).sort((a, b) => b.revenue - a.revenue);
+  }, [barbers, filteredReferrals]);
+
   if (!isAdmin) {
     return (
       <DashboardLayout>
@@ -184,7 +214,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
           <Card className="glass-card border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
@@ -225,12 +255,54 @@ export default function Reports() {
               <p className="text-2xl font-bold text-primary">{formatCurrencyBRL(revenueTotal)}</p>
             </CardContent>
           </Card>
+          <Card className="glass-card border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Ticket médio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-primary">{formatCurrencyBRL(averageTicket)}</p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <StatusDistributionChart referrals={filteredReferrals} />
           <PlanDistributionChart referrals={filteredReferrals} />
         </div>
+
+        <ConversionTrendChart referrals={filteredReferrals} range={reportRange} />
+
+        <Card className="glass-card border-border/50">
+          <CardHeader>
+            <CardTitle className="font-display">Receita por barbeiro</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {revenueByBarber.length === 0 ? (
+              <p className="text-muted-foreground text-center py-6">
+                Nenhum barbeiro encontrado para o filtro atual
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {revenueByBarber.map((barber) => (
+                  <div
+                    key={barber.id}
+                    className="flex flex-col gap-2 rounded-lg border border-border/50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium">{barber.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {barber.converted} vendas convertidas
+                      </p>
+                    </div>
+                    <p className="text-lg font-semibold text-primary">
+                      {formatCurrencyBRL(barber.revenue)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
