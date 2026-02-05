@@ -715,3 +715,35 @@ export async function markAsClient(
     return { success: false, error: 'Erro ao marcar como cliente' };
   }
 }
+
+/**
+ * Get leads/clients belonging to a specific barber (by referrer_id)
+ */
+export async function getBarberLeadsAsReferrers(
+  barberId: string
+): Promise<{ data: { id: string; name: string; phone: string }[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('referrals')
+      .select('id, lead_name, lead_phone')
+      .eq('referrer_id', barberId)
+      .eq('is_client', true)
+      .order('lead_name');
+
+    if (error) {
+      console.error('Error fetching barber leads as referrers:', error);
+      return { data: [], error: error.message };
+    }
+
+    return {
+      data: (data || []).map(lead => ({
+        id: lead.id,
+        name: lead.lead_name,
+        phone: lead.lead_phone
+      }))
+    };
+  } catch (error) {
+    console.error('Error in getBarberLeadsAsReferrers:', error);
+    return { data: [], error: 'Erro ao buscar clientes do barbeiro' };
+  }
+}
