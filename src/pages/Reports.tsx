@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAllBarbers, getAllReferrals } from '@/services/referralService';
@@ -163,8 +165,44 @@ export default function Reports() {
         </div>
 
         <Card className="glass-card border-border/50">
-          <CardHeader>
+          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <CardTitle className="font-display">Filtros</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 self-start md:self-auto"
+              onClick={() => {
+                if (filteredReferrals.length === 0) {
+                  return;
+                }
+                const rows = [
+                  ['Nome', 'Telefone', 'Status', 'Plano', 'Barbeiro', 'Cliente', 'Criado em']
+                ];
+                filteredReferrals.forEach((referral) => {
+                  rows.push([
+                    referral.lead_name,
+                    referral.lead_phone,
+                    referral.status,
+                    referral.converted_plan_id ? getPlanById(referral.converted_plan_id)?.label ?? '' : '',
+                    referral.referrer_name,
+                    isClientReferral(referral) ? 'Sim' : 'Não',
+                    new Date(referral.created_at).toLocaleDateString('pt-BR')
+                  ]);
+                });
+                const dateStamp = new Date().toISOString().slice(0, 10);
+                const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `relatorio-${dateStamp}.csv`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+              }}
+              disabled={filteredReferrals.length === 0}
+            >
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </Button>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
