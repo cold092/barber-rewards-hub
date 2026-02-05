@@ -37,10 +37,35 @@ const navItems: NavItem[] = [
   { path: '/equipe', label: 'Gerenciar Equipe', icon: Settings, adminOnly: true },
 ];
 
-const reportItems = [
-  { label: 'Clientes convertidos', icon: UserCheck, view: 'converted-clients' },
-  { label: 'Total de clientes', icon: Users, view: 'clients' },
-  { label: 'Leads', icon: FileText, view: 'leads' }
+const reportSections = [
+  {
+    title: 'Clientes',
+    items: [
+      {
+        label: 'Convertidos',
+        description: 'Clientes que fecharam venda',
+        icon: UserCheck,
+        view: 'converted-clients'
+      },
+      {
+        label: 'Todos os clientes',
+        description: 'Base completa de clientes',
+        icon: Users,
+        view: 'clients'
+      }
+    ]
+  },
+  {
+    title: 'Leads',
+    items: [
+      {
+        label: 'Lista de leads',
+        description: 'Leads cadastrados e status',
+        icon: FileText,
+        view: 'leads'
+      }
+    ]
+  }
 ];
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -126,30 +151,42 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               );
             })}
             {showReports && (
-              <div className="space-y-1">
+              <div className="space-y-3">
                 <p className="px-2 text-xs uppercase tracking-wide text-muted-foreground">
                   Relatórios
                 </p>
-                {reportItems.map((item) => {
-                  const isActive = isReportActive(item.view);
-                  return (
-                    <Button
-                      key={item.view}
-                      variant="ghost"
-                      className={cn(
-                        "w-full justify-start gap-3 h-11",
-                        isActive && "bg-sidebar-accent text-primary"
-                      )}
-                      onClick={() => {
-                        navigate(`/leads?view=${item.view}`);
-                        setSidebarOpen(false);
-                      }}
-                    >
-                      <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                      {item.label}
-                    </Button>
-                  );
-                })}
+                {reportSections.map((section) => (
+                  <div key={section.title} className="space-y-1">
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+                      {section.title}
+                    </p>
+                    {section.items.map((item) => {
+                      const isActive = isReportActive(item.view);
+                      return (
+                        <Button
+                          key={item.view}
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start gap-3 h-auto py-2",
+                            isActive && "bg-sidebar-accent text-primary"
+                          )}
+                          onClick={() => {
+                            navigate(`/leads?view=${item.view}`);
+                            setSidebarOpen(false);
+                          }}
+                        >
+                          <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                          <span className="flex flex-col items-start text-left">
+                            <span className="text-sm font-medium">{item.label}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {item.description}
+                            </span>
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </nav>
