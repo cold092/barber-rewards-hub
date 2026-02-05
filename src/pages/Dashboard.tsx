@@ -12,7 +12,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { getAllReferrals, getRanking } from '@/services/referralService';
-import { REWARD_PLANS } from '@/config/plans';
+import { getPlanById } from '@/config/plans';
 import { formatCurrencyBRL } from '@/utils/currency';
 import PlanDistributionChart from '@/components/dashboard/PlanDistributionChart';
 import type { Referral, Profile } from '@/types/database';
@@ -62,7 +62,7 @@ export default function Dashboard() {
     (referral) => referral.status === 'converted' && referral.converted_plan_id
   );
   const financialTotal = convertedReferrals.reduce((sum, referral) => {
-    const plan = REWARD_PLANS[referral.converted_plan_id || ''];
+    const plan = getPlanById(referral.converted_plan_id || '');
     return sum + (plan?.price || 0);
   }, 0);
 
