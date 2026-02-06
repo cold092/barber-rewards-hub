@@ -23,6 +23,9 @@ export interface Referral {
   id: string;
   referrer_id: string;
   referrer_name: string;
+  created_by_id?: string | null;
+  created_by_name?: string | null;
+  created_by_role?: AppRole | null;
   lead_name: string;
   lead_phone: string;
   status: ReferralStatus;
