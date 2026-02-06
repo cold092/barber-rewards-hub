@@ -17,6 +17,12 @@ interface ClientData {
   clientPhone: string;
 }
 
+interface CreatedByData {
+  id: string;
+  name: string;
+  role: AppRole;
+}
+
 /**
  * Register a new lead/referral
  * Awards REFERRAL_BONUS_POINTS to the referrer immediately
@@ -24,7 +30,8 @@ interface ClientData {
 export async function registerLead(
   referrerId: string,
   referrerName: string,
-  leadData: LeadData
+  leadData: LeadData,
+  createdBy?: CreatedByData
 ): Promise<{ success: boolean; referralId?: string; error?: string }> {
   try {
     // Create the referral record
@@ -35,7 +42,10 @@ export async function registerLead(
         referrer_name: referrerName,
         lead_name: leadData.leadName,
         lead_phone: leadData.leadPhone,
-        status: 'new' as ReferralStatus
+        status: 'new' as ReferralStatus,
+        created_by_id: createdBy?.id,
+        created_by_name: createdBy?.name,
+        created_by_role: createdBy?.role
       })
       .select()
       .single();
@@ -84,7 +94,8 @@ export async function registerLead(
 export async function registerClient(
   referrerId: string,
   referrerName: string,
-  clientData: ClientData
+  clientData: ClientData,
+  createdBy?: CreatedByData
 ): Promise<{ success: boolean; referralId?: string; error?: string }> {
   try {
     const { data: referral, error } = await supabase
@@ -96,7 +107,10 @@ export async function registerClient(
         lead_phone: clientData.clientPhone,
         status: 'converted' as ReferralStatus,
         is_client: true,
-        client_since: new Date().toISOString()
+        client_since: new Date().toISOString(),
+        created_by_id: createdBy?.id,
+        created_by_name: createdBy?.name,
+        created_by_role: createdBy?.role
       })
       .select()
       .single();
@@ -512,8 +526,10 @@ export async function getClientReferralRanking(): Promise<{ data: ClientRankingE
  */
 export async function registerLeadByLead(
   referrerProfileId: string,
+  referrerName: string,
   referringLeadId: string,
-  leadData: LeadData
+  leadData: LeadData,
+  createdBy?: CreatedByData
 ): Promise<{ success: boolean; referralId?: string; error?: string }> {
   try {
     // Get the referring lead info
@@ -533,11 +549,14 @@ export async function registerLeadByLead(
       .from('referrals')
       .insert({
         referrer_id: referrerProfileId,
-        referrer_name: referringLead.lead_name,
+        referrer_name: referrerName,
         lead_name: leadData.leadName,
         lead_phone: leadData.leadPhone,
         status: 'new' as ReferralStatus,
-        referred_by_lead_id: referringLeadId
+        referred_by_lead_id: referringLeadId,
+        created_by_id: createdBy?.id,
+        created_by_name: createdBy?.name,
+        created_by_role: createdBy?.role
       })
       .select()
       .single();

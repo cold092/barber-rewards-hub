@@ -627,6 +627,22 @@ export default function Leads() {
                           <Phone className="h-3 w-3" />
                           {formatPhoneNumber(referral.lead_phone)}
                         </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Adicionado em {new Date(referral.created_at).toLocaleString('pt-BR')}
+                          {referral.created_by_name && (
+                            <>
+                              {' '}por{' '}
+                              <span className="font-medium text-foreground">
+                                {referral.created_by_name}
+                              </span>
+                              {referral.created_by_role && (
+                                <span className="text-muted-foreground">
+                                  {' '}({referral.created_by_role === 'admin' ? 'Admin' : referral.created_by_role === 'barber' ? 'Barbeiro' : 'Cliente'})
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </p>
                       </div>
                       <div className="flex flex-wrap justify-end gap-2">
                         {getStatusBadge(referral.status)}
