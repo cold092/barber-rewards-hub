@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
-import { REWARD_PLANS, REFERRAL_BONUS_POINTS, getPlanPoints } from "@/config/plans";
+import {
+  REWARD_PLANS,
+  REFERRAL_BONUS_POINTS,
+  getPlanPoints,
+  getBarberReferralSharePoints
+} from "@/config/plans";
 import type { Profile, Referral, ReferralStatus, AppRole } from "@/types/database";
 
 interface LeadData {
@@ -12,6 +17,32 @@ interface ClientData {
   clientPhone: string;
 }
 
+interface CreatedByData {
+  id: string;
+  name: string;
+  role: AppRole;
+}
+
+const hasMissingCreatedByColumns = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const message = 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+    ? ((error as { message: string }).message)
+    : '';
+
+  return message.includes("created_by_id") || message.includes("created_by_name") || message.includes("created_by_role");
+};
+
+const stripCreatedByFields = <T extends Record<string, unknown>>(payload: T): T => {
+  const cloned = { ...payload };
+  delete cloned.created_by_id;
+  delete cloned.created_by_name;
+  delete cloned.created_by_role;
+  return cloned;
+};
+
 /**
  * Register a new lead/referral
  * Awards REFERRAL_BONUS_POINTS to the referrer immediately
@@ -19,21 +50,35 @@ interface ClientData {
 export async function registerLead(
   referrerId: string,
   referrerName: string,
-  leadData: LeadData
+  leadData: LeadData,
+  createdBy?: CreatedByData
 ): Promise<{ success: boolean; referralId?: string; error?: string }> {
   try {
     // Create the referral record
-    const { data: referral, error: referralError } = await supabase
+    const insertPayload = {
+      referrer_id: referrerId,
+      referrer_name: referrerName,
+      lead_name: leadData.leadName,
+      lead_phone: leadData.leadPhone,
+      status: 'new' as ReferralStatus,
+      created_by_id: createdBy?.id,
+      created_by_name: createdBy?.name,
+      created_by_role: createdBy?.role
+    };
+
+    let { data: referral, error: referralError } = await supabase
       .from('referrals')
-      .insert({
-        referrer_id: referrerId,
-        referrer_name: referrerName,
-        lead_name: leadData.leadName,
-        lead_phone: leadData.leadPhone,
-        status: 'new' as ReferralStatus
-      })
+      .insert(insertPayload)
       .select()
       .single();
+
+    if (referralError && hasMissingCreatedByColumns(referralError)) {
+      ({ data: referral, error: referralError } = await supabase
+        .from('referrals')
+        .insert(stripCreatedByFields(insertPayload))
+        .select()
+        .single());
+    }
 
     if (referralError) {
       console.error('Error creating referral:', referralError);
@@ -79,22 +124,36 @@ export async function registerLead(
 export async function registerClient(
   referrerId: string,
   referrerName: string,
-  clientData: ClientData
+  clientData: ClientData,
+  createdBy?: CreatedByData
 ): Promise<{ success: boolean; referralId?: string; error?: string }> {
   try {
-    const { data: referral, error } = await supabase
+    const insertPayload = {
+      referrer_id: referrerId,
+      referrer_name: referrerName,
+      lead_name: clientData.clientName,
+      lead_phone: clientData.clientPhone,
+      status: 'converted' as ReferralStatus,
+      is_client: true,
+      client_since: new Date().toISOString(),
+      created_by_id: createdBy?.id,
+      created_by_name: createdBy?.name,
+      created_by_role: createdBy?.role
+    };
+
+    let { data: referral, error } = await supabase
       .from('referrals')
-      .insert({
-        referrer_id: referrerId,
-        referrer_name: referrerName,
-        lead_name: clientData.clientName,
-        lead_phone: clientData.clientPhone,
-        status: 'converted' as ReferralStatus,
-        is_client: true,
-        client_since: new Date().toISOString()
-      })
+      .insert(insertPayload)
       .select()
       .single();
+
+    if (error && hasMissingCreatedByColumns(error)) {
+      ({ data: referral, error } = await supabase
+        .from('referrals')
+        .insert(stripCreatedByFields(insertPayload))
+        .select()
+        .single());
+    }
 
     if (error) {
       console.error('Error creating client:', error);
@@ -190,6 +249,7 @@ export async function confirmConversion(
 ): Promise<{ success: boolean; pointsAwarded?: number; error?: string }> {
   try {
     const planPoints = getPlanPoints(planId);
+    const barberSharePoints = getBarberReferralSharePoints(planId);
     
     if (planPoints === 0) {
       return { success: false, error: 'Plano inválido' };
@@ -249,6 +309,32 @@ export async function confirmConversion(
       if (updateLeadError) {
         console.error('Error updating lead points:', updateLeadError);
         return { success: false, error: updateLeadError.message };
+      }
+
+      if (barberSharePoints > 0) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('wallet_balance, lifetime_points')
+          .eq('id', referral.referrer_id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          return { success: false, error: profileError.message };
+        }
+
+        const { error: updateWalletError } = await supabase
+          .from('profiles')
+          .update({
+            wallet_balance: (profile.wallet_balance || 0) + barberSharePoints,
+            lifetime_points: (profile.lifetime_points || 0) + barberSharePoints
+          })
+          .eq('id', referral.referrer_id);
+
+        if (updateWalletError) {
+          console.error('Error updating wallet:', updateWalletError);
+          return { success: false, error: updateWalletError.message };
+        }
       }
     } else {
       // Get current profile balance
@@ -480,8 +566,10 @@ export async function getClientReferralRanking(): Promise<{ data: ClientRankingE
  */
 export async function registerLeadByLead(
   referrerProfileId: string,
+  referrerName: string,
   referringLeadId: string,
-  leadData: LeadData
+  leadData: LeadData,
+  createdBy?: CreatedByData
 ): Promise<{ success: boolean; referralId?: string; error?: string }> {
   try {
     // Get the referring lead info
@@ -497,18 +585,31 @@ export async function registerLeadByLead(
     }
 
     // Create the new referral linked to the referring lead
-    const { data: referral, error: referralError } = await supabase
+    const insertPayload = {
+      referrer_id: referrerProfileId,
+      referrer_name: referrerName,
+      lead_name: leadData.leadName,
+      lead_phone: leadData.leadPhone,
+      status: 'new' as ReferralStatus,
+      referred_by_lead_id: referringLeadId,
+      created_by_id: createdBy?.id,
+      created_by_name: createdBy?.name,
+      created_by_role: createdBy?.role
+    };
+
+    let { data: referral, error: referralError } = await supabase
       .from('referrals')
-      .insert({
-        referrer_id: referrerProfileId,
-        referrer_name: referringLead.lead_name,
-        lead_name: leadData.leadName,
-        lead_phone: leadData.leadPhone,
-        status: 'new' as ReferralStatus,
-        referred_by_lead_id: referringLeadId
-      })
+      .insert(insertPayload)
       .select()
       .single();
+
+    if (referralError && hasMissingCreatedByColumns(referralError)) {
+      ({ data: referral, error: referralError } = await supabase
+        .from('referrals')
+        .insert(stripCreatedByFields(insertPayload))
+        .select()
+        .single());
+    }
 
     if (referralError) {
       console.error('Error creating referral from lead:', referralError);
