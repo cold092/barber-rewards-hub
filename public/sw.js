@@ -1,5 +1,5 @@
-const CACHE_NAME = "barbercrm-static-v6";
-const STATIC_ASSETS = ["/", "/index.html", "/manifest.json", "/favicon.ico", "/icon.svg?v=6"];
+const CACHE_NAME = "barbercrm-static-v7";
+const STATIC_ASSETS = ["/", "/index.html"];
 
 const isApiRequest = (requestUrl) => {
   return (
@@ -8,6 +8,9 @@ const isApiRequest = (requestUrl) => {
     requestUrl.pathname.startsWith("/storage/") ||
     requestUrl.host.includes("supabase.co")
   );
+};
+const isMetadataRequest = (requestUrl) => {
+  return requestUrl.pathname === "/manifest.json" || requestUrl.pathname === "/favicon.ico" || requestUrl.pathname === "/icon.svg";
 };
 
 self.addEventListener("install", (event) => {
@@ -39,6 +42,11 @@ self.addEventListener("fetch", (event) => {
 
   // Never cache API/database/auth requests. Always fetch fresh data.
   if (isApiRequest(url)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  if (isMetadataRequest(url)) {
     event.respondWith(fetch(event.request));
     return;
   }
