@@ -1,5 +1,5 @@
-const CACHE_NAME = "barbercrm-static-v5";
-const STATIC_ASSETS = ["/", "/index.html", "/manifest.json", "/favicon.ico", "/icon.svg?v=5"];
+const CACHE_NAME = "barbercrm-static-v6";
+const STATIC_ASSETS = ["/", "/index.html", "/manifest.json", "/favicon.ico", "/icon.svg?v=6"];
 
 const isApiRequest = (requestUrl) => {
   return (
