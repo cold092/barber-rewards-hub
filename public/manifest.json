@@ -1,6 +1,6 @@
 {
   "name": "Growth Game",
-  "short_name": "GrowthGame",
+  "short_name": "Growth Game",
   "description": "Sistema de indicações e crescimento.",
   "start_url": "/",
   "display": "standalone",
@@ -18,5 +18,7 @@
       "sizes": "64x64 32x32 16x16",
       "type": "image/x-icon"
     }
-  ]
+  ],
+  "id": "/?app=growth-game",
+  "scope": "/"
 }
