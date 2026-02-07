@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center">
               <Scissors className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold gold-text">BarberCRM</span>
+            <span className="font-display font-bold gold-text">Growth Game</span>
           </div>
           <Button
             variant="ghost"
@@ -90,8 +90,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Scissors className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-display font-bold gold-text text-lg">BarberCRM</h1>
-                <p className="text-xs text-muted-foreground">Sistema de Indicações</p>
+                <h1 className="font-display font-bold gold-text text-lg">Growth Game</h1>
+                <p className="text-xs text-muted-foreground">Sistema de Crescimento</p>
               </div>
             </div>
           </div>

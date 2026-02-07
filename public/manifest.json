@@ -1,12 +1,18 @@
 {
-  "name": "BarberCRM",
-  "short_name": "BarberCRM",
-  "description": "Sistema de indicações para barbearias.",
+  "name": "Growth Game",
+  "short_name": "Growth Game",
+  "description": "Sistema de indicações e crescimento.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f12",
   "theme_color": "#0f0f12",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/favicon.ico",
       "sizes": "64x64 32x32 16x16",
