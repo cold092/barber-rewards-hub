@@ -1,6 +1,6 @@
 {
   "name": "Growth Game",
-  "short_name": "Growth Game",
+  "short_name": "GrowthGame",
   "description": "Sistema de indicações e crescimento.",
   "start_url": "/",
   "display": "standalone",
