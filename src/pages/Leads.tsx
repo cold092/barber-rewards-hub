@@ -25,28 +25,40 @@ import {
   ExternalLink,
   Download,
   Trash2,
-  Menu
+  Menu,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
+import { addHistoryEvent, logWhatsAppContact } from '@/services/leadHistoryService';
 import { getPlanById, getRewardPlans, PLAN_OVERRIDES_STORAGE_KEY, REWARD_PLANS } from '@/config/plans';
 import { DEFAULT_CLIENT_MESSAGE, DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
-import type { Referral } from '@/types/database';
+import { KanbanBoard } from '@/components/leads/KanbanBoard';
+import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
+import type { Referral, ReferralStatus } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
+const VIEW_MODE_STORAGE_KEY = 'leadsViewMode';
 
 type PlanDraft = Record<string, { points: string; price: string }>;
+type ViewMode = 'kanban' | 'list';
 
 export default function Leads() {
-  const { isAdmin, isBarber, profile } = useAuth();
+  const { isAdmin, isBarber, profile, user } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return (saved === 'list' || saved === 'kanban') ? saved : 'kanban';
+  });
   const [leadMessageTemplate, setLeadMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [leadMessageDraft, setLeadMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
   const [clientMessageTemplate, setClientMessageTemplate] = useState(DEFAULT_CLIENT_MESSAGE);
@@ -55,16 +67,21 @@ export default function Leads() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   
+  // Details dialog state
+  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  
   // Conversion dialog state
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
-  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
+  const [convertingReferral, setConvertingReferral] = useState<Referral | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
+
   const contactTagOptions = [
-    { value: 'sql', label: 'SQL', className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-    { value: 'mql', label: 'MQL', className: 'bg-sky-500/20 text-sky-400 border-sky-500/30' },
-    { value: 'cold', label: 'Frio', className: 'bg-slate-500/20 text-slate-200 border-slate-500/30' },
-    { value: 'scheduled', label: 'Marcou', className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' }
+    { value: 'sql', label: 'SQL', className: 'bg-success/20 text-success border-success/30' },
+    { value: 'mql', label: 'MQL', className: 'bg-info/20 text-info border-info/30' },
+    { value: 'cold', label: 'Frio', className: 'bg-muted text-muted-foreground border-border' },
+    { value: 'scheduled', label: 'Marcou', className: 'bg-accent/20 text-accent-foreground border-accent/30' }
   ];
 
   const loadReferrals = async () => {
@@ -140,6 +157,11 @@ export default function Leads() {
     setSearchParams(params);
   };
 
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  };
+
   const allClientReferrals = referrals.filter(isClientReferral);
   const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral));
   const baseReferrals = listType === 'clients' ? allClientReferrals : allLeadReferrals;
@@ -147,13 +169,20 @@ export default function Leads() {
     if (filter === 'all') return true;
     return referral.status === filter;
   });
-  const clientReferrals = filteredReferrals.filter(isClientReferral);
-  const leadReferrals = filteredReferrals.filter((referral) => !isClientReferral(referral));
 
   const handleContact = async (referral: Referral) => {
     const result = await markAsContacted(referral.id);
     
     if (result.success) {
+      // Log to history
+      await addHistoryEvent({
+        referralId: referral.id,
+        eventType: 'status_change',
+        eventData: { from_status: referral.status, to_status: 'contacted' },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+      
       toast.success('Status atualizado para "Contatado"');
       loadReferrals();
     } else {
@@ -165,6 +194,14 @@ export default function Leads() {
     const result = await undoContacted(referral.id);
 
     if (result.success) {
+      await addHistoryEvent({
+        referralId: referral.id,
+        eventType: 'status_change',
+        eventData: { from_status: 'contacted', to_status: 'new' },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+      
       toast.success('Contato desfeito');
       loadReferrals();
     } else {
@@ -172,7 +209,7 @@ export default function Leads() {
     }
   };
 
-  const openWhatsApp = (referral: Referral) => {
+  const openWhatsApp = async (referral: Referral) => {
     const template = isClientReferral(referral) ? clientMessageTemplate : leadMessageTemplate;
     const link = generateWhatsAppLink(
       referral.lead_name,
@@ -180,13 +217,23 @@ export default function Leads() {
       referral.referrer_name,
       template
     );
+    
+    // Log to history
+    await logWhatsAppContact(referral.id, user?.id, profile?.name);
+    
     window.open(link, '_blank');
   };
 
   const openConvertDialog = (referral: Referral) => {
-    setSelectedReferral(referral);
+    setConvertingReferral(referral);
     setSelectedPlan('');
     setConvertDialogOpen(true);
+    setDetailsDialogOpen(false);
+  };
+
+  const openDetailsDialog = (referral: Referral) => {
+    setSelectedReferral(referral);
+    setDetailsDialogOpen(true);
   };
 
   const handleTagChange = async (referral: Referral, value: string) => {
@@ -194,6 +241,14 @@ export default function Leads() {
     const result = await updateContactTag(referral.id, nextTag);
 
     if (result.success) {
+      await addHistoryEvent({
+        referralId: referral.id,
+        eventType: 'tag_change',
+        eventData: { tag: nextTag || 'none', previous_tag: referral.contact_tag },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+
       setReferrals((prev) =>
         prev.map((item) =>
           item.id === referral.id ? { ...item, contact_tag: nextTag } : item
@@ -206,16 +261,29 @@ export default function Leads() {
   };
 
   const handleConvert = async () => {
-    if (!selectedReferral || !selectedPlan) return;
+    if (!convertingReferral || !selectedPlan) return;
     
     setConverting(true);
-    const result = await confirmConversion(selectedReferral.id, selectedPlan);
+    const result = await confirmConversion(convertingReferral.id, selectedPlan);
     setConverting(false);
     
     if (result.success) {
       const plan = getPlanById(selectedPlan);
+      
+      await addHistoryEvent({
+        referralId: convertingReferral.id,
+        eventType: 'conversion',
+        eventData: { 
+          plan_id: selectedPlan, 
+          plan_label: plan?.label,
+          points_awarded: result.pointsAwarded 
+        },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+
       toast.success(
-        `Conversão confirmada! ${selectedReferral.referrer_name} ganhou +${result.pointsAwarded} pontos`,
+        `Conversão confirmada! ${convertingReferral.referrer_name} ganhou +${result.pointsAwarded} pontos`,
         { duration: 5000 }
       );
       setConvertDialogOpen(false);
@@ -251,6 +319,38 @@ export default function Leads() {
     }
   };
 
+  const handleStatusChange = async (referralId: string, newStatus: ReferralStatus) => {
+    const referral = referrals.find(r => r.id === referralId);
+    if (!referral) return;
+
+    // For converted status, open the dialog instead
+    if (newStatus === 'converted') {
+      openConvertDialog(referral);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('referrals')
+      .update({ status: newStatus })
+      .eq('id', referralId);
+
+    if (error) {
+      toast.error('Erro ao atualizar status');
+      return;
+    }
+
+    await addHistoryEvent({
+      referralId,
+      eventType: 'status_change',
+      eventData: { from_status: referral.status, to_status: newStatus },
+      createdById: user?.id,
+      createdByName: profile?.name
+    });
+
+    toast.success('Status atualizado');
+    loadReferrals();
+  };
+
   const handleExport = () => {
     if (filteredReferrals.length === 0) {
       toast.error(listType === 'clients' ? 'Nenhum cliente para exportar' : 'Nenhum lead para exportar');
@@ -258,7 +358,7 @@ export default function Leads() {
     }
 
     const rows = [
-      ['Lead', 'Telefone', 'Status', 'Plano', 'Indicado por', 'Tag', 'Cliente', 'Criado em']
+      ['Lead', 'Telefone', 'Status', 'Plano', 'Indicado por', 'Tag', 'Cliente', 'Observações', 'Criado em']
     ];
 
     filteredReferrals.forEach((referral) => {
@@ -271,6 +371,7 @@ export default function Leads() {
         referral.referrer_name,
         referral.contact_tag ?? '',
         referralIsClient ? 'Sim' : 'Não',
+        referral.notes ?? '',
         new Date(referral.created_at).toLocaleDateString('pt-BR')
       ]);
     });
@@ -341,7 +442,7 @@ export default function Leads() {
   const getStatusBadge = (status: Referral['status']) => {
     switch (status) {
       case 'new':
-        return <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30">Novo</Badge>;
+        return <Badge variant="outline" className="bg-info/20 text-info border-info/30">Novo</Badge>;
       case 'contacted':
         return <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30">Contatado</Badge>;
       case 'converted':
@@ -363,7 +464,7 @@ export default function Leads() {
   const getClientBadge = (isClient: boolean) => {
     if (!isClient) return null;
     return (
-      <Badge variant="outline" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+      <Badge variant="outline" className="bg-success/15 text-success border-success/30">
         Cliente
       </Badge>
     );
@@ -393,8 +494,28 @@ export default function Leads() {
             </p>
           </div>
           
-          {/* Filter */}
+          {/* Controls */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* View Mode Toggle */}
+            <div className="flex items-center rounded-md border border-border bg-muted p-1">
+              <Button
+                variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 px-3"
+                onClick={() => handleViewModeChange('kanban')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 px-3"
+                onClick={() => handleViewModeChange('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+
             <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
               <Download className="h-4 w-4" />
               Exportar CSV
@@ -525,34 +646,36 @@ export default function Leads() {
                 </DialogContent>
               </Dialog>
             )}
-            <Select
-              value={filter}
-              onValueChange={(v: typeof filter) => {
-                setFilter(v);
-                updateSearchParams(
-                  listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
-                  v
-                );
-              }}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filtrar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="new">Novos</SelectItem>
-                <SelectItem value="contacted">Contatados</SelectItem>
-                <SelectItem value="converted">Convertidos</SelectItem>
-              </SelectContent>
-            </Select>
+            {viewMode === 'list' && (
+              <Select
+                value={filter}
+                onValueChange={(v: typeof filter) => {
+                  setFilter(v);
+                  updateSearchParams(
+                    listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
+                    v
+                  );
+                }}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Filtrar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="new">Novos</SelectItem>
+                  <SelectItem value="contacted">Contatados</SelectItem>
+                  <SelectItem value="converted">Convertidos</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card className="glass-card border-blue-500/20">
+          <Card className="glass-card border-info/20">
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-blue-400">
+              <p className="text-2xl font-bold text-info">
                 {referrals.filter(r => r.status === 'new').length}
               </p>
               <p className="text-xs text-muted-foreground">Novos</p>
@@ -584,13 +707,9 @@ export default function Leads() {
           </Card>
         </div>
 
-        {/* Leads & Clients Lists */}
-        <Card className="glass-card border-border/50">
-          <CardHeader className="space-y-4">
-            <CardTitle className="flex items-center gap-2 font-display">
-              <Users className="h-5 w-5 text-primary" />
-              {listType === 'clients' ? `Clientes (${filteredReferrals.length})` : `Leads (${filteredReferrals.length})`}
-            </CardTitle>
+        {/* Kanban View */}
+        {viewMode === 'kanban' && (
+          <div className="space-y-4">
             <Tabs
               value={listType}
               onValueChange={(value) => {
@@ -602,175 +721,229 @@ export default function Leads() {
                 );
               }}
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="leads">Leads</TabsTrigger>
-                <TabsTrigger value="clients">Clientes</TabsTrigger>
+              <TabsList className="grid w-full max-w-xs grid-cols-2">
+                <TabsTrigger value="leads">Leads ({allLeadReferrals.length})</TabsTrigger>
+                <TabsTrigger value="clients">Clientes ({allClientReferrals.length})</TabsTrigger>
               </TabsList>
             </Tabs>
-          </CardHeader>
-          <CardContent>
-            {filteredReferrals.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                {listType === 'clients' ? 'Nenhum cliente encontrado' : 'Nenhum lead encontrado'}
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {filteredReferrals.map((referral) => (
-                  <div 
-                    key={referral.id}
-                    className="p-4 rounded-lg bg-secondary/50 space-y-3"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-lg">{referral.lead_name}</p>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {formatPhoneNumber(referral.lead_phone)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Adicionado em {new Date(referral.created_at).toLocaleString('pt-BR')}
-                          {referral.created_by_name && (
-                            <>
-                              {' '}por{' '}
-                              <span className="font-medium text-foreground">
-                                {referral.created_by_name}
-                              </span>
-                              {referral.created_by_role && (
-                                <span className="text-muted-foreground">
-                                  {' '}({referral.created_by_role === 'admin' ? 'Admin' : referral.created_by_role === 'barber' ? 'Barbeiro' : 'Cliente'})
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {getStatusBadge(referral.status)}
-                        {getContactTagBadge(referral.contact_tag)}
-                        {getClientBadge(isClientReferral(referral))}
-                        {referral.status === 'converted' && referral.converted_plan_id && (
-                          <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
-                            {getPlanById(referral.converted_plan_id)?.label}
-                          </Badge>
-                        )}
-                      </div>
 
-                      <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">Tag de contato:</span>
-                          <Select
-                            value={referral.contact_tag ?? 'none'}
-                            onValueChange={(value) => handleTagChange(referral, value)}
-                          >
-                            <SelectTrigger className="h-8 w-36">
-                              <SelectValue placeholder="Sem tag" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">Sem tag</SelectItem>
-                              {contactTagOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+            <KanbanBoard
+              referrals={baseReferrals}
+              onStatusChange={handleStatusChange}
+              onOpenDetails={openDetailsDialog}
+              onWhatsApp={openWhatsApp}
+              isAdmin={isAdmin}
+              contactTagOptions={contactTagOptions}
+            />
+          </div>
+        )}
+
+        {/* List View */}
+        {viewMode === 'list' && (
+          <Card className="glass-card border-border/50">
+            <CardHeader className="space-y-4">
+              <CardTitle className="flex items-center gap-2 font-display">
+                <Users className="h-5 w-5 text-primary" />
+                {listType === 'clients' ? `Clientes (${filteredReferrals.length})` : `Leads (${filteredReferrals.length})`}
+              </CardTitle>
+              <Tabs
+                value={listType}
+                onValueChange={(value) => {
+                  const nextListType = value as 'leads' | 'clients';
+                  setListType(nextListType);
+                  updateSearchParams(
+                    nextListType === 'clients' && filter === 'converted' ? 'converted-clients' : nextListType,
+                    filter
+                  );
+                }}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="leads">Leads</TabsTrigger>
+                  <TabsTrigger value="clients">Clientes</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardHeader>
+            <CardContent>
+              {filteredReferrals.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  {listType === 'clients' ? 'Nenhum cliente encontrado' : 'Nenhum lead encontrado'}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {filteredReferrals.map((referral) => (
+                    <div 
+                      key={referral.id}
+                      className="p-4 rounded-lg bg-secondary/50 space-y-3 cursor-pointer hover:bg-secondary/70 transition-colors"
+                      onClick={() => openDetailsDialog(referral)}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-lg">{referral.lead_name}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {formatPhoneNumber(referral.lead_phone)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Adicionado em {new Date(referral.created_at).toLocaleString('pt-BR')}
+                            {referral.created_by_name && (
+                              <>
+                                {' '}por{' '}
+                                <span className="font-medium text-foreground">
+                                  {referral.created_by_name}
+                                </span>
+                                {referral.created_by_role && (
+                                  <span className="text-muted-foreground">
+                                    {' '}({referral.created_by_role === 'admin' ? 'Admin' : referral.created_by_role === 'barber' ? 'Barbeiro' : 'Cliente'})
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {getStatusBadge(referral.status)}
+                          {getContactTagBadge(referral.contact_tag)}
+                          {getClientBadge(isClientReferral(referral))}
+                          {referral.status === 'converted' && referral.converted_plan_id && (
+                            <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                              {getPlanById(referral.converted_plan_id)?.label}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">Tag de contato:</span>
+                            <Select
+                              value={referral.contact_tag ?? 'none'}
+                              onValueChange={(value) => handleTagChange(referral, value)}
+                            >
+                              <SelectTrigger className="h-8 w-36">
+                                <SelectValue placeholder="Sem tag" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Sem tag</SelectItem>
+                                {contactTagOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                      {referral.status !== 'converted' && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          {isAdmin && (
+                        {referral.status !== 'converted' && (
+                          <div className="flex flex-wrap gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                            {isAdmin && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={() => openWhatsApp(referral)}
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                                WhatsApp
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            )}
+                            
+                            {referral.status === 'new' && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="gap-2"
+                                onClick={() => handleContact(referral)}
+                              >
+                                <Clock className="h-4 w-4" />
+                                Marcar Contatado
+                              </Button>
+                            )}
+                            {referral.status === 'contacted' && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="gap-2 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleUndoContact(referral)}
+                              >
+                                Desfazer Contato
+                              </Button>
+                            )}
+                            
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="gap-2"
-                              onClick={() => openWhatsApp(referral)}
+                              className="gap-2 gold-gradient text-primary-foreground"
+                              onClick={() => openConvertDialog(referral)}
                             >
-                              <MessageCircle className="h-4 w-4" />
-                              WhatsApp
-                              <ExternalLink className="h-3 w-3" />
+                              <CheckCircle className="h-4 w-4" />
+                              Converter Venda
                             </Button>
-                          )}
-                          
-                          {referral.status === 'new' && (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="gap-2"
-                              onClick={() => handleContact(referral)}
-                            >
-                              <Clock className="h-4 w-4" />
-                              Marcar Contatado
-                            </Button>
-                          )}
-                          {referral.status === 'contacted' && (
+                          </div>
+                        )}
+                        {referral.status === 'converted' && (
+                          <div className="flex flex-wrap gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
                             <Button
                               size="sm"
                               variant="ghost"
                               className="gap-2 text-muted-foreground hover:text-foreground"
-                              onClick={() => handleUndoContact(referral)}
+                              onClick={() => handleUndoConversion(referral)}
                             >
-                              Desfazer Contato
+                              Desfazer Conversão
                             </Button>
-                          )}
-                          
-                          <Button
-                            size="sm"
-                            className="gap-2 gold-gradient text-primary-foreground"
-                            onClick={() => openConvertDialog(referral)}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Converter Venda
-                          </Button>
-                        </div>
-                      )}
-                      {referral.status === 'converted' && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="gap-2 text-muted-foreground hover:text-foreground"
-                            onClick={() => handleUndoConversion(referral)}
-                          >
-                            Desfazer Conversão
-                          </Button>
-                          {isAdmin && isClientReferral(referral) && (
+                            {isAdmin && isClientReferral(referral) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={() => openWhatsApp(referral)}
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                                WhatsApp
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                        {/* Delete button - admin only */}
+                        {isAdmin && (
+                          <div className="flex justify-end pt-2 border-t border-border/30 mt-2" onClick={(e) => e.stopPropagation()}>
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="gap-2"
-                              onClick={() => openWhatsApp(referral)}
+                              variant="ghost"
+                              className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDelete(referral)}
                             >
-                              <MessageCircle className="h-4 w-4" />
-                              WhatsApp
-                              <ExternalLink className="h-3 w-3" />
+                              <Trash2 className="h-4 w-4" />
+                              Excluir
                             </Button>
-                          )}
-                        </div>
-                      )}
-                      {/* Delete button - admin only */}
-                      {isAdmin && (
-                        <div className="flex justify-end pt-2 border-t border-border/30 mt-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="gap-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDelete(referral)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Excluir
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
       </div>
+
+      {/* Lead Details Dialog */}
+      <LeadDetailsDialog
+        referral={selectedReferral}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onWhatsApp={openWhatsApp}
+        onContact={handleContact}
+        onConvert={openConvertDialog}
+        onTagChange={handleTagChange}
+        onDelete={handleDelete}
+        onUpdate={loadReferrals}
+        isAdmin={isAdmin}
+        userId={user?.id}
+        userName={profile?.name}
+        contactTagOptions={contactTagOptions}
+      />
 
       {/* Conversion Dialog */}
       <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
@@ -778,7 +951,7 @@ export default function Leads() {
           <DialogHeader>
             <DialogTitle className="font-display">Confirmar Conversão</DialogTitle>
             <DialogDescription>
-              Selecione o plano vendido para {selectedReferral?.lead_name}
+              Selecione o plano vendido para {convertingReferral?.lead_name}
             </DialogDescription>
           </DialogHeader>
           
@@ -802,7 +975,7 @@ export default function Leads() {
             {selectedPlan && (
               <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-sm text-muted-foreground">
-                  {selectedReferral?.referrer_name} receberá:
+                  {convertingReferral?.referrer_name} receberá:
                 </p>
                 <p className="text-2xl font-bold text-primary">
                   +{getPlanById(selectedPlan)?.points} pontos
