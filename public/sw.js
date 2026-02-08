@@ -1,4 +1,4 @@
-const CACHE_NAME = "barbercrm-static-v8";
+const CACHE_NAME = "barbercrm-static-v9";
 const STATIC_ASSETS = ["/", "/index.html"];
 
 const isApiRequest = (requestUrl) => {
