@@ -22,6 +22,7 @@ export const REWARD_PLANS: Record<string, RewardPlan> = {
 
 // Points awarded just for registering a lead
 export const REFERRAL_BONUS_POINTS = 10;
+export const BARBER_REFERRAL_CONVERSION_PERCENT = 30;
 
 export const PLAN_OVERRIDES_STORAGE_KEY = 'rewardPlanOverrides';
 
@@ -75,6 +76,12 @@ export const getPlanById = (planId: string): RewardPlan | undefined => {
 
 export const getPlanPoints = (planId: string): number => {
   return getPlanById(planId)?.points ?? 0;
+};
+
+export const getBarberReferralSharePoints = (planId: string): number => {
+  const planPoints = getPlanPoints(planId);
+  const share = (planPoints * BARBER_REFERRAL_CONVERSION_PERCENT) / 100;
+  return Math.round(share);
 };
 
 export const getTierColor = (tier: 'prata' | 'gold' | 'vip'): string => {
