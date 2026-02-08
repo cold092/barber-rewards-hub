@@ -1,0 +1,24 @@
+{
+  "name": "Growth Game",
+  "short_name": "GrowthGame",
+  "description": "Sistema de indicações e crescimento.",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#0f0f12",
+  "theme_color": "#0f0f12",
+  "icons": [
+    {
+      "src": "/icon.svg?v=8",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico?v=8",
+      "sizes": "64x64 32x32 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "id": "/",
+  "scope": "/"
+}
