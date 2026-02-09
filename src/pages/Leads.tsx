@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,28 +25,44 @@ import {
   ExternalLink,
   Download,
   Trash2,
-  Menu
+  Menu,
+  LayoutGrid,
+  List,
+  Bell,
+  TrendingUp,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
+import { addHistoryEvent, logWhatsAppContact } from '@/services/leadHistoryService';
 import { getPlanById, getRewardPlans, PLAN_OVERRIDES_STORAGE_KEY, REWARD_PLANS } from '@/config/plans';
 import { DEFAULT_CLIENT_MESSAGE, DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
-import type { Referral } from '@/types/database';
+import { KanbanBoard } from '@/components/leads/KanbanBoard';
+import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
+import type { Referral, ReferralStatus } from '@/types/database';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
+const VIEW_MODE_STORAGE_KEY = 'leadsViewMode';
 
 type PlanDraft = Record<string, { points: string; price: string }>;
+type ViewMode = 'kanban' | 'list';
 
 export default function Leads() {
-  const { isAdmin, isBarber, profile } = useAuth();
+  const { isAdmin, isBarber, profile, user } = useAuth();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return (saved === 'list' || saved === 'kanban') ? saved : 'kanban';
+  });
   const [leadMessageTemplate, setLeadMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [leadMessageDraft, setLeadMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
   const [clientMessageTemplate, setClientMessageTemplate] = useState(DEFAULT_CLIENT_MESSAGE);
@@ -55,16 +71,21 @@ export default function Leads() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   
+  // Details dialog state
+  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  
   // Conversion dialog state
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
-  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
+  const [convertingReferral, setConvertingReferral] = useState<Referral | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
+
   const contactTagOptions = [
-    { value: 'sql', label: 'SQL', className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-    { value: 'mql', label: 'MQL', className: 'bg-sky-500/20 text-sky-400 border-sky-500/30' },
-    { value: 'cold', label: 'Frio', className: 'bg-slate-500/20 text-slate-200 border-slate-500/30' },
-    { value: 'scheduled', label: 'Marcou', className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' }
+    { value: 'sql', label: 'SQL', className: 'bg-success/20 text-success border-success/30' },
+    { value: 'mql', label: 'MQL', className: 'bg-info/20 text-info border-info/30' },
+    { value: 'cold', label: 'Frio', className: 'bg-muted text-muted-foreground border-border' },
+    { value: 'scheduled', label: 'Marcou', className: 'bg-accent/20 text-accent-foreground border-accent/30' }
   ];
 
   const loadReferrals = async () => {
@@ -140,6 +161,11 @@ export default function Leads() {
     setSearchParams(params);
   };
 
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  };
+
   const allClientReferrals = referrals.filter(isClientReferral);
   const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral));
   const baseReferrals = listType === 'clients' ? allClientReferrals : allLeadReferrals;
@@ -147,13 +173,20 @@ export default function Leads() {
     if (filter === 'all') return true;
     return referral.status === filter;
   });
-  const clientReferrals = filteredReferrals.filter(isClientReferral);
-  const leadReferrals = filteredReferrals.filter((referral) => !isClientReferral(referral));
 
   const handleContact = async (referral: Referral) => {
     const result = await markAsContacted(referral.id);
     
     if (result.success) {
+      // Log to history
+      await addHistoryEvent({
+        referralId: referral.id,
+        eventType: 'status_change',
+        eventData: { from_status: referral.status, to_status: 'contacted' },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+      
       toast.success('Status atualizado para "Contatado"');
       loadReferrals();
     } else {
@@ -165,6 +198,14 @@ export default function Leads() {
     const result = await undoContacted(referral.id);
 
     if (result.success) {
+      await addHistoryEvent({
+        referralId: referral.id,
+        eventType: 'status_change',
+        eventData: { from_status: 'contacted', to_status: 'new' },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+      
       toast.success('Contato desfeito');
       loadReferrals();
     } else {
@@ -172,7 +213,7 @@ export default function Leads() {
     }
   };
 
-  const openWhatsApp = (referral: Referral) => {
+  const openWhatsApp = async (referral: Referral) => {
     const template = isClientReferral(referral) ? clientMessageTemplate : leadMessageTemplate;
     const link = generateWhatsAppLink(
       referral.lead_name,
@@ -180,13 +221,23 @@ export default function Leads() {
       referral.referrer_name,
       template
     );
+    
+    // Log to history
+    await logWhatsAppContact(referral.id, user?.id, profile?.name);
+    
     window.open(link, '_blank');
   };
 
   const openConvertDialog = (referral: Referral) => {
-    setSelectedReferral(referral);
+    setConvertingReferral(referral);
     setSelectedPlan('');
     setConvertDialogOpen(true);
+    setDetailsDialogOpen(false);
+  };
+
+  const openDetailsDialog = (referral: Referral) => {
+    setSelectedReferral(referral);
+    setDetailsDialogOpen(true);
   };
 
   const handleTagChange = async (referral: Referral, value: string) => {
@@ -194,6 +245,14 @@ export default function Leads() {
     const result = await updateContactTag(referral.id, nextTag);
 
     if (result.success) {
+      await addHistoryEvent({
+        referralId: referral.id,
+        eventType: 'tag_change',
+        eventData: { tag: nextTag || 'none', previous_tag: referral.contact_tag },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+
       setReferrals((prev) =>
         prev.map((item) =>
           item.id === referral.id ? { ...item, contact_tag: nextTag } : item
@@ -206,16 +265,29 @@ export default function Leads() {
   };
 
   const handleConvert = async () => {
-    if (!selectedReferral || !selectedPlan) return;
+    if (!convertingReferral || !selectedPlan) return;
     
     setConverting(true);
-    const result = await confirmConversion(selectedReferral.id, selectedPlan);
+    const result = await confirmConversion(convertingReferral.id, selectedPlan);
     setConverting(false);
     
     if (result.success) {
       const plan = getPlanById(selectedPlan);
+      
+      await addHistoryEvent({
+        referralId: convertingReferral.id,
+        eventType: 'conversion',
+        eventData: { 
+          plan_id: selectedPlan, 
+          plan_label: plan?.label,
+          points_awarded: result.pointsAwarded 
+        },
+        createdById: user?.id,
+        createdByName: profile?.name
+      });
+
       toast.success(
-        `Conversão confirmada! ${selectedReferral.referrer_name} ganhou +${result.pointsAwarded} pontos`,
+        `Conversão confirmada! ${convertingReferral.referrer_name} ganhou +${result.pointsAwarded} pontos`,
         { duration: 5000 }
       );
       setConvertDialogOpen(false);
@@ -251,6 +323,38 @@ export default function Leads() {
     }
   };
 
+  const handleStatusChange = async (referralId: string, newStatus: ReferralStatus) => {
+    const referral = referrals.find(r => r.id === referralId);
+    if (!referral) return;
+
+    // For converted status, open the dialog instead
+    if (newStatus === 'converted') {
+      openConvertDialog(referral);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('referrals')
+      .update({ status: newStatus })
+      .eq('id', referralId);
+
+    if (error) {
+      toast.error('Erro ao atualizar status');
+      return;
+    }
+
+    await addHistoryEvent({
+      referralId,
+      eventType: 'status_change',
+      eventData: { from_status: referral.status, to_status: newStatus },
+      createdById: user?.id,
+      createdByName: profile?.name
+    });
+
+    toast.success('Status atualizado');
+    loadReferrals();
+  };
+
   const handleExport = () => {
     if (filteredReferrals.length === 0) {
       toast.error(listType === 'clients' ? 'Nenhum cliente para exportar' : 'Nenhum lead para exportar');
@@ -258,7 +362,7 @@ export default function Leads() {
     }
 
     const rows = [
-      ['Lead', 'Telefone', 'Status', 'Plano', 'Indicado por', 'Tag', 'Cliente', 'Criado em']
+      ['Lead', 'Telefone', 'Status', 'Plano', 'Indicado por', 'Tag', 'Cliente', 'Observações', 'Criado em']
     ];
 
     filteredReferrals.forEach((referral) => {
@@ -271,6 +375,7 @@ export default function Leads() {
         referral.referrer_name,
         referral.contact_tag ?? '',
         referralIsClient ? 'Sim' : 'Não',
+        referral.notes ?? '',
         new Date(referral.created_at).toLocaleDateString('pt-BR')
       ]);
     });
@@ -285,6 +390,7 @@ export default function Leads() {
     setLeadMessageDraft(nextTemplate);
     localStorage.setItem(LEAD_MESSAGE_STORAGE_KEY, nextTemplate);
     toast.success('Mensagem para leads salva');
+    setConfigDialogOpen(false);
   };
 
   const handleSaveClientMessage = () => {
@@ -293,6 +399,7 @@ export default function Leads() {
     setClientMessageDraft(nextTemplate);
     localStorage.setItem(CLIENT_MESSAGE_STORAGE_KEY, nextTemplate);
     toast.success('Mensagem para clientes salva');
+    setConfigDialogOpen(false);
   };
 
   const handleSavePlans = () => {
@@ -321,6 +428,7 @@ export default function Leads() {
     );
     setPlanDraft(nextDraft);
     toast.success('Planos atualizados');
+    setConfigDialogOpen(false);
   };
 
   const handlePlanDraftChange = (planId: string, field: 'points' | 'price', value: string) => {
@@ -338,7 +446,7 @@ export default function Leads() {
   const getStatusBadge = (status: Referral['status']) => {
     switch (status) {
       case 'new':
-        return <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30">Novo</Badge>;
+        return <Badge variant="outline" className="bg-info/20 text-info border-info/30">Novo</Badge>;
       case 'contacted':
         return <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30">Contatado</Badge>;
       case 'converted':
@@ -360,7 +468,7 @@ export default function Leads() {
   const getClientBadge = (isClient: boolean) => {
     if (!isClient) return null;
     return (
-      <Badge variant="outline" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+      <Badge variant="outline" className="bg-success/15 text-success border-success/30">
         Cliente
       </Badge>
     );
@@ -540,33 +648,72 @@ export default function Leads() {
     );
   }
 
+  const followUpCount = referrals.filter(r => r.follow_up_date && r.status !== 'converted').length;
+  const overdueFollowUps = referrals.filter(r => {
+    if (!r.follow_up_date || r.status === 'converted') return false;
+    const d = new Date(r.follow_up_date);
+    return d < new Date() && d.toDateString() !== new Date().toDateString();
+  }).length;
+  const conversionRate = referrals.length > 0 
+    ? Math.round((referrals.filter(r => r.status === 'converted').length / referrals.length) * 100) 
+    : 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold">
-              <span className="gold-text">Leads</span>
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gerencie todas as indicações
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl lavender-gradient lavender-glow">
+                <Sparkles className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-display font-bold">
+                  <span className="gold-text">Mini-CRM</span>
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Gerencie leads, follow-ups e conversões
+                </p>
+              </div>
+            </div>
           </div>
           
-          {/* Filter */}
+          {/* Controls */}
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
-              <Download className="h-4 w-4" />
-              Exportar CSV
+            {/* View Mode Toggle */}
+            <div className="flex items-center rounded-lg border border-border/50 bg-secondary/50 p-0.5">
+              <Button
+                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                size="sm"
+                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'kanban' && "lavender-gradient text-primary-foreground shadow-sm")}
+                onClick={() => handleViewModeChange('kanban')}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Kanban
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'list' && "lavender-gradient text-primary-foreground shadow-sm")}
+                onClick={() => handleViewModeChange('list')}
+              >
+                <List className="h-3.5 w-3.5" />
+                Lista
+              </Button>
+            </div>
+
+            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleExport}>
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Exportar</span>
             </Button>
             {isAdmin && (
               <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Menu className="h-4 w-4" />
-                      Configurações
+                    <Button variant="outline" size="sm" className="gap-2 text-xs">
+                      <Menu className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Config</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -578,7 +725,7 @@ export default function Leads() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <DialogContent className="glass-card max-w-3xl">
+                <DialogContent className="glass-card w-[min(95vw,48rem)] max-w-3xl max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="font-display">Configurações</DialogTitle>
                     <DialogDescription>
@@ -686,79 +833,128 @@ export default function Leads() {
                 </DialogContent>
               </Dialog>
             )}
-            <Select
-              value={filter}
-              onValueChange={(v: typeof filter) => {
-                setFilter(v);
-                updateSearchParams(
-                  listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
-                  v
-                );
-              }}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Filtrar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="new">Novos</SelectItem>
-                <SelectItem value="contacted">Contatados</SelectItem>
-                <SelectItem value="converted">Convertidos</SelectItem>
-              </SelectContent>
-            </Select>
+            {viewMode === 'list' && (
+              <Select
+                value={filter}
+                onValueChange={(v: typeof filter) => {
+                  setFilter(v);
+                  updateSearchParams(
+                    listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
+                    v
+                  );
+                }}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Filtrar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="new">Novos</SelectItem>
+                  <SelectItem value="contacted">Contatados</SelectItem>
+                  <SelectItem value="converted">Convertidos</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card className="glass-card border-blue-500/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-blue-400">
-                {referrals.filter(r => r.status === 'new').length}
-              </p>
-              <p className="text-xs text-muted-foreground">Novos</p>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <Card className="glass-card border-info/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-info/10 group-hover:bg-info/20 transition-colors">
+                  <Users className="h-4 w-4 text-info" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-info">
+                    {referrals.filter(r => r.status === 'new').length}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Novos</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-warning/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-warning">
-                {referrals.filter(r => r.status === 'contacted').length}
-              </p>
-              <p className="text-xs text-muted-foreground">Contatados</p>
+          <Card className="glass-card border-warning/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warning/10 group-hover:bg-warning/20 transition-colors">
+                  <MessageCircle className="h-4 w-4 text-warning" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-warning">
+                    {referrals.filter(r => r.status === 'contacted').length}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Contatados</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-success/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-success">
-                {referrals.filter(r => r.status === 'converted').length}
-              </p>
-              <p className="text-xs text-muted-foreground">Convertidos</p>
+          <Card className="glass-card border-success/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-success/10 group-hover:bg-success/20 transition-colors">
+                  <CheckCircle className="h-4 w-4 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-success">
+                    {referrals.filter(r => r.status === 'converted').length}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Convertidos</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-primary/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-primary">
-                {referrals.filter(isClientReferral).length}
-              </p>
-              <p className="text-xs text-muted-foreground">Clientes</p>
+          <Card className="glass-card border-primary/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-primary">
+                    {conversionRate}%
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Conversão</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={cn(
+            "glass-card hover-lift group",
+            overdueFollowUps > 0 ? "border-destructive/30" : "border-accent/20"
+          )}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  overdueFollowUps > 0 ? "bg-destructive/10 group-hover:bg-destructive/20" : "bg-accent/10 group-hover:bg-accent/20"
+                )}>
+                  <Bell className={cn("h-4 w-4", overdueFollowUps > 0 ? "text-destructive" : "text-accent")} />
+                </div>
+                <div>
+                  <p className={cn("text-2xl font-bold", overdueFollowUps > 0 ? "text-destructive" : "text-accent")}>
+                    {followUpCount}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                    {overdueFollowUps > 0 ? `${overdueFollowUps} atrasado${overdueFollowUps > 1 ? 's' : ''}` : 'Follow-ups'}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Leads & Clients Lists */}
-        <Card className="glass-card border-border/50">
-          <CardHeader className="space-y-4">
-            <CardTitle className="flex items-center gap-2 font-display">
-              <Users className="h-5 w-5 text-primary" />
-              {listType === 'clients' ? `Clientes (${filteredReferrals.length})` : `Leads (${filteredReferrals.length})`}
-            </CardTitle>
+        {/* Kanban View */}
+        {viewMode === 'kanban' && (
+          <div className="space-y-4">
             <Tabs
               value={listType}
               onValueChange={(value) => handleListTypeChange(value as 'leads' | 'clients')}
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="leads">Leads</TabsTrigger>
-                <TabsTrigger value="clients">Clientes</TabsTrigger>
+              <TabsList className="grid w-full max-w-xs grid-cols-2">
+                <TabsTrigger value="leads">Leads ({allLeadReferrals.length})</TabsTrigger>
+                <TabsTrigger value="clients">Clientes ({allClientReferrals.length})</TabsTrigger>
               </TabsList>
             </Tabs>
           </CardHeader>
@@ -793,13 +989,30 @@ export default function Leads() {
 
       </div>
 
+      {/* Lead Details Dialog */}
+      <LeadDetailsDialog
+        referral={selectedReferral}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onWhatsApp={openWhatsApp}
+        onContact={handleContact}
+        onConvert={openConvertDialog}
+        onTagChange={handleTagChange}
+        onDelete={handleDelete}
+        onUpdate={loadReferrals}
+        isAdmin={isAdmin}
+        userId={user?.id}
+        userName={profile?.name}
+        contactTagOptions={contactTagOptions}
+      />
+
       {/* Conversion Dialog */}
       <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
         <DialogContent className="glass-card">
           <DialogHeader>
             <DialogTitle className="font-display">Confirmar Conversão</DialogTitle>
             <DialogDescription>
-              Selecione o plano vendido para {selectedReferral?.lead_name}
+              Selecione o plano vendido para {convertingReferral?.lead_name}
             </DialogDescription>
           </DialogHeader>
           
@@ -823,7 +1036,7 @@ export default function Leads() {
             {selectedPlan && (
               <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-sm text-muted-foreground">
-                  {selectedReferral?.referrer_name} receberá:
+                  {convertingReferral?.referrer_name} receberá:
                 </p>
                 <p className="text-2xl font-bold text-primary">
                   +{getPlanById(selectedPlan)?.points} pontos
