@@ -133,7 +133,9 @@ export default function Leads() {
 
     if (viewParam === 'clients' || viewParam === 'converted-clients') {
       setListType('clients');
-    } else if (viewParam === 'leads') {
+    } else {
+      // Default to Leads when no explicit view is present in URL.
+      // This ensures sidebar "Leads" click always opens the Leads tab.
       setListType('leads');
     }
 
