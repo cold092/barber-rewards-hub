@@ -65,16 +65,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <span className="font-display font-bold gold-text">Growth Game</span>
           </div>
-          <div className="flex items-center gap-1">
-            <NotificationCenter />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
         </div>
       </header>
 
