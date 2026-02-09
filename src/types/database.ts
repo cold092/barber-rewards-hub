@@ -1,5 +1,6 @@
 export type AppRole = 'admin' | 'barber' | 'client';
 export type ReferralStatus = 'new' | 'contacted' | 'converted';
+export type LeadEventType = 'status_change' | 'tag_change' | 'qualification_change' | 'note_added' | 'whatsapp_contact' | 'conversion' | 'created';
 
 export interface Profile {
   id: string;
@@ -35,10 +36,34 @@ export interface Referral {
   converted_plan_id: string | null;
   referred_by_lead_id: string | null;
   lead_points: number;
+  notes: string | null;
+  is_qualified: boolean | null;
+  follow_up_date: string | null;
+  follow_up_note: string | null;
   created_at: string;
   updated_at: string;
 }
 
+export interface KanbanColumnConfig {
+  id: string;
+  user_id: string;
+  column_id: string;
+  title: string;
+  color: string;
+  position: number;
+  created_at: string;
+}
+
 export interface ReferralWithProfile extends Referral {
   referrer?: Profile;
+}
+
+export interface LeadHistory {
+  id: string;
+  referral_id: string;
+  event_type: LeadEventType;
+  event_data: Record<string, unknown>;
+  created_by_id: string | null;
+  created_by_name: string | null;
+  created_at: string;
 }
