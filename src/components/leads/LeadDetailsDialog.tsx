@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { LeadTimeline } from './LeadTimeline';
+import { FollowUpPicker } from './FollowUpPicker';
 import { updateLeadNotes } from '@/services/leadHistoryService';
 import { formatPhoneNumber } from '@/utils/whatsapp';
 import { getPlanById, getRewardPlans } from '@/config/plans';
@@ -113,8 +114,9 @@ export function LeadDetailsDialog({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Detalhes</TabsTrigger>
+            <TabsTrigger value="followup">Follow-up</TabsTrigger>
             <TabsTrigger value="timeline">Histórico</TabsTrigger>
           </TabsList>
 
@@ -233,6 +235,15 @@ export function LeadDetailsDialog({
                 </Button>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="followup" className="mt-4">
+            <FollowUpPicker
+              referral={referral}
+              userId={userId}
+              userName={userName}
+              onUpdate={onUpdate}
+            />
           </TabsContent>
 
           <TabsContent value="timeline" className="mt-4">
