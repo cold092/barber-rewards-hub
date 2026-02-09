@@ -1,4 +1,4 @@
-const CACHE_NAME = "barbercrm-static-v9";
+const CACHE_NAME = "barbercrm-static-v10";
 const STATIC_ASSETS = ["/", "/index.html"];
 
 const isApiRequest = (requestUrl) => {
@@ -10,7 +10,7 @@ const isApiRequest = (requestUrl) => {
   );
 };
 const isMetadataRequest = (requestUrl) => {
-  return requestUrl.pathname === "/manifest.json" || requestUrl.pathname === "/favicon.ico" || requestUrl.pathname === "/icon.svg";
+  return requestUrl.pathname === "/manifest.json" || requestUrl.pathname === "/icon.svg";
 };
 
 self.addEventListener("install", (event) => {
