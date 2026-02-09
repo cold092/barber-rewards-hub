@@ -593,10 +593,14 @@ export default function Leads() {
               onValueChange={(value) => {
                 const nextListType = value as 'leads' | 'clients';
                 setListType(nextListType);
-                updateSearchParams(
-                  nextListType === 'clients' && filter === 'converted' ? 'converted-clients' : nextListType,
-                  filter
-                );
+
+                // Clients tab should default to all statuses to avoid showing only converted cards.
+                const nextStatus = nextListType === 'clients' ? 'all' : filter;
+                if (nextListType === 'clients') {
+                  setFilter('all');
+                }
+
+                updateSearchParams(nextListType, nextStatus);
               }}
             >
               <TabsList className="grid w-full grid-cols-2">
