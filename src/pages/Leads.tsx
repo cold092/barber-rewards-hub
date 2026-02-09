@@ -610,13 +610,10 @@ export default function Leads() {
   const handleListTypeChange = (nextListType: 'leads' | 'clients') => {
     setListType(nextListType);
 
-    // Clients tab defaults to broad view to avoid stale converted-only URL state.
-    const nextStatus = nextListType === 'clients' ? 'all' : filter;
-    if (nextListType === 'clients') {
-      setFilter('all');
-    }
-
-    updateSearchParams(nextListType, nextStatus);
+    // Always reset status filter when changing tabs so Leads/Clients never open "empty"
+    // because of a stale status selection from the other tab.
+    setFilter('all');
+    updateSearchParams(nextListType, 'all');
   };
 
   const clientsByClassification = [
