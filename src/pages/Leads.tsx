@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,10 @@ import {
   Trash2,
   Menu,
   LayoutGrid,
-  List
+  List,
+  Bell,
+  TrendingUp,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
@@ -38,6 +41,7 @@ import { downloadCsv } from '@/utils/export';
 import { KanbanBoard } from '@/components/leads/KanbanBoard';
 import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -480,53 +484,72 @@ export default function Leads() {
     );
   }
 
+  const followUpCount = referrals.filter(r => r.follow_up_date && r.status !== 'converted').length;
+  const overdueFollowUps = referrals.filter(r => {
+    if (!r.follow_up_date || r.status === 'converted') return false;
+    const d = new Date(r.follow_up_date);
+    return d < new Date() && d.toDateString() !== new Date().toDateString();
+  }).length;
+  const conversionRate = referrals.length > 0 
+    ? Math.round((referrals.filter(r => r.status === 'converted').length / referrals.length) * 100) 
+    : 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold">
-              <span className="gold-text">Leads</span>
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gerencie todas as indicações
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl lavender-gradient lavender-glow">
+                <Sparkles className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-display font-bold">
+                  <span className="gold-text">Mini-CRM</span>
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Gerencie leads, follow-ups e conversões
+                </p>
+              </div>
+            </div>
           </div>
           
           {/* Controls */}
           <div className="flex flex-wrap items-center gap-2">
             {/* View Mode Toggle */}
-            <div className="flex items-center rounded-md border border-border bg-muted p-1">
+            <div className="flex items-center rounded-lg border border-border/50 bg-secondary/50 p-0.5">
               <Button
-                variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
+                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8 px-3"
+                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'kanban' && "lavender-gradient text-primary-foreground shadow-sm")}
                 onClick={() => handleViewModeChange('kanban')}
               >
-                <LayoutGrid className="h-4 w-4" />
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Kanban
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8 px-3"
+                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'list' && "lavender-gradient text-primary-foreground shadow-sm")}
                 onClick={() => handleViewModeChange('list')}
               >
-                <List className="h-4 w-4" />
+                <List className="h-3.5 w-3.5" />
+                Lista
               </Button>
             </div>
 
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
-              <Download className="h-4 w-4" />
-              Exportar CSV
+            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleExport}>
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Exportar</span>
             </Button>
             {isAdmin && (
               <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Menu className="h-4 w-4" />
-                      Configurações
+                    <Button variant="outline" size="sm" className="gap-2 text-xs">
+                      <Menu className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Config</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -672,37 +695,88 @@ export default function Leads() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card className="glass-card border-info/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-info">
-                {referrals.filter(r => r.status === 'new').length}
-              </p>
-              <p className="text-xs text-muted-foreground">Novos</p>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <Card className="glass-card border-info/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-info/10 group-hover:bg-info/20 transition-colors">
+                  <Users className="h-4 w-4 text-info" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-info">
+                    {referrals.filter(r => r.status === 'new').length}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Novos</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-warning/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-warning">
-                {referrals.filter(r => r.status === 'contacted').length}
-              </p>
-              <p className="text-xs text-muted-foreground">Contatados</p>
+          <Card className="glass-card border-warning/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warning/10 group-hover:bg-warning/20 transition-colors">
+                  <MessageCircle className="h-4 w-4 text-warning" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-warning">
+                    {referrals.filter(r => r.status === 'contacted').length}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Contatados</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-success/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-success">
-                {referrals.filter(r => r.status === 'converted').length}
-              </p>
-              <p className="text-xs text-muted-foreground">Convertidos</p>
+          <Card className="glass-card border-success/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-success/10 group-hover:bg-success/20 transition-colors">
+                  <CheckCircle className="h-4 w-4 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-success">
+                    {referrals.filter(r => r.status === 'converted').length}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Convertidos</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-primary/20">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-primary">
-                {referrals.filter(isClientReferral).length}
-              </p>
-              <p className="text-xs text-muted-foreground">Clientes</p>
+          <Card className="glass-card border-primary/20 hover-lift group">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-primary">
+                    {conversionRate}%
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Conversão</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={cn(
+            "glass-card hover-lift group",
+            overdueFollowUps > 0 ? "border-destructive/30" : "border-accent/20"
+          )}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  overdueFollowUps > 0 ? "bg-destructive/10 group-hover:bg-destructive/20" : "bg-accent/10 group-hover:bg-accent/20"
+                )}>
+                  <Bell className={cn("h-4 w-4", overdueFollowUps > 0 ? "text-destructive" : "text-accent")} />
+                </div>
+                <div>
+                  <p className={cn("text-2xl font-bold", overdueFollowUps > 0 ? "text-destructive" : "text-accent")}>
+                    {followUpCount}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                    {overdueFollowUps > 0 ? `${overdueFollowUps} atrasado${overdueFollowUps > 1 ? 's' : ''}` : 'Follow-ups'}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useState } from 'react';
 import { KanbanColumn } from './KanbanColumn';
 import { KanbanCard } from './KanbanCard';
@@ -32,7 +32,13 @@ export function KanbanBoard({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
       },
     })
   );
@@ -99,8 +105,8 @@ export function KanbanBoard({
 
       <DragOverlay>
         {activeReferral && (
-          <div className="p-3 rounded-lg bg-background border-2 border-primary shadow-lg">
-            <p className="font-medium">{activeReferral.lead_name}</p>
+          <div className="p-3 rounded-xl bg-background border-2 border-primary shadow-lg backdrop-blur-sm">
+            <p className="font-medium text-sm">{activeReferral.lead_name}</p>
           </div>
         )}
       </DragOverlay>

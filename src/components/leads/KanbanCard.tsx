@@ -1,10 +1,12 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Phone, MessageCircle, GripVertical, FileText, Calendar } from 'lucide-react';
+import { Phone, MessageCircle, GripVertical, FileText, Calendar, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/utils/whatsapp';
+import { isPast, isToday, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type { Referral } from '@/types/database';
 
 interface KanbanCardProps {
@@ -42,13 +44,19 @@ export function KanbanCard({
     );
   };
 
+  const followUpDate = referral.follow_up_date ? new Date(referral.follow_up_date) : null;
+  const isOverdue = followUpDate ? isPast(followUpDate) && !isToday(followUpDate) : false;
+  const isDueToday = followUpDate ? isToday(followUpDate) : false;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group p-3 rounded-lg bg-background border border-border/50 hover:border-primary/30 transition-all cursor-pointer",
-        isDragging && "opacity-50 shadow-lg ring-2 ring-primary"
+        "group p-3 rounded-xl bg-background/80 border border-border/40 hover:border-primary/30 transition-all cursor-pointer backdrop-blur-sm",
+        isDragging && "opacity-50 shadow-lg ring-2 ring-primary",
+        isOverdue && "border-destructive/40 bg-destructive/5",
+        isDueToday && "border-warning/40 bg-warning/5"
       )}
     >
       <div className="flex items-start gap-2">
@@ -61,44 +69,55 @@ export function KanbanCard({
         </button>
         
         <div className="flex-1 min-w-0" onClick={() => onOpenDetails(referral)}>
-          <p className="font-medium truncate">{referral.lead_name}</p>
+          <p className="font-medium truncate text-sm">{referral.lead_name}</p>
           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
             <Phone className="h-3 w-3" />
             {formatPhoneNumber(referral.lead_phone)}
           </p>
           
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="flex flex-wrap gap-1 mt-2">
             {getTagBadge(referral.contact_tag)}
             {referral.is_client && (
-              <Badge variant="outline" className="text-xs bg-success/15 text-success border-success/30">
+              <Badge variant="outline" className="text-[10px] bg-success/15 text-success border-success/30">
                 Cliente
               </Badge>
             )}
             {referral.notes && (
-              <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-border">
-                <FileText className="h-3 w-3 mr-1" />
-                Obs.
+              <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border">
+                <FileText className="h-2.5 w-2.5 mr-0.5" />
+                Obs
               </Badge>
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            {new Date(referral.created_at).toLocaleDateString('pt-BR')}
-          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {new Date(referral.created_at).toLocaleDateString('pt-BR')}
+            </p>
+            {followUpDate && (
+              <p className={cn(
+                "text-[11px] flex items-center gap-1 font-medium",
+                isOverdue ? "text-destructive" : isDueToday ? "text-warning" : "text-muted-foreground"
+              )}>
+                <Bell className="h-3 w-3" />
+                {format(followUpDate, 'dd/MM', { locale: ptBR })}
+              </p>
+            )}
+          </div>
         </div>
 
         {isAdmin && referral.status !== 'converted' && (
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => {
               e.stopPropagation();
               onWhatsApp(referral);
             }}
           >
-            <MessageCircle className="h-4 w-4" />
+            <MessageCircle className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>

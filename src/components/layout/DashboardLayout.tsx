@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { 
   Scissors, 
   LayoutDashboard, 
@@ -64,13 +65,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <span className="font-display font-bold gold-text">Growth Game</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationCenter />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -144,10 +148,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* User Info & Logout */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="mb-4 p-3 rounded-lg bg-sidebar-accent/50">
-              <p className="font-medium text-sm truncate">{profile?.name || 'Usuário'}</p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {role === 'admin' ? 'Administrador' : role === 'barber' ? 'Barbeiro' : 'Cliente'}
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm truncate">{profile?.name || 'Usuário'}</p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {role === 'admin' ? 'Administrador' : role === 'barber' ? 'Barbeiro' : 'Cliente'}
+                  </p>
+                </div>
+                <NotificationCenter />
+              </div>
               {profile && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Saldo:</span>

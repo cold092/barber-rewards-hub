@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      kanban_columns: {
+        Row: {
+          color: string
+          column_id: string
+          created_at: string
+          id: string
+          position: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          column_id: string
+          created_at?: string
+          id?: string
+          position?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          column_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lead_history: {
         Row: {
           created_at: string
@@ -91,6 +121,8 @@ export type Database = {
           contact_tag: string | null
           converted_plan_id: string | null
           created_at: string
+          follow_up_date: string | null
+          follow_up_note: string | null
           id: string
           is_client: boolean
           is_qualified: boolean | null
@@ -109,6 +141,8 @@ export type Database = {
           contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
+          follow_up_date?: string | null
+          follow_up_note?: string | null
           id?: string
           is_client?: boolean
           is_qualified?: boolean | null
@@ -127,6 +161,8 @@ export type Database = {
           contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
+          follow_up_date?: string | null
+          follow_up_note?: string | null
           id?: string
           is_client?: boolean
           is_qualified?: boolean | null

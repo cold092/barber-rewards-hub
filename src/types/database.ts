@@ -38,8 +38,20 @@ export interface Referral {
   lead_points: number;
   notes: string | null;
   is_qualified: boolean | null;
+  follow_up_date: string | null;
+  follow_up_note: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface KanbanColumnConfig {
+  id: string;
+  user_id: string;
+  column_id: string;
+  title: string;
+  color: string;
+  position: number;
+  created_at: string;
 }
 
 export interface ReferralWithProfile extends Referral {
