@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, type DragEvent } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,7 +80,9 @@ export default function Leads() {
   const [convertingReferral, setConvertingReferral] = useState<Referral | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
-
+  const [manualOrder, setManualOrder] = useState<string[]>([]);
+  const [draggedReferralId, setDraggedReferralId] = useState<string | null>(null);
+  const [dragOverReferralId, setDragOverReferralId] = useState<string | null>(null);
   const contactTagOptions = [
     { value: 'sql', label: 'SQL', className: 'bg-success/20 text-success border-success/30' },
     { value: 'mql', label: 'MQL', className: 'bg-info/20 text-info border-info/30' },
@@ -175,6 +177,32 @@ export default function Leads() {
     if (filter === 'all') return true;
     return referral.status === filter;
   });
+
+  const orderedFilteredReferrals = [
+    ...manualOrder
+      .map((id) => filteredReferrals.find((referral) => referral.id === id))
+      .filter((referral): referral is Referral => Boolean(referral)),
+    ...filteredReferrals.filter((referral) => !manualOrder.includes(referral.id))
+  ];
+
+  useEffect(() => {
+    setManualOrder((prev) => {
+      const validIds = prev.filter((id) => filteredReferrals.some((referral) => referral.id === id));
+      const missingIds = filteredReferrals
+        .map((referral) => referral.id)
+        .filter((id) => !validIds.includes(id));
+
+      const nextOrder = [...validIds, ...missingIds];
+      if (nextOrder.length === prev.length && nextOrder.every((id, index) => id === prev[index])) {
+        return prev;
+      }
+
+      return nextOrder;
+    });
+  }, [filteredReferrals]);
+
+  const clientReferrals = filteredReferrals.filter(isClientReferral);
+  const leadReferrals = filteredReferrals.filter((referral) => !isClientReferral(referral));
 
   const handleContact = async (referral: Referral) => {
     const result = await markAsContacted(referral.id);
@@ -445,6 +473,44 @@ export default function Leads() {
 
   const rewardPlans = getRewardPlans();
 
+  const handleDragStart = (event: DragEvent<HTMLDivElement>, referralId: string) => {
+    setDraggedReferralId(referralId);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', referralId);
+    window.getSelection?.()?.removeAllRanges();
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>, referralId: string) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    if (draggedReferralId && draggedReferralId !== referralId) {
+      setDragOverReferralId(referralId);
+    }
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>, targetReferralId: string) => {
+    event.preventDefault();
+    if (!draggedReferralId || draggedReferralId === targetReferralId) return;
+
+    setManualOrder((prev) => {
+      const sourceIndex = prev.indexOf(draggedReferralId);
+      const targetIndex = prev.indexOf(targetReferralId);
+      if (sourceIndex === -1 || targetIndex === -1) return prev;
+
+      const next = [...prev];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, moved);
+      return next;
+    });
+
+    setDragOverReferralId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedReferralId(null);
+    setDragOverReferralId(null);
+  };
+
   const getStatusBadge = (status: Referral['status']) => {
     switch (status) {
       case 'new':
@@ -476,8 +542,17 @@ export default function Leads() {
     );
   };
 
-  const renderReferralCard = (referral: Referral) => (
-    <div key={referral.id} className="p-4 rounded-lg bg-secondary/50 space-y-3">
+  const renderReferralCard = (referral: Referral, enableDrag = false) => (
+    <div
+      key={referral.id}
+      draggable={enableDrag}
+      onDragStart={enableDrag ? (event) => handleDragStart(event, referral.id) : undefined}
+      onDragOver={enableDrag ? (event) => handleDragOver(event, referral.id) : undefined}
+      onDrop={enableDrag ? (event) => handleDrop(event, referral.id) : undefined}
+      onDragEnd={enableDrag ? handleDragEnd : undefined}
+      className={`p-4 rounded-lg bg-secondary/50 space-y-3 border border-transparent transition ${enableDrag ? 'select-none touch-none' : ''} ${dragOverReferralId === referral.id ? 'border-primary/60' : ''} ${draggedReferralId === referral.id ? 'opacity-60' : ''}`}
+      style={enableDrag ? { WebkitUserSelect: 'none', WebkitTouchCallout: 'none' } : undefined}
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-semibold text-lg">{referral.lead_name}</p>
@@ -622,14 +697,14 @@ export default function Leads() {
     ...Object.entries(rewardPlans).map(([planId, plan]) => ({
       key: planId,
       title: plan.label,
-      items: filteredReferrals.filter(
+      items: orderedFilteredReferrals.filter(
         (referral) => isClientReferral(referral) && referral.converted_plan_id === planId
       )
     })),
     {
       key: 'no-plan',
       title: 'Sem Plano Definido',
-      items: filteredReferrals.filter(
+      items: orderedFilteredReferrals.filter(
         (referral) =>
           isClientReferral(referral) &&
           (!referral.converted_plan_id || !rewardPlans[referral.converted_plan_id])
@@ -667,7 +742,7 @@ export default function Leads() {
     </div>
   );
 
-  const leadsListContent = <div className="space-y-4">{filteredReferrals.map((referral) => renderReferralCard(referral))}</div>;
+  const leadsListContent = <div className="space-y-4">{orderedFilteredReferrals.map((referral) => renderReferralCard(referral, true))}</div>;
 
 
   const listTitle = listType === 'clients' ? `Clientes (${filteredReferrals.length})` : `Leads (${filteredReferrals.length})`;
