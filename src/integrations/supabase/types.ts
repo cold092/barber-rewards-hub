@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      kanban_columns: {
+        Row: {
+          color: string
+          column_id: string
+          created_at: string
+          id: string
+          position: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          column_id: string
+          created_at?: string
+          id?: string
+          position?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          column_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lead_history: {
+        Row: {
+          created_at: string
+          created_by_id: string | null
+          created_by_name: string | null
+          event_data: Json | null
+          event_type: Database["public"]["Enums"]["lead_event_type"]
+          id: string
+          referral_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          event_data?: Json | null
+          event_type: Database["public"]["Enums"]["lead_event_type"]
+          id?: string
+          referral_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          event_data?: Json | null
+          event_type?: Database["public"]["Enums"]["lead_event_type"]
+          id?: string
+          referral_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_history_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -56,11 +124,15 @@ export type Database = {
           created_by_name: string | null
           created_by_role: Database["public"]["Enums"]["app_role"] | null
           created_at: string
+          follow_up_date: string | null
+          follow_up_note: string | null
           id: string
           is_client: boolean
+          is_qualified: boolean | null
           lead_name: string
           lead_phone: string
           lead_points: number
+          notes: string | null
           referred_by_lead_id: string | null
           referrer_id: string
           referrer_name: string
@@ -75,11 +147,15 @@ export type Database = {
           created_by_name?: string | null
           created_by_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string
+          follow_up_date?: string | null
+          follow_up_note?: string | null
           id?: string
           is_client?: boolean
+          is_qualified?: boolean | null
           lead_name: string
           lead_phone: string
           lead_points?: number
+          notes?: string | null
           referred_by_lead_id?: string | null
           referrer_id: string
           referrer_name: string
@@ -94,11 +170,15 @@ export type Database = {
           created_by_name?: string | null
           created_by_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string
+          follow_up_date?: string | null
+          follow_up_note?: string | null
           id?: string
           is_client?: boolean
+          is_qualified?: boolean | null
           lead_name?: string
           lead_phone?: string
           lead_points?: number
+          notes?: string | null
           referred_by_lead_id?: string | null
           referrer_id?: string
           referrer_name?: string
@@ -162,6 +242,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "barber" | "client"
+      lead_event_type:
+        | "status_change"
+        | "tag_change"
+        | "qualification_change"
+        | "note_added"
+        | "whatsapp_contact"
+        | "conversion"
+        | "created"
       referral_status: "new" | "contacted" | "converted"
     }
     CompositeTypes: {
@@ -291,6 +379,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "barber", "client"],
+      lead_event_type: [
+        "status_change",
+        "tag_change",
+        "qualification_change",
+        "note_added",
+        "whatsapp_contact",
+        "conversion",
+        "created",
+      ],
       referral_status: ["new", "contacted", "converted"],
     },
   },
