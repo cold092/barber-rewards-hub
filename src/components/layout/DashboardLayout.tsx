@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { 
   Scissors, 
   LayoutDashboard, 
@@ -12,8 +13,8 @@ import {
   Menu,
   X,
   Settings,
-  FileText,
-  UserCheck
+  UserCheck,
+  BarChart3
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -34,13 +35,8 @@ const navItems: NavItem[] = [
   { path: '/leads', label: 'Leads', icon: Users },
   { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
+  { path: '/relatorios', label: 'Relatórios', icon: BarChart3, adminOnly: true },
   { path: '/equipe', label: 'Gerenciar Equipe', icon: Settings, adminOnly: true },
-];
-
-const reportItems = [
-  { label: 'Clientes convertidos', icon: UserCheck, view: 'converted-clients' },
-  { label: 'Total de clientes', icon: Users, view: 'clients' },
-  { label: 'Leads', icon: FileText, view: 'leads' }
 ];
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -52,8 +48,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Filter nav items based on role
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
   const showReports = isAdmin;
-  const isReportActive = (view: string) =>
-    location.pathname === '/leads' && new URLSearchParams(location.search).get('view') === view;
 
   const handleSignOut = async () => {
     await signOut();
@@ -69,15 +63,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center">
               <Scissors className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold gold-text">BarberCRM</span>
+            <span className="font-display font-bold gold-text">Growth Game</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationCenter />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -97,8 +94,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Scissors className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-display font-bold gold-text text-lg">BarberCRM</h1>
-                <p className="text-xs text-muted-foreground">Sistema de Indicações</p>
+                <h1 className="font-display font-bold gold-text text-lg">Growth Game</h1>
+                <p className="text-xs text-muted-foreground">Sistema de Crescimento</p>
               </div>
             </div>
           </div>
@@ -126,30 +123,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               );
             })}
             {showReports && (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <p className="px-2 text-xs uppercase tracking-wide text-muted-foreground">
                   Relatórios
                 </p>
-                {reportItems.map((item) => {
-                  const isActive = isReportActive(item.view);
-                  return (
-                    <Button
-                      key={item.view}
-                      variant="ghost"
-                      className={cn(
-                        "w-full justify-start gap-3 h-11",
-                        isActive && "bg-sidebar-accent text-primary"
-                      )}
-                      onClick={() => {
-                        navigate(`/leads?view=${item.view}`);
-                        setSidebarOpen(false);
-                      }}
-                    >
-                      <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                      {item.label}
-                    </Button>
-                  );
-                })}
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start gap-3 h-11",
+                    location.pathname === '/relatorios' && "bg-sidebar-accent text-primary"
+                  )}
+                  onClick={() => {
+                    navigate('/relatorios');
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <UserCheck className={cn("h-5 w-5", location.pathname === '/relatorios' && "text-primary")} />
+                  Visualizar relatórios
+                </Button>
               </div>
             )}
           </nav>
@@ -157,10 +148,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* User Info & Logout */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="mb-4 p-3 rounded-lg bg-sidebar-accent/50">
-              <p className="font-medium text-sm truncate">{profile?.name || 'Usuário'}</p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {role === 'admin' ? 'Administrador' : role === 'barber' ? 'Barbeiro' : 'Cliente'}
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm truncate">{profile?.name || 'Usuário'}</p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {role === 'admin' ? 'Administrador' : role === 'barber' ? 'Barbeiro' : 'Cliente'}
+                  </p>
+                </div>
+                <NotificationCenter />
+              </div>
               {profile && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Saldo:</span>
