@@ -12,7 +12,7 @@ import { UserPlus, Phone, User, Users, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { registerLead, registerClient, getAllBarbers, getAllLeadsAsReferrers, registerLeadByLead, getBarberLeadsAsReferrers } from '@/services/referralService';
-import { REFERRAL_BONUS_POINTS } from '@/config/plans';
+import { BARBER_REFERRAL_CONVERSION_PERCENT, REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { isValidPhone } from '@/utils/whatsapp';
 import type { Profile } from '@/types/database';
 
@@ -23,7 +23,7 @@ const leadSchema = z.object({
 
 export default function NewReferral() {
   const navigate = useNavigate();
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, role } = useAuth();
   const [loading, setLoading] = useState(false);
   const [leadName, setLeadName] = useState('');
   const [leadPhone, setLeadPhone] = useState('');
@@ -36,6 +36,7 @@ export default function NewReferral() {
   const [loadingReferrers, setLoadingReferrers] = useState(true);
   const [referrerType, setReferrerType] = useState<'user' | 'lead'>('user');
   const [barberReferrerType, setBarberReferrerType] = useState<'self' | 'client'>('self');
+  const [clientReferrerType, setClientReferrerType] = useState<'barber' | 'team'>('barber');
   const [selectedBarberClientId, setSelectedBarberClientId] = useState('');
   const [entryType, setEntryType] = useState<'lead' | 'client'>('lead');
 
@@ -82,25 +83,43 @@ export default function NewReferral() {
         setLoading(false);
         return;
       }
+      const createdBy = role && profile ? { id: profile.id, name: profile.name, role } : undefined;
 
       if (isAdmin) {
-        if (!selectedReferrerId) {
-          toast.error('Selecione o barbeiro responsável');
+        if (clientReferrerType === 'barber') {
+          if (!selectedReferrerId) {
+            toast.error('Selecione o barbeiro responsável');
+            setLoading(false);
+            return;
+          }
+
+          const referrer = barbers.find(r => r.id === selectedReferrerId);
+          if (!referrer) {
+            toast.error('Barbeiro não encontrado');
+            setLoading(false);
+            return;
+          }
+
+          const result = await registerClient(referrer.id, referrer.name, {
+            clientName: leadName.trim(),
+            clientPhone: leadPhone.trim()
+          }, createdBy);
+
           setLoading(false);
+
+          if (result.success) {
+            toast.success('Cliente registrado com sucesso!');
+            navigate('/leads');
+          } else {
+            toast.error(result.error || 'Erro ao registrar cliente');
+          }
           return;
         }
 
-        const referrer = barbers.find(r => r.id === selectedReferrerId);
-        if (!referrer) {
-          toast.error('Barbeiro não encontrado');
-          setLoading(false);
-          return;
-        }
-
-        const result = await registerClient(referrer.id, referrer.name, {
+        const result = await registerClient(profile.id, profile.name, {
           clientName: leadName.trim(),
           clientPhone: leadPhone.trim()
-        });
+        }, createdBy);
 
         setLoading(false);
 
@@ -116,7 +135,7 @@ export default function NewReferral() {
       const result = await registerClient(profile.id, profile.name, {
         clientName: leadName.trim(),
         clientPhone: leadPhone.trim()
-      });
+      }, createdBy);
 
       setLoading(false);
 
@@ -136,6 +155,7 @@ export default function NewReferral() {
         setLoading(false);
         return;
       }
+      const createdBy = role && profile ? { id: profile.id, name: profile.name, role } : undefined;
 
       if (!selectedLeadReferrerId) {
         toast.error('Selecione o cliente que está indicando');
@@ -143,11 +163,30 @@ export default function NewReferral() {
         return;
       }
 
+      if (!selectedReferrerId) {
+        toast.error('Selecione o barbeiro responsável');
+        setLoading(false);
+        return;
+      }
+
+      const responsibleBarber = referrers.find((ref) => ref.id === selectedReferrerId);
+      if (!responsibleBarber) {
+        toast.error('Barbeiro responsável não encontrado');
+        setLoading(false);
+        return;
+      }
+
       const leadReferrer = leadReferrers.find(l => l.id === selectedLeadReferrerId);
-      const result = await registerLeadByLead(profile.id, selectedLeadReferrerId, {
+      const result = await registerLeadByLead(
+        responsibleBarber.id,
+        responsibleBarber.name,
+        selectedLeadReferrerId,
+        {
         leadName: leadName.trim(),
         leadPhone: leadPhone.trim()
-      });
+      },
+        createdBy
+      );
       
       setLoading(false);
       
@@ -178,10 +217,11 @@ export default function NewReferral() {
         return;
       }
       
+      const createdBy = role && profile ? { id: profile.id, name: profile.name, role } : undefined;
       const result = await registerLead(selectedReferrerId, referrer.name, {
         leadName: leadName.trim(),
         leadPhone: leadPhone.trim()
-      });
+      }, createdBy);
       
       setLoading(false);
       
@@ -203,6 +243,7 @@ export default function NewReferral() {
       setLoading(false);
       return;
     }
+    const createdBy = role && profile ? { id: profile.id, name: profile.name, role } : undefined;
     
     // If barber selected a client as referrer
     if (barberReferrerType === 'client') {
@@ -213,10 +254,10 @@ export default function NewReferral() {
       }
 
       const clientReferrer = barberClients.find(c => c.id === selectedBarberClientId);
-      const result = await registerLeadByLead(profile.id, selectedBarberClientId, {
+      const result = await registerLeadByLead(profile.id, profile.name, selectedBarberClientId, {
         leadName: leadName.trim(),
         leadPhone: leadPhone.trim()
-      });
+      }, createdBy);
       
       setLoading(false);
       
@@ -236,7 +277,7 @@ export default function NewReferral() {
     const result = await registerLead(profile.id, profile.name, {
       leadName: leadName.trim(),
       leadPhone: leadPhone.trim()
-    });
+    }, createdBy);
     
     setLoading(false);
     
@@ -350,31 +391,61 @@ export default function NewReferral() {
                       </Select>
                     </TabsContent>
                     
-                    <TabsContent value="lead" className="mt-4">
-                      <Select
-                        value={selectedLeadReferrerId}
-                        onValueChange={setSelectedLeadReferrerId}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione o cliente indicador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingReferrers ? (
-                            <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                          ) : leadReferrers.length === 0 ? (
-                            <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
-                          ) : (
-                            leadReferrers.map((lead) => (
-                              <SelectItem key={lead.id} value={lead.id}>
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4 text-muted-foreground" />
-                                  {lead.name} ({lead.phone})
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                    <TabsContent value="lead" className="mt-4 space-y-3">
+                      <div className="space-y-2">
+                        <Label>Cliente indicador</Label>
+                        <Select
+                          value={selectedLeadReferrerId}
+                          onValueChange={setSelectedLeadReferrerId}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione o cliente indicador" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {loadingReferrers ? (
+                              <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                            ) : leadReferrers.length === 0 ? (
+                              <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
+                            ) : (
+                              leadReferrers.map((lead) => (
+                                <SelectItem key={lead.id} value={lead.id}>
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    {lead.name} ({lead.phone})
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Barbeiro responsável</Label>
+                        <Select
+                          value={selectedReferrerId}
+                          onValueChange={setSelectedReferrerId}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione o barbeiro" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {loadingReferrers ? (
+                              <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                            ) : referrers.length === 0 ? (
+                              <SelectItem value="empty" disabled>Nenhum barbeiro encontrado</SelectItem>
+                            ) : (
+                              referrers.map((referrer) => (
+                                <SelectItem key={referrer.id} value={referrer.id}>
+                                  <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                    {referrer.name}
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </div>
@@ -453,28 +524,52 @@ export default function NewReferral() {
 
               {isAdmin && entryType === 'client' && (
                 <div className="space-y-2">
-                  <Label>Barbeiro responsável</Label>
-                  <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione o barbeiro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingReferrers ? (
-                        <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                      ) : barbers.length === 0 ? (
-                        <SelectItem value="empty" disabled>Nenhum barbeiro encontrado</SelectItem>
-                      ) : (
-                        barbers.map((referrer) => (
-                          <SelectItem key={referrer.id} value={referrer.id}>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              {referrer.name}
-                            </div>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Label>Responsável pelo cadastro</Label>
+                  <Tabs
+                    value={clientReferrerType}
+                    onValueChange={(v) => setClientReferrerType(v as 'barber' | 'team')}
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="barber" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Barbeiro
+                      </TabsTrigger>
+                      <TabsTrigger value="team" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Equipe
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="barber" className="mt-4">
+                      <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione o barbeiro" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingReferrers ? (
+                            <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                          ) : barbers.length === 0 ? (
+                            <SelectItem value="empty" disabled>Nenhum barbeiro encontrado</SelectItem>
+                          ) : (
+                            barbers.map((referrer) => (
+                              <SelectItem key={referrer.id} value={referrer.id}>
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-muted-foreground" />
+                                  {referrer.name}
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </TabsContent>
+
+                    <TabsContent value="team" className="mt-4">
+                      <div className="p-4 rounded-lg bg-secondary/60 border border-border/50">
+                        <p className="text-sm text-muted-foreground">Cadastro feito pela equipe.</p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               )}
 
@@ -521,8 +616,11 @@ export default function NewReferral() {
                     (isAdmin &&
                       entryType === 'lead' &&
                       ((referrerType === 'user' && (loadingReferrers || !selectedReferrerId)) ||
-                        (referrerType === 'lead' && (loadingReferrers || !selectedLeadReferrerId)))) ||
-                    (isAdmin && entryType === 'client' && (loadingReferrers || !selectedReferrerId)) ||
+                        (referrerType === 'lead' && (loadingReferrers || !selectedLeadReferrerId || !selectedReferrerId)))) ||
+                    (isAdmin &&
+                      entryType === 'client' &&
+                      clientReferrerType === 'barber' &&
+                      (loadingReferrers || !selectedReferrerId)) ||
                     (!isAdmin && entryType === 'lead' && barberReferrerType === 'client' && (loadingReferrers || !selectedBarberClientId))
                   }
                 >
@@ -549,7 +647,8 @@ export default function NewReferral() {
                 <p className="text-sm text-muted-foreground mt-1">
                   Cliente cadastrado pode indicar novos leads<br />
                   Ao indicar: +{REFERRAL_BONUS_POINTS} pontos imediatos<br />
-                  Ao converter: +30 a +400 pontos (depende do plano vendido)
+                  Ao converter: +30 a +400 pontos (depende do plano vendido)<br />
+                  Indicação de cliente convertida: barbeiro ganha {BARBER_REFERRAL_CONVERSION_PERCENT}% dos pontos
                 </p>
               </div>
             </div>
