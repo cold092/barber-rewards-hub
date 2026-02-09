@@ -52,6 +52,9 @@ export type Database = {
           client_since: string | null
           contact_tag: string | null
           converted_plan_id: string | null
+          created_by_id: string | null
+          created_by_name: string | null
+          created_by_role: Database["public"]["Enums"]["app_role"] | null
           created_at: string
           id: string
           is_client: boolean
@@ -68,6 +71,9 @@ export type Database = {
           client_since?: string | null
           contact_tag?: string | null
           converted_plan_id?: string | null
+          created_by_id?: string | null
+          created_by_name?: string | null
+          created_by_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string
           id?: string
           is_client?: boolean
@@ -84,6 +90,9 @@ export type Database = {
           client_since?: string | null
           contact_tag?: string | null
           converted_plan_id?: string | null
+          created_by_id?: string | null
+          created_by_name?: string | null
+          created_by_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string
           id?: string
           is_client?: boolean
