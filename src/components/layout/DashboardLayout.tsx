@@ -34,6 +34,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/leads', label: 'Leads', icon: Users },
+  { path: '/clientes', label: 'Clientes', icon: UserCheck },
   { path: '/whatsapp', label: 'WhatsApp', icon: MessageSquare },
   { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
