@@ -1,5 +1,10 @@
+import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
+
+const PAGE_SIZE = 10;
 
 interface KanbanColumnProps {
   id: string;
@@ -10,9 +15,14 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ id, title, count, color, children }: KanbanColumnProps) {
-  const { isOver, setNodeRef } = useDroppable({
-    id,
-  });
+  const { isOver, setNodeRef } = useDroppable({ id });
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const childArray = Array.isArray(children) ? children : children ? [children] : [];
+  const totalItems = childArray.length;
+  const visibleItems = childArray.slice(0, visibleCount);
+  const hasMore = visibleCount < totalItems;
+  const remaining = totalItems - visibleCount;
 
   return (
     <div
@@ -31,7 +41,18 @@ export function KanbanColumn({ id, title, count, color, children }: KanbanColumn
         </div>
       </div>
       <div className="flex-1 p-2.5 space-y-2 overflow-y-auto">
-        {children}
+        {visibleItems}
+        {hasMore && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+            Ver mais {Math.min(remaining, PAGE_SIZE)} de {remaining}
+          </Button>
+        )}
       </div>
     </div>
   );
