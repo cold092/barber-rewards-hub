@@ -5,12 +5,14 @@ import { ChatArea } from '@/components/whatsapp/ChatArea';
 import { LeadSidePanel } from '@/components/whatsapp/LeadSidePanel';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
+import { useTagConfig } from '@/contexts/TagConfigContext';
 import { MOCK_CONVERSATIONS, AVAILABLE_TAGS } from '@/data/whatsappMockData';
 import type { WhatsAppConversation, WhatsAppMessage } from '@/data/whatsappMockData';
 import { cn } from '@/lib/utils';
 
 export default function WhatsApp() {
   const { activeTags } = useTagFilter();
+  const { tags: crmTags } = useTagConfig();
   const [conversations, setConversations] = useState<WhatsAppConversation[]>(MOCK_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showPanel, setShowPanel] = useState(false);
@@ -108,7 +110,7 @@ export default function WhatsApp() {
         {/* Global Tag Filter */}
         <div className="mb-3">
           <GlobalTagFilter
-            tagOptions={AVAILABLE_TAGS.slice(0, 6).map(t => ({ value: t.id, label: t.label, className: t.color }))}
+            tagOptions={crmTags}
           />
         </div>
 

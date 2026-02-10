@@ -24,6 +24,8 @@ import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
 import { ColumnManager, type ColumnConfig } from '@/components/leads/ColumnManager';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
+import { useTagConfig } from '@/contexts/TagConfigContext';
+import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +42,7 @@ const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
 export default function Clients() {
   const { isAdmin, isBarber, profile, user } = useAuth();
   const { activeTags } = useTagFilter();
+  const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
@@ -48,17 +51,11 @@ export default function Clients() {
   const [convertingReferral, setConvertingReferral] = useState<Referral | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
+  const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(CLIENT_COLUMNS_KEY);
     return saved ? JSON.parse(saved) : DEFAULT_CLIENT_COLUMNS;
   });
-
-  const contactTagOptions = [
-    { value: 'sql', label: 'SQL', className: 'bg-success/20 text-success border-success/30' },
-    { value: 'mql', label: 'MQL', className: 'bg-info/20 text-info border-info/30' },
-    { value: 'cold', label: 'Frio', className: 'bg-muted text-muted-foreground border-border' },
-    { value: 'scheduled', label: 'Marcou', className: 'bg-accent/20 text-accent-foreground border-accent/30' },
-  ];
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -208,6 +205,9 @@ export default function Clients() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setTagSettingsOpen(true)}>
+              Tags
+            </Button>
             <ColumnManager columns={columns} onColumnsChange={handleColumnsChange} />
           </div>
         </div>
@@ -321,6 +321,8 @@ export default function Clients() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TagSettingsDialog open={tagSettingsOpen} onOpenChange={setTagSettingsOpen} />
     </DashboardLayout>
   );
 }
