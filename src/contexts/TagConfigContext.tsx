@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
+import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface TagConfig {
   value: string;
@@ -31,6 +33,7 @@ interface TagConfigContextType {
   updateTag: (value: string, updated: Partial<TagConfig>) => void;
   removeTag: (value: string) => void;
   resetToDefaults: () => void;
+  loading: boolean;
 }
 
 const TagConfigContext = createContext<TagConfigContextType | undefined>(undefined);
@@ -39,40 +42,72 @@ export function TagConfigProvider({ children }: { children: ReactNode }) {
   const [tags, setTags] = useState<TagConfig[]>(() => {
     const stored = localStorage.getItem(TAG_CONFIG_STORAGE_KEY);
     if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return DEFAULT_TAGS;
-      }
+      try { return JSON.parse(stored); } catch { /* fall through */ }
     }
     return DEFAULT_TAGS;
   });
+  const [loading, setLoading] = useState(true);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Load from DB on mount
   useEffect(() => {
-    localStorage.setItem(TAG_CONFIG_STORAGE_KEY, JSON.stringify(tags));
-  }, [tags]);
+    let cancelled = false;
+    (async () => {
+      const dbTags = await getGlobalSetting<TagConfig[]>('tags');
+      if (!cancelled && dbTags && Array.isArray(dbTags) && dbTags.length > 0) {
+        setTags(dbTags);
+        localStorage.setItem(TAG_CONFIG_STORAGE_KEY, JSON.stringify(dbTags));
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Persist to localStorage + debounced DB save
+  const persistTags = useCallback((nextTags: TagConfig[]) => {
+    localStorage.setItem(TAG_CONFIG_STORAGE_KEY, JSON.stringify(nextTags));
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await upsertSetting(user.id, 'tags', nextTags);
+      }
+    }, 500);
+  }, []);
 
   const addTag = useCallback((tag: TagConfig) => {
     setTags(prev => {
       if (prev.some(t => t.value === tag.value)) return prev;
-      return [...prev, tag];
+      const next = [...prev, tag];
+      persistTags(next);
+      return next;
     });
-  }, []);
+  }, [persistTags]);
 
   const updateTag = useCallback((value: string, updated: Partial<TagConfig>) => {
-    setTags(prev => prev.map(t => t.value === value ? { ...t, ...updated } : t));
-  }, []);
+    setTags(prev => {
+      const next = prev.map(t => t.value === value ? { ...t, ...updated } : t);
+      persistTags(next);
+      return next;
+    });
+  }, [persistTags]);
 
   const removeTag = useCallback((value: string) => {
-    setTags(prev => prev.filter(t => t.value !== value));
-  }, []);
+    setTags(prev => {
+      const next = prev.filter(t => t.value !== value);
+      persistTags(next);
+      return next;
+    });
+  }, [persistTags]);
 
   const resetToDefaults = useCallback(() => {
     setTags(DEFAULT_TAGS);
-  }, []);
+    persistTags(DEFAULT_TAGS);
+  }, [persistTags]);
 
   return (
-    <TagConfigContext.Provider value={{ tags, presetColors: PRESET_COLORS, addTag, updateTag, removeTag, resetToDefaults }}>
+    <TagConfigContext.Provider value={{ tags, presetColors: PRESET_COLORS, addTag, updateTag, removeTag, resetToDefaults, loading }}>
       {children}
     </TagConfigContext.Provider>
   );

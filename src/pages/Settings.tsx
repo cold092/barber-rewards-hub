@@ -25,6 +25,7 @@ import { DEFAULT_LEAD_MESSAGE, DEFAULT_CLIENT_MESSAGE } from '@/utils/whatsapp';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
+import { upsertSetting, getGlobalSetting } from '@/services/settingsService';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
@@ -46,7 +47,7 @@ const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
 ];
 
 export default function SettingsPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { tags, presetColors, addTag, updateTag, removeTag, resetToDefaults } = useTagConfig();
 
   // Plans
@@ -67,32 +68,42 @@ export default function SettingsPage() {
   const [newTagColor, setNewTagColor] = useState(presetColors[0].className);
 
   useEffect(() => {
-    // Load plans
-    const plans = getRewardPlans();
-    setPlanDraft(
-      Object.fromEntries(
-        Object.entries(plans).map(([id, p]) => [id, { points: String(p.points), price: String(p.price) }])
-      )
-    );
+    if (!user) return;
+    let cancelled = false;
 
-    // Load messages
-    setLeadMessageDraft(localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY) || DEFAULT_LEAD_MESSAGE);
-    setClientMessageDraft(localStorage.getItem(CLIENT_MESSAGE_STORAGE_KEY) || DEFAULT_CLIENT_MESSAGE);
+    (async () => {
+      // Load plans from DB, fallback to localStorage
+      const dbPlans = await getGlobalSetting<Record<string, { points: number; price: number }>>('plan_overrides');
+      const plans = dbPlans || getRewardPlans();
+      const entries = dbPlans
+        ? Object.entries(REWARD_PLANS).map(([id]) => [id, { points: String(dbPlans[id]?.points ?? REWARD_PLANS[id].points), price: String(dbPlans[id]?.price ?? REWARD_PLANS[id].price) }])
+        : Object.entries(plans).map(([id, p]) => [id, { points: String(p.points), price: String(p.price) }]);
+      if (!cancelled) setPlanDraft(Object.fromEntries(entries));
 
-    // Load columns
-    const savedLeadCols = localStorage.getItem(LEADS_COLUMNS_KEY);
-    setLeadColumns(savedLeadCols ? JSON.parse(savedLeadCols) : DEFAULT_LEAD_COLUMNS);
+      // Load messages from DB
+      const dbLeadMsg = await getGlobalSetting<string>('lead_message');
+      if (!cancelled) setLeadMessageDraft(dbLeadMsg || localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY) || DEFAULT_LEAD_MESSAGE);
 
-    const savedClientCols = localStorage.getItem(CLIENT_COLUMNS_KEY);
-    setClientColumns(savedClientCols ? JSON.parse(savedClientCols) : DEFAULT_CLIENT_COLUMNS);
-  }, []);
+      const dbClientMsg = await getGlobalSetting<string>('client_message');
+      if (!cancelled) setClientMessageDraft(dbClientMsg || localStorage.getItem(CLIENT_MESSAGE_STORAGE_KEY) || DEFAULT_CLIENT_MESSAGE);
+
+      // Load columns from DB
+      const dbLeadCols = await getGlobalSetting<ColumnConfig[]>('lead_columns');
+      if (!cancelled) setLeadColumns(dbLeadCols || JSON.parse(localStorage.getItem(LEADS_COLUMNS_KEY) || 'null') || DEFAULT_LEAD_COLUMNS);
+
+      const dbClientCols = await getGlobalSetting<ColumnConfig[]>('client_columns');
+      if (!cancelled) setClientColumns(dbClientCols || JSON.parse(localStorage.getItem(CLIENT_COLUMNS_KEY) || 'null') || DEFAULT_CLIENT_COLUMNS);
+    })();
+
+    return () => { cancelled = true; };
+  }, [user]);
 
   // --- Plans ---
   const handlePlanChange = (planId: string, field: 'points' | 'price', value: string) => {
     setPlanDraft(prev => ({ ...prev, [planId]: { ...prev[planId], [field]: value } }));
   };
 
-  const handleSavePlans = () => {
+  const handleSavePlans = async () => {
     const overrides = Object.fromEntries(
       Object.entries(planDraft).map(([id, v]) => {
         const base = REWARD_PLANS[id];
@@ -102,21 +113,24 @@ export default function SettingsPage() {
       })
     );
     localStorage.setItem(PLAN_OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
+    if (user) await upsertSetting(user.id, 'plan_overrides', overrides);
     toast.success('Planos salvos com sucesso');
   };
 
   // --- Messages ---
-  const handleSaveLeadMessage = () => {
+  const handleSaveLeadMessage = async () => {
     const msg = leadMessageDraft.trim() || DEFAULT_LEAD_MESSAGE;
     localStorage.setItem(LEAD_MESSAGE_STORAGE_KEY, msg);
     setLeadMessageDraft(msg);
+    if (user) await upsertSetting(user.id, 'lead_message', msg);
     toast.success('Mensagem para leads salva');
   };
 
-  const handleSaveClientMessage = () => {
+  const handleSaveClientMessage = async () => {
     const msg = clientMessageDraft.trim() || DEFAULT_CLIENT_MESSAGE;
     localStorage.setItem(CLIENT_MESSAGE_STORAGE_KEY, msg);
     setClientMessageDraft(msg);
+    if (user) await upsertSetting(user.id, 'client_message', msg);
     toast.success('Mensagem para clientes salva');
   };
 
@@ -135,14 +149,16 @@ export default function SettingsPage() {
   };
 
   // --- Columns ---
-  const saveLeadColumns = (cols: ColumnConfig[]) => {
+  const saveLeadColumns = async (cols: ColumnConfig[]) => {
     setLeadColumns(cols);
     localStorage.setItem(LEADS_COLUMNS_KEY, JSON.stringify(cols));
+    if (user) await upsertSetting(user.id, 'lead_columns', cols);
   };
 
-  const saveClientColumns = (cols: ColumnConfig[]) => {
+  const saveClientColumns = async (cols: ColumnConfig[]) => {
     setClientColumns(cols);
     localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(cols));
+    if (user) await upsertSetting(user.id, 'client_columns', cols);
   };
 
   const addLeadColumn = () => {
