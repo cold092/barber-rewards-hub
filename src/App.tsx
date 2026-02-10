@@ -15,6 +15,7 @@ import Ranking from "./pages/Ranking";
 import ManageTeam from "./pages/ManageTeam";
 import Reports from "./pages/Reports";
 import WhatsApp from "./pages/WhatsApp";
+import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -112,6 +113,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <WhatsApp />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/configuracoes"
+      element={
+        <ProtectedRoute>
+          <SettingsPage />
         </ProtectedRoute>
       }
     />

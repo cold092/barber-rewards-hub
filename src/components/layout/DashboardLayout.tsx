@@ -39,7 +39,8 @@ const navItems: NavItem[] = [
   { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
   { path: '/relatorios', label: 'Relatórios', icon: BarChart3, adminOnly: true },
-  { path: '/equipe', label: 'Gerenciar Equipe', icon: Settings, adminOnly: true },
+  { path: '/configuracoes', label: 'Configurações', icon: Settings, adminOnly: true },
+  { path: '/equipe', label: 'Gerenciar Equipe', icon: Users, adminOnly: true },
 ];
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
