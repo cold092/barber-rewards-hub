@@ -43,6 +43,8 @@ import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
 import { ColumnManager, type ColumnConfig } from '@/components/leads/ColumnManager';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
+import { useTagConfig } from '@/contexts/TagConfigContext';
+import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,6 +63,7 @@ const LEADS_COLUMNS_KEY = 'leadsKanbanColumns';
 export default function Leads() {
   const { isAdmin, isBarber, profile, user } = useAuth();
   const { activeTags } = useTagFilter();
+  const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
@@ -83,6 +86,7 @@ export default function Leads() {
   const [clientMessageDraft, setClientMessageDraft] = useState(DEFAULT_CLIENT_MESSAGE);
   const [planDraft, setPlanDraft] = useState<PlanDraft>({});
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Details dialog state
@@ -94,13 +98,6 @@ export default function Leads() {
   const [convertingReferral, setConvertingReferral] = useState<Referral | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
-
-  const contactTagOptions = [
-    { value: 'sql', label: 'SQL', className: 'bg-success/20 text-success border-success/30' },
-    { value: 'mql', label: 'MQL', className: 'bg-info/20 text-info border-info/30' },
-    { value: 'cold', label: 'Frio', className: 'bg-muted text-muted-foreground border-border' },
-    { value: 'scheduled', label: 'Marcou', className: 'bg-accent/20 text-accent-foreground border-accent/30' }
-  ];
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -583,7 +580,10 @@ export default function Leads() {
                     <DropdownMenuLabel>Configurações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setConfigDialogOpen(true)}>
-                      Abrir painel
+                      Planos e Mensagens
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTagSettingsOpen(true)}>
+                      Configurar Tags
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -1068,6 +1068,8 @@ export default function Leads() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TagSettingsDialog open={tagSettingsOpen} onOpenChange={setTagSettingsOpen} />
     </DashboardLayout>
   );
 }

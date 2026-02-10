@@ -72,13 +72,25 @@ export function KanbanBoard({
   };
 
   const getReferralsByColumn = (columnId: string) => {
-    // For default columns, filter by status
+    // For default status columns, filter by status
     if (['new', 'contacted', 'converted'].includes(columnId)) {
       return referrals.filter(r => r.status === columnId);
     }
-    // For custom columns, show all referrals in first column by default
-    // (custom columns are purely visual organizational tools)
-    return [];
+
+    // Client-specific columns
+    if (columnId === 'vip') {
+      return referrals.filter(r => r.contact_tag === 'sql');
+    }
+    if (columnId === 'inactive') {
+      return referrals.filter(r => r.contact_tag === 'cold');
+    }
+    if (columnId === 'active') {
+      // Active = all clients not in VIP or inactive
+      return referrals.filter(r => r.contact_tag !== 'sql' && r.contact_tag !== 'cold');
+    }
+
+    // Custom tag-based columns: match column id to contact_tag
+    return referrals.filter(r => r.contact_tag === columnId);
   };
 
   return (
