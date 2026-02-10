@@ -3,15 +3,23 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ConversationList } from '@/components/whatsapp/ConversationList';
 import { ChatArea } from '@/components/whatsapp/ChatArea';
 import { LeadSidePanel } from '@/components/whatsapp/LeadSidePanel';
-import { MOCK_CONVERSATIONS } from '@/data/whatsappMockData';
+import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
+import { useTagFilter } from '@/contexts/TagFilterContext';
+import { MOCK_CONVERSATIONS, AVAILABLE_TAGS } from '@/data/whatsappMockData';
 import type { WhatsAppConversation, WhatsAppMessage } from '@/data/whatsappMockData';
 import { cn } from '@/lib/utils';
 
 export default function WhatsApp() {
+  const { activeTags } = useTagFilter();
   const [conversations, setConversations] = useState<WhatsAppConversation[]>(MOCK_CONVERSATIONS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showPanel, setShowPanel] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+
+  // Filter by global tags
+  const filteredConversations = activeTags.length > 0
+    ? conversations.filter(c => c.tags.some(t => activeTags.includes(t)))
+    : conversations;
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null;
 
@@ -97,6 +105,13 @@ export default function WhatsApp() {
           </div>
         </div>
 
+        {/* Global Tag Filter */}
+        <div className="mb-3">
+          <GlobalTagFilter
+            tagOptions={AVAILABLE_TAGS.slice(0, 6).map(t => ({ value: t.id, label: t.label, className: t.color }))}
+          />
+        </div>
+
         {/* Main chat layout */}
         <div className="flex-1 rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden flex min-h-0">
           {/* Conversation List */}
@@ -105,7 +120,7 @@ export default function WhatsApp() {
             mobileView === 'chat' ? 'hidden lg:flex lg:flex-col' : 'flex flex-col flex-1 lg:flex-none'
           )}>
             <ConversationList
-              conversations={conversations}
+              conversations={filteredConversations}
               selectedId={selectedId}
               onSelect={handleSelect}
             />

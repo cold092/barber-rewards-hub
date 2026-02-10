@@ -40,6 +40,9 @@ import { DEFAULT_CLIENT_MESSAGE, DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, for
 import { downloadCsv } from '@/utils/export';
 import { KanbanBoard } from '@/components/leads/KanbanBoard';
 import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
+import { ColumnManager, type ColumnConfig } from '@/components/leads/ColumnManager';
+import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
+import { useTagFilter } from '@/contexts/TagFilterContext';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,8 +56,11 @@ const VIEW_MODE_STORAGE_KEY = 'leadsViewMode';
 type PlanDraft = Record<string, { points: string; price: string }>;
 type ViewMode = 'kanban' | 'list';
 
+const LEADS_COLUMNS_KEY = 'leadsKanbanColumns';
+
 export default function Leads() {
   const { isAdmin, isBarber, profile, user } = useAuth();
+  const { activeTags } = useTagFilter();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
@@ -62,6 +68,14 @@ export default function Leads() {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
     return (saved === 'list' || saved === 'kanban') ? saved : 'kanban';
+  });
+  const [leadColumns, setLeadColumns] = useState<ColumnConfig[]>(() => {
+    const saved = localStorage.getItem(LEADS_COLUMNS_KEY);
+    return saved ? JSON.parse(saved) : [
+      { id: 'new', title: 'Novos', color: 'bg-info/10', isDefault: true },
+      { id: 'contacted', title: 'Contatados', color: 'bg-warning/10', isDefault: true },
+      { id: 'converted', title: 'Convertidos', color: 'bg-success/10', isDefault: true },
+    ];
   });
   const [leadMessageTemplate, setLeadMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [leadMessageDraft, setLeadMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
@@ -169,10 +183,21 @@ export default function Leads() {
   const allClientReferrals = referrals.filter(isClientReferral);
   const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral));
   const baseReferrals = listType === 'clients' ? allClientReferrals : allLeadReferrals;
-  const filteredReferrals = baseReferrals.filter((referral) => {
+  
+  // Apply tag filter
+  const tagFilteredReferrals = activeTags.length > 0
+    ? baseReferrals.filter(r => r.contact_tag && activeTags.includes(r.contact_tag))
+    : baseReferrals;
+  
+  const filteredReferrals = tagFilteredReferrals.filter((referral) => {
     if (filter === 'all') return true;
     return referral.status === filter;
   });
+
+  const handleColumnsChange = (newColumns: ColumnConfig[]) => {
+    setLeadColumns(newColumns);
+    localStorage.setItem(LEADS_COLUMNS_KEY, JSON.stringify(newColumns));
+  };
 
   const handleContact = async (referral: Referral) => {
     const result = await markAsContacted(referral.id);
@@ -539,6 +564,8 @@ export default function Leads() {
               </Button>
             </div>
 
+            <ColumnManager columns={leadColumns} onColumnsChange={handleColumnsChange} />
+
             <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleExport}>
               <Download className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Exportar</span>
@@ -694,6 +721,9 @@ export default function Leads() {
           </div>
         </div>
 
+        {/* Global Tag Filter */}
+        <GlobalTagFilter tagOptions={contactTagOptions} />
+
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <Card className="glass-card border-info/20 hover-lift group">
@@ -783,33 +813,15 @@ export default function Leads() {
 
         {/* Kanban View */}
         {viewMode === 'kanban' && (
-          <div className="space-y-4">
-            <Tabs
-              value={listType}
-              onValueChange={(value) => {
-                const nextListType = value as 'leads' | 'clients';
-                setListType(nextListType);
-                updateSearchParams(
-                  nextListType === 'clients' && filter === 'converted' ? 'converted-clients' : nextListType,
-                  filter
-                );
-              }}
-            >
-              <TabsList className="grid w-full max-w-xs grid-cols-2">
-                <TabsTrigger value="leads">Leads ({allLeadReferrals.length})</TabsTrigger>
-                <TabsTrigger value="clients">Clientes ({allClientReferrals.length})</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <KanbanBoard
-              referrals={baseReferrals}
-              onStatusChange={handleStatusChange}
-              onOpenDetails={openDetailsDialog}
-              onWhatsApp={openWhatsApp}
-              isAdmin={isAdmin}
-              contactTagOptions={contactTagOptions}
-            />
-          </div>
+          <KanbanBoard
+            referrals={tagFilteredReferrals.filter(r => !isClientReferral(r))}
+            onStatusChange={handleStatusChange}
+            onOpenDetails={openDetailsDialog}
+            onWhatsApp={openWhatsApp}
+            isAdmin={isAdmin}
+            contactTagOptions={contactTagOptions}
+            customColumns={leadColumns}
+          />
         )}
 
         {/* List View */}
@@ -818,24 +830,8 @@ export default function Leads() {
             <CardHeader className="space-y-4">
               <CardTitle className="flex items-center gap-2 font-display">
                 <Users className="h-5 w-5 text-primary" />
-                {listType === 'clients' ? `Clientes (${filteredReferrals.length})` : `Leads (${filteredReferrals.length})`}
+                Leads ({filteredReferrals.filter(r => !isClientReferral(r)).length})
               </CardTitle>
-              <Tabs
-                value={listType}
-                onValueChange={(value) => {
-                  const nextListType = value as 'leads' | 'clients';
-                  setListType(nextListType);
-                  updateSearchParams(
-                    nextListType === 'clients' && filter === 'converted' ? 'converted-clients' : nextListType,
-                    filter
-                  );
-                }}
-              >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="leads">Leads</TabsTrigger>
-                  <TabsTrigger value="clients">Clientes</TabsTrigger>
-                </TabsList>
-              </Tabs>
             </CardHeader>
             <CardContent>
               {filteredReferrals.length === 0 ? (

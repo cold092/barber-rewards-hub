@@ -4,9 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { TagFilterProvider } from "@/contexts/TagFilterContext";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Leads from "./pages/Leads";
+import Clients from "./pages/Clients";
 import NewReferral from "./pages/NewReferral";
 import Ranking from "./pages/Ranking";
 import ManageTeam from "./pages/ManageTeam";
@@ -73,6 +75,14 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/clientes"
+      element={
+        <ProtectedRoute>
+          <Clients />
+        </ProtectedRoute>
+      }
+    />
+    <Route
       path="/nova-indicacao"
       element={
         <ProtectedRoute>
@@ -127,13 +137,15 @@ const AppRoutes = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
+      <TagFilterProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TagFilterProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

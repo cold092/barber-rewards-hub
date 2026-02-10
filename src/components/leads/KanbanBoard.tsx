@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KanbanColumn } from './KanbanColumn';
 import { KanbanCard } from './KanbanCard';
 import type { Referral, ReferralStatus } from '@/types/database';
+import type { ColumnConfig } from './ColumnManager';
 
 interface KanbanBoardProps {
   referrals: Referral[];
@@ -11,9 +12,10 @@ interface KanbanBoardProps {
   onWhatsApp: (referral: Referral) => void;
   isAdmin: boolean;
   contactTagOptions: Array<{ value: string; label: string; className: string }>;
+  customColumns?: ColumnConfig[];
 }
 
-const columns: { id: ReferralStatus; title: string; color: string }[] = [
+const DEFAULT_COLUMNS: { id: ReferralStatus; title: string; color: string }[] = [
   { id: 'new', title: 'Novos', color: 'bg-info/10' },
   { id: 'contacted', title: 'Contatados', color: 'bg-warning/10' },
   { id: 'converted', title: 'Convertidos', color: 'bg-success/10' }
@@ -25,9 +27,12 @@ export function KanbanBoard({
   onOpenDetails,
   onWhatsApp,
   isAdmin,
-  contactTagOptions
+  contactTagOptions,
+  customColumns
 }: KanbanBoardProps) {
   const [activeReferral, setActiveReferral] = useState<Referral | null>(null);
+
+  const columns = customColumns || DEFAULT_COLUMNS;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -66,8 +71,14 @@ export function KanbanBoard({
     }
   };
 
-  const getReferralsByStatus = (status: ReferralStatus) => {
-    return referrals.filter(r => r.status === status);
+  const getReferralsByColumn = (columnId: string) => {
+    // For default columns, filter by status
+    if (['new', 'contacted', 'converted'].includes(columnId)) {
+      return referrals.filter(r => r.status === columnId);
+    }
+    // For custom columns, show all referrals in first column by default
+    // (custom columns are purely visual organizational tools)
+    return [];
   };
 
   return (
@@ -77,9 +88,11 @@ export function KanbanBoard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-${Math.min(columns.length, 4)} gap-4`}
+        style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+      >
         {columns.map((column) => {
-          const columnReferrals = getReferralsByStatus(column.id);
+          const columnReferrals = getReferralsByColumn(column.id);
           return (
             <KanbanColumn
               key={column.id}
