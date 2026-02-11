@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import type { Referral, ReferralStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
 
 const CLIENT_COLUMNS_KEY = 'clientKanbanColumns';
 
@@ -52,10 +53,7 @@ export default function Clients() {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
-  const [columns, setColumns] = useState<ColumnConfig[]>(() => {
-    const saved = localStorage.getItem(CLIENT_COLUMNS_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_CLIENT_COLUMNS;
-  });
+  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_CLIENT_COLUMNS);
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -70,9 +68,37 @@ export default function Clients() {
 
   useEffect(() => { loadReferrals(); }, [isBarber, profile]);
 
-  const handleColumnsChange = (newColumns: ColumnConfig[]) => {
+  useEffect(() => {
+    const loadColumns = async () => {
+      const dbColumns = await getGlobalSetting<ColumnConfig[]>('client_columns');
+      if (dbColumns && dbColumns.length > 0) {
+        setColumns(dbColumns);
+        localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(dbColumns));
+        return;
+      }
+
+      const savedColumns = localStorage.getItem(CLIENT_COLUMNS_KEY);
+      if (savedColumns) {
+        setColumns(JSON.parse(savedColumns));
+      }
+    };
+
+    loadColumns();
+  }, []);
+
+  const handleColumnsChange = async (newColumns: ColumnConfig[]) => {
     setColumns(newColumns);
     localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(newColumns));
+
+    if (!user) return;
+
+    const saved = await upsertSetting(user.id, 'client_columns', newColumns);
+    if (!saved) {
+      toast.error('Erro ao salvar colunas no banco de dados');
+      return;
+    }
+
+    toast.success('Colunas de clientes salvas');
   };
 
   // Filter by active tags
@@ -143,6 +169,43 @@ export default function Clients() {
     }
     toast.success('Status atualizado');
     loadReferrals();
+  };
+
+  const handleColumnChange = async (referralId: string, columnId: string) => {
+    const referral = referrals.find((item) => item.id === referralId);
+    if (!referral) return;
+
+    const nextTag = columnId === 'active'
+      ? null
+      : columnId === 'vip'
+        ? 'sql'
+        : columnId === 'inactive'
+          ? 'cold'
+          : columnId;
+
+    if (referral.contact_tag === nextTag) return;
+
+    const result = await updateContactTag(referralId, nextTag);
+    if (!result.success) {
+      toast.error(result.error || 'Erro ao atualizar coluna do cliente');
+      return;
+    }
+
+    await addHistoryEvent({
+      referralId,
+      eventType: 'tag_change',
+      eventData: { tag: nextTag || 'none', previous_tag: referral.contact_tag },
+      createdById: user?.id,
+      createdByName: profile?.name,
+    });
+
+    setReferrals((prev) =>
+      prev.map((item) =>
+        item.id === referralId ? { ...item, contact_tag: nextTag } : item
+      )
+    );
+
+    toast.success('Cliente movido de coluna');
   };
 
   const handleConvert = async () => {
@@ -262,6 +325,7 @@ export default function Clients() {
         <KanbanBoard
           referrals={filteredReferrals}
           onStatusChange={handleStatusChange}
+          onColumnChange={handleColumnChange}
           onOpenDetails={openDetailsDialog}
           onWhatsApp={openWhatsApp}
           isAdmin={isAdmin}
