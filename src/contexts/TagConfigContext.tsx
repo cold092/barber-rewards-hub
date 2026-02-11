@@ -6,13 +6,14 @@ export interface TagConfig {
   value: string;
   label: string;
   className: string;
+  showInClientColumns?: boolean;
 }
 
 const DEFAULT_TAGS: TagConfig[] = [
-  { value: 'sql', label: 'SQL', className: 'bg-success/20 text-success border-success/30' },
-  { value: 'mql', label: 'MQL', className: 'bg-info/20 text-info border-info/30' },
-  { value: 'cold', label: 'Frio', className: 'bg-muted text-muted-foreground border-border' },
-  { value: 'scheduled', label: 'Marcou', className: 'bg-accent/20 text-accent-foreground border-accent/30' },
+  { value: 'sql', label: 'SQL', className: 'bg-success/20 text-success border-success/30', showInClientColumns: true },
+  { value: 'mql', label: 'MQL', className: 'bg-info/20 text-info border-info/30', showInClientColumns: true },
+  { value: 'cold', label: 'Frio', className: 'bg-muted text-muted-foreground border-border', showInClientColumns: true },
+  { value: 'scheduled', label: 'Marcou', className: 'bg-accent/20 text-accent-foreground border-accent/30', showInClientColumns: true },
 ];
 
 const TAG_CONFIG_STORAGE_KEY = 'crmTagConfig';
@@ -39,10 +40,17 @@ interface TagConfigContextType {
 const TagConfigContext = createContext<TagConfigContextType | undefined>(undefined);
 
 export function TagConfigProvider({ children }: { children: ReactNode }) {
+  const normalizeTags = useCallback((sourceTags: TagConfig[]) => {
+    return sourceTags.map((tag) => ({
+      ...tag,
+      showInClientColumns: tag.showInClientColumns !== false,
+    }));
+  }, []);
+
   const [tags, setTags] = useState<TagConfig[]>(() => {
     const stored = localStorage.getItem(TAG_CONFIG_STORAGE_KEY);
     if (stored) {
-      try { return JSON.parse(stored); } catch { /* fall through */ }
+      try { return normalizeTags(JSON.parse(stored)); } catch { /* fall through */ }
     }
     return DEFAULT_TAGS;
   });
@@ -55,13 +63,14 @@ export function TagConfigProvider({ children }: { children: ReactNode }) {
     (async () => {
       const dbTags = await getGlobalSetting<TagConfig[]>('tags');
       if (!cancelled && dbTags && Array.isArray(dbTags) && dbTags.length > 0) {
-        setTags(dbTags);
-        localStorage.setItem(TAG_CONFIG_STORAGE_KEY, JSON.stringify(dbTags));
+        const normalized = normalizeTags(dbTags);
+        setTags(normalized);
+        localStorage.setItem(TAG_CONFIG_STORAGE_KEY, JSON.stringify(normalized));
       }
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [normalizeTags]);
 
   // Persist to localStorage + debounced DB save
   const persistTags = useCallback((nextTags: TagConfig[]) => {
