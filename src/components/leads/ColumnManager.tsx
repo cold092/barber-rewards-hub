@@ -144,11 +144,8 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                   "flex items-center gap-2 p-2 rounded-lg bg-secondary/50 border border-border/30",
                   draggingId === col.id && "opacity-60 border-primary/40"
                 )}
-                draggable={editingId !== col.id}
-                onDragStart={() => handleDragStart(col.id)}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={() => handleDrop(col.id)}
-                onDragEnd={handleDragEnd}
               >
                 {editingId === col.id ? (
                   <>
@@ -182,7 +179,16 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                   </>
                 ) : (
                   <>
-                    <GripVertical className="h-4 w-4 text-muted-foreground/70 cursor-grab" />
+                    <div
+                      draggable
+                      onDragStart={() => handleDragStart(col.id)}
+                      onDragEnd={handleDragEnd}
+                      className="flex items-center gap-1.5 rounded-md border border-border/50 bg-background/40 px-2 py-1 cursor-grab active:cursor-grabbing"
+                      title="Arraste para reordenar"
+                    >
+                      <GripVertical className="h-4 w-4 text-muted-foreground/70" />
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Arrastar</span>
+                    </div>
                     <div className={cn("w-3 h-3 rounded shrink-0", col.color)} />
                     <span className="text-sm flex-1 truncate">{col.title}</span>
                     {col.isDefault && (

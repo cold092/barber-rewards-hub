@@ -386,6 +386,7 @@ export default function Clients() {
             isAdmin={isAdmin}
             contactTagOptions={contactTagOptions}
             customColumns={columns}
+            onColumnsReorder={handleColumnsChange}
           />
         )}
 
