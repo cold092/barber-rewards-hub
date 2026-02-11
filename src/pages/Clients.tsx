@@ -42,6 +42,19 @@ const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
   { id: 'clients', title: 'Clientes', color: 'bg-success/10', isDefault: true },
 ];
 
+const ensureClientColumn = (columns: ColumnConfig[]): ColumnConfig[] => {
+  const hasClientsColumn = columns.some((column) => column.id === 'clients');
+  if (hasClientsColumn) {
+    return columns.map((column) =>
+      column.id === 'clients'
+        ? { ...column, title: 'Clientes', isDefault: true }
+        : column
+    );
+  }
+
+  return [...DEFAULT_CLIENT_COLUMNS, ...columns];
+};
+
 type ClientViewMode = 'kanban' | 'list';
 
 export default function Clients() {
@@ -63,7 +76,7 @@ export default function Clients() {
   });
   const [columns, setColumns] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(CLIENT_COLUMNS_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_CLIENT_COLUMNS;
+    return saved ? ensureClientColumn(JSON.parse(saved)) : DEFAULT_CLIENT_COLUMNS;
   });
 
   const loadReferrals = async () => {
@@ -90,8 +103,9 @@ export default function Clients() {
   };
 
   const handleColumnsChange = (nextColumns: ColumnConfig[]) => {
-    setColumns(nextColumns);
-    localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(nextColumns));
+    const normalizedColumns = ensureClientColumn(nextColumns);
+    setColumns(normalizedColumns);
+    localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(normalizedColumns));
   };
 
   const openDetailsDialog = (referral: Referral) => {

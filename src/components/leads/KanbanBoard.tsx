@@ -91,6 +91,12 @@ export function KanbanBoard({
       return referrals.filter(r => r.status === columnId);
     }
 
+    // Default client bucket: every client without an explicit custom column mapping
+    if (columnId === 'clients') {
+      const customColumnIds = new Set(columns.map((column) => column.id));
+      return referrals.filter((referral) => !referral.contact_tag || !customColumnIds.has(referral.contact_tag));
+    }
+
     // Client-specific columns
     if (columnId === 'vip') {
       return referrals.filter(r => r.contact_tag === 'sql');
