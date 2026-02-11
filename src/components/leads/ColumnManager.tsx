@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -36,6 +36,8 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!newTitle.trim()) {
@@ -57,6 +59,54 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
     }
     onColumnsChange(columns.filter(c => c.id !== id));
     toast.success('Coluna removida');
+  };
+
+
+  const handleMoveColumn = (id: string, direction: 'up' | 'down') => {
+    const index = columns.findIndex((column) => column.id === id);
+    if (index === -1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= columns.length) return;
+
+    const nextColumns = [...columns];
+    const [moved] = nextColumns.splice(index, 1);
+    nextColumns.splice(targetIndex, 0, moved);
+    onColumnsChange(nextColumns);
+    toast.success('Ordem das colunas atualizada');
+  };
+
+
+  const reorderColumns = (sourceId: string, destinationId: string) => {
+    if (sourceId === destinationId) return;
+
+    const sourceIndex = columns.findIndex((column) => column.id === sourceId);
+    const destinationIndex = columns.findIndex((column) => column.id === destinationId);
+
+    if (sourceIndex === -1 || destinationIndex === -1) return;
+
+    const nextColumns = [...columns];
+    const [moved] = nextColumns.splice(sourceIndex, 1);
+    nextColumns.splice(destinationIndex, 0, moved);
+    onColumnsChange(nextColumns);
+  };
+
+  const handleDragStart = (columnId: string) => {
+    setDraggingId(columnId);
+  };
+
+  const handleDrop = (columnId: string) => {
+    if (!draggingId) return;
+
+    reorderColumns(draggingId, columnId);
+    setDraggingId(null);
+    setDropTargetId(null);
+    toast.success('Ordem das colunas atualizada');
+  };
+
+  const handleDragEnd = () => {
+    setDraggingId(null);
+    setDropTargetId(null);
   };
 
   const handleStartEdit = (col: ColumnConfig) => {
@@ -88,10 +138,27 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
         </DialogHeader>
 
         <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Dica: clique na coluna e arraste para cima/baixo para reordenar.
+          </p>
           {/* Existing columns */}
           <div className="space-y-2">
             {columns.map((col) => (
-              <div key={col.id} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 border border-border/30">
+              <div
+                key={col.id}
+                className={cn(
+                  "flex items-center gap-2 p-2 rounded-lg bg-secondary/50 border border-border/30",
+                  draggingId === col.id && "opacity-60 border-primary/40",
+                  dropTargetId === col.id && draggingId !== col.id && "border-primary/60 ring-1 ring-primary/40"
+                )}
+                draggable={editingId !== col.id}
+                onDragStart={() => handleDragStart(col.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(event) => event.preventDefault()}
+                onDragEnter={() => setDropTargetId(col.id)}
+                onDragLeave={() => setDropTargetId((current) => (current === col.id ? null : current))}
+                onDrop={() => handleDrop(col.id)}
+              >
                 {editingId === col.id ? (
                   <>
                     <Input
@@ -129,6 +196,24 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                     {col.isDefault && (
                       <span className="text-[10px] text-muted-foreground">padrão</span>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleMoveColumn(col.id, 'up')}
+                      disabled={columns.findIndex((column) => column.id === col.id) === 0}
+                    >
+                      <ArrowUp className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleMoveColumn(col.id, 'down')}
+                      disabled={columns.findIndex((column) => column.id === col.id) === columns.length - 1}
+                    >
+                      <ArrowDown className="h-3 w-3 text-muted-foreground" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEdit(col)}>
                       <Pencil className="h-3 w-3 text-muted-foreground" />
                     </Button>
