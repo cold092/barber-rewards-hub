@@ -821,6 +821,7 @@ export default function Leads() {
             isAdmin={isAdmin}
             contactTagOptions={contactTagOptions}
             customColumns={leadColumns}
+            onColumnsReorder={handleColumnsChange}
           />
         )}
 
