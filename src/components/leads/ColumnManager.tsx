@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Pencil, Check, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -36,6 +36,7 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!newTitle.trim()) {
@@ -74,6 +75,37 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
     toast.success('Ordem das colunas atualizada');
   };
 
+
+  const reorderColumns = (sourceId: string, destinationId: string) => {
+    if (sourceId === destinationId) return;
+
+    const sourceIndex = columns.findIndex((column) => column.id === sourceId);
+    const destinationIndex = columns.findIndex((column) => column.id === destinationId);
+
+    if (sourceIndex === -1 || destinationIndex === -1) return;
+
+    const nextColumns = [...columns];
+    const [moved] = nextColumns.splice(sourceIndex, 1);
+    nextColumns.splice(destinationIndex, 0, moved);
+    onColumnsChange(nextColumns);
+  };
+
+  const handleDragStart = (columnId: string) => {
+    setDraggingId(columnId);
+  };
+
+  const handleDrop = (columnId: string) => {
+    if (!draggingId) return;
+
+    reorderColumns(draggingId, columnId);
+    setDraggingId(null);
+    toast.success('Ordem das colunas atualizada');
+  };
+
+  const handleDragEnd = () => {
+    setDraggingId(null);
+  };
+
   const handleStartEdit = (col: ColumnConfig) => {
     setEditingId(col.id);
     setEditTitle(col.title);
@@ -106,7 +138,18 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
           {/* Existing columns */}
           <div className="space-y-2">
             {columns.map((col) => (
-              <div key={col.id} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 border border-border/30">
+              <div
+                key={col.id}
+                className={cn(
+                  "flex items-center gap-2 p-2 rounded-lg bg-secondary/50 border border-border/30",
+                  draggingId === col.id && "opacity-60 border-primary/40"
+                )}
+                draggable={editingId !== col.id}
+                onDragStart={() => handleDragStart(col.id)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={() => handleDrop(col.id)}
+                onDragEnd={handleDragEnd}
+              >
                 {editingId === col.id ? (
                   <>
                     <Input
@@ -139,6 +182,7 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                   </>
                 ) : (
                   <>
+                    <GripVertical className="h-4 w-4 text-muted-foreground/70 cursor-grab" />
                     <div className={cn("w-3 h-3 rounded shrink-0", col.color)} />
                     <span className="text-sm flex-1 truncate">{col.title}</span>
                     {col.isDefault && (
