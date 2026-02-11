@@ -1,21 +1,30 @@
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
   UserCheck,
   TrendingUp,
   Star,
+  Download,
+  LayoutGrid,
+  List,
+  Menu,
+  Phone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
 import { addHistoryEvent, logWhatsAppContact } from '@/services/leadHistoryService';
 import { getPlanById, getRewardPlans } from '@/config/plans';
-import { generateWhatsAppLink } from '@/utils/whatsapp';
+import { generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
+import { downloadCsv } from '@/utils/export';
 import { KanbanBoard } from '@/components/leads/KanbanBoard';
 import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
+import { ColumnManager } from '@/components/leads/ColumnManager';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
@@ -24,6 +33,29 @@ import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+
+const CLIENT_COLUMNS_KEY = 'clientKanbanColumns';
+const CLIENT_VIEW_MODE_KEY = 'clientsViewMode';
+
+const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
+  { id: 'clients', title: 'Clientes', color: 'bg-success/10', isDefault: true },
+];
+
+const ensureClientColumn = (columns: ColumnConfig[]): ColumnConfig[] => {
+  const hasClientsColumn = columns.some((column) => column.id === 'clients');
+  if (hasClientsColumn) {
+    return columns.map((column) =>
+      column.id === 'clients'
+        ? { ...column, title: 'Clientes', isDefault: true }
+        : column
+    );
+  }
+
+  return [...DEFAULT_CLIENT_COLUMNS, ...columns];
+};
+
+type ClientViewMode = 'kanban' | 'list';
 
 export default function Clients() {
   const { isAdmin, isBarber, profile, user } = useAuth();
@@ -38,14 +70,14 @@ export default function Clients() {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
-  const columns: ColumnConfig[] = contactTagOptions
-    .filter((tag) => tag.showInClientColumns !== false)
-    .map((tag) => ({
-    id: tag.value,
-    title: tag.label,
-    color: 'bg-muted/40',
-    isDefault: true,
-    }));
+  const [viewMode, setViewMode] = useState<ClientViewMode>(() => {
+    const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
+    return saved === 'list' ? 'list' : 'kanban';
+  });
+  const [columns, setColumns] = useState<ColumnConfig[]>(() => {
+    const saved = localStorage.getItem(CLIENT_COLUMNS_KEY);
+    return saved ? ensureClientColumn(JSON.parse(saved)) : DEFAULT_CLIENT_COLUMNS;
+  });
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -64,6 +96,17 @@ export default function Clients() {
   const filteredReferrals = activeTags.length > 0
     ? referrals.filter(r => r.contact_tag && activeTags.includes(r.contact_tag))
     : referrals;
+
+  const handleViewModeChange = (mode: ClientViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem(CLIENT_VIEW_MODE_KEY, mode);
+  };
+
+  const handleColumnsChange = (nextColumns: ColumnConfig[]) => {
+    const normalizedColumns = ensureClientColumn(nextColumns);
+    setColumns(normalizedColumns);
+    localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(normalizedColumns));
+  };
 
   const openDetailsDialog = (referral: Referral) => {
     setSelectedReferral(referral);
@@ -115,7 +158,7 @@ export default function Clients() {
     }
   };
 
-  const handleContact = async (referral: Referral) => {
+  const handleContact = async (_referral: Referral) => {
     // no-op for clients already converted
   };
 
@@ -134,7 +177,7 @@ export default function Clients() {
     const referral = referrals.find((item) => item.id === referralId);
     if (!referral) return;
 
-    const nextTag = columnId;
+    const nextTag = columnId === 'clients' ? null : columnId;
 
     if (referral.contact_tag === nextTag) return;
 
@@ -185,6 +228,24 @@ export default function Clients() {
 
   const rewardPlans = getRewardPlans();
 
+  const handleExport = () => {
+    const rows = [
+      ['Nome', 'Telefone', 'Status', 'Tag', 'Plano', 'Pontos', 'Indicado por', 'Data de cadastro'],
+      ...filteredReferrals.map((referral) => [
+        referral.lead_name,
+        referral.lead_phone,
+        referral.status,
+        referral.contact_tag || 'Sem tag',
+        referral.converted_plan_id || '-',
+        referral.lead_points,
+        referral.referrer_name,
+        new Date(referral.created_at).toLocaleDateString('pt-BR'),
+      ]),
+    ];
+    downloadCsv(`clientes-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    toast.success('CSV exportado com sucesso');
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -220,10 +281,52 @@ export default function Clients() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setTagSettingsOpen(true)}>
-              Tags
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center rounded-lg border border-border/50 bg-secondary/50 p-0.5">
+              <Button
+                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                size="sm"
+                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'kanban' && "lavender-gradient text-primary-foreground shadow-sm")}
+                onClick={() => handleViewModeChange('kanban')}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Kanban
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'list' && "lavender-gradient text-primary-foreground shadow-sm")}
+                onClick={() => handleViewModeChange('list')}
+              >
+                <List className="h-3.5 w-3.5" />
+                Lista
+              </Button>
+            </div>
+
+            <ColumnManager columns={columns} onColumnsChange={handleColumnsChange} />
+
+            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleExport}>
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Exportar</span>
             </Button>
+
+            {isAdmin && (
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 text-xs">
+                      <Menu className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Config</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Configurações</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setTagSettingsOpen(true)}>
+                      Configurar Tags
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            )}
           </div>
         </div>
 
@@ -273,17 +376,71 @@ export default function Clients() {
           </Card>
         </div>
 
-        {/* Kanban Board */}
-        <KanbanBoard
-          referrals={filteredReferrals}
-          onStatusChange={handleStatusChange}
-          onColumnChange={handleColumnChange}
-          onOpenDetails={openDetailsDialog}
-          onWhatsApp={openWhatsApp}
-          isAdmin={isAdmin}
-          contactTagOptions={contactTagOptions}
-          customColumns={columns}
-        />
+        {viewMode === 'kanban' && (
+          <KanbanBoard
+            referrals={filteredReferrals}
+            onStatusChange={handleStatusChange}
+            onColumnChange={handleColumnChange}
+            onOpenDetails={openDetailsDialog}
+            onWhatsApp={openWhatsApp}
+            isAdmin={isAdmin}
+            contactTagOptions={contactTagOptions}
+            customColumns={columns}
+            onColumnsReorder={handleColumnsChange}
+          />
+        )}
+
+        {viewMode === 'list' && (
+          <Card className="glass-card border-border/50">
+            <CardHeader>
+              <CardTitle className="font-display">Clientes ({filteredReferrals.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredReferrals.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
+              ) : (
+                <div className="space-y-4">
+                  {filteredReferrals.map((referral) => (
+                    <div
+                      key={referral.id}
+                      className="p-4 rounded-lg bg-secondary/50 space-y-3 cursor-pointer hover:bg-secondary/70 transition-colors"
+                      onClick={() => openDetailsDialog(referral)}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-lg">{referral.lead_name}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {formatPhoneNumber(referral.lead_phone)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Cadastrado em {new Date(referral.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Badge variant="outline" className="bg-success/15 text-success border-success/30">
+                            Cliente
+                          </Badge>
+                          {referral.contact_tag && (
+                            <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                              {contactTagOptions.find((option) => option.value === referral.contact_tag)?.label || referral.contact_tag}
+                            </Badge>
+                          )}
+                          {referral.converted_plan_id && (
+                            <Badge variant="outline" className="bg-accent/15 text-accent border-accent/30">
+                              {getPlanById(referral.converted_plan_id)?.label}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Dialogs */}

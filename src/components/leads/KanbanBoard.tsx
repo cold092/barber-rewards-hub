@@ -14,6 +14,7 @@ interface KanbanBoardProps {
   isAdmin: boolean;
   contactTagOptions: Array<{ value: string; label: string; className: string }>;
   customColumns?: ColumnConfig[];
+  onColumnsReorder?: (columns: ColumnConfig[]) => void;
 }
 
 const DEFAULT_COLUMNS: { id: ReferralStatus; title: string; color: string }[] = [
@@ -30,11 +31,14 @@ export function KanbanBoard({
   onWhatsApp,
   isAdmin,
   contactTagOptions,
-  customColumns
+  customColumns,
+  onColumnsReorder
 }: KanbanBoardProps) {
   const [activeReferral, setActiveReferral] = useState<Referral | null>(null);
 
   const columns = customColumns || DEFAULT_COLUMNS;
+
+  const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -85,10 +89,46 @@ export function KanbanBoard({
     }
   };
 
+
+  const handleColumnDragStart = (columnId: string) => {
+    setDraggingColumnId(columnId);
+  };
+
+  const handleColumnDrop = (destinationColumnId: string) => {
+    if (!customColumns || !onColumnsReorder || !draggingColumnId || draggingColumnId === destinationColumnId) {
+      setDraggingColumnId(null);
+      return;
+    }
+
+    const sourceIndex = customColumns.findIndex((column) => column.id === draggingColumnId);
+    const destinationIndex = customColumns.findIndex((column) => column.id === destinationColumnId);
+
+    if (sourceIndex === -1 || destinationIndex === -1) {
+      setDraggingColumnId(null);
+      return;
+    }
+
+    const nextColumns = [...customColumns];
+    const [moved] = nextColumns.splice(sourceIndex, 1);
+    nextColumns.splice(destinationIndex, 0, moved);
+    onColumnsReorder(nextColumns);
+    setDraggingColumnId(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setDraggingColumnId(null);
+  };
+
   const getReferralsByColumn = (columnId: string) => {
     // For default status columns, filter by status
     if (['new', 'contacted', 'converted'].includes(columnId)) {
       return referrals.filter(r => r.status === columnId);
+    }
+
+    // Default client bucket: every client without an explicit custom column mapping
+    if (columnId === 'clients') {
+      const customColumnIds = new Set(columns.map((column) => column.id));
+      return referrals.filter((referral) => !referral.contact_tag || !customColumnIds.has(referral.contact_tag));
     }
 
     // Client-specific columns
@@ -126,6 +166,11 @@ export function KanbanBoard({
               title={column.title}
               count={columnReferrals.length}
               color={column.color}
+              columnDragEnabled={Boolean(customColumns && onColumnsReorder)}
+              isColumnDragging={draggingColumnId === column.id}
+              onColumnDragStart={() => handleColumnDragStart(column.id)}
+              onColumnDragEnd={handleColumnDragEnd}
+              onColumnDrop={() => handleColumnDrop(column.id)}
             >
               {columnReferrals.map((referral) => (
                 <KanbanCard
