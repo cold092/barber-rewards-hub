@@ -39,6 +39,7 @@ export function KanbanBoard({
   const columns = customColumns || DEFAULT_COLUMNS;
 
   const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
+  const [columnDropTargetId, setColumnDropTargetId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -94,9 +95,16 @@ export function KanbanBoard({
     setDraggingColumnId(columnId);
   };
 
+
+  const handleColumnDragOver = (columnId: string) => {
+    if (!draggingColumnId || draggingColumnId === columnId) return;
+    setColumnDropTargetId(columnId);
+  };
+
   const handleColumnDrop = (destinationColumnId: string) => {
     if (!customColumns || !onColumnsReorder || !draggingColumnId || draggingColumnId === destinationColumnId) {
       setDraggingColumnId(null);
+      setColumnDropTargetId(null);
       return;
     }
 
@@ -105,6 +113,7 @@ export function KanbanBoard({
 
     if (sourceIndex === -1 || destinationIndex === -1) {
       setDraggingColumnId(null);
+      setColumnDropTargetId(null);
       return;
     }
 
@@ -113,10 +122,12 @@ export function KanbanBoard({
     nextColumns.splice(destinationIndex, 0, moved);
     onColumnsReorder(nextColumns);
     setDraggingColumnId(null);
+    setColumnDropTargetId(null);
   };
 
   const handleColumnDragEnd = () => {
     setDraggingColumnId(null);
+    setColumnDropTargetId(null);
   };
 
   const getReferralsByColumn = (columnId: string) => {
@@ -168,8 +179,10 @@ export function KanbanBoard({
               color={column.color}
               columnDragEnabled={Boolean(customColumns && onColumnsReorder)}
               isColumnDragging={draggingColumnId === column.id}
+              isColumnDropTarget={columnDropTargetId === column.id}
               onColumnDragStart={() => handleColumnDragStart(column.id)}
               onColumnDragEnd={handleColumnDragEnd}
+              onColumnDragOver={() => handleColumnDragOver(column.id)}
               onColumnDrop={() => handleColumnDrop(column.id)}
             >
               {columnReferrals.map((referral) => (

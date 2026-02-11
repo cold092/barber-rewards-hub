@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Pencil, Check, X, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -37,6 +37,7 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
   const [editTitle, setEditTitle] = useState('');
   const [editColor, setEditColor] = useState('');
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!newTitle.trim()) {
@@ -99,11 +100,13 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
 
     reorderColumns(draggingId, columnId);
     setDraggingId(null);
+    setDropTargetId(null);
     toast.success('Ordem das colunas atualizada');
   };
 
   const handleDragEnd = () => {
     setDraggingId(null);
+    setDropTargetId(null);
   };
 
   const handleStartEdit = (col: ColumnConfig) => {
@@ -135,6 +138,9 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
         </DialogHeader>
 
         <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Dica: clique na coluna e arraste para cima/baixo para reordenar.
+          </p>
           {/* Existing columns */}
           <div className="space-y-2">
             {columns.map((col) => (
@@ -142,9 +148,15 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                 key={col.id}
                 className={cn(
                   "flex items-center gap-2 p-2 rounded-lg bg-secondary/50 border border-border/30",
-                  draggingId === col.id && "opacity-60 border-primary/40"
+                  draggingId === col.id && "opacity-60 border-primary/40",
+                  dropTargetId === col.id && draggingId !== col.id && "border-primary/60 ring-1 ring-primary/40"
                 )}
+                draggable={editingId !== col.id}
+                onDragStart={() => handleDragStart(col.id)}
+                onDragEnd={handleDragEnd}
                 onDragOver={(event) => event.preventDefault()}
+                onDragEnter={() => setDropTargetId(col.id)}
+                onDragLeave={() => setDropTargetId((current) => (current === col.id ? null : current))}
                 onDrop={() => handleDrop(col.id)}
               >
                 {editingId === col.id ? (
