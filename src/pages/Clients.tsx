@@ -2,43 +2,29 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   UserCheck,
-  Sparkles,
   TrendingUp,
-  Calendar,
   Star,
-  MessageCircle,
-  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAllReferrals, confirmConversion, updateContactTag, undoConversion, deleteReferral } from '@/services/referralService';
+import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
 import { addHistoryEvent, logWhatsAppContact } from '@/services/leadHistoryService';
 import { getPlanById, getRewardPlans } from '@/config/plans';
-import { DEFAULT_CLIENT_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
+import { generateWhatsAppLink } from '@/utils/whatsapp';
 import { KanbanBoard } from '@/components/leads/KanbanBoard';
 import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
-import { ColumnManager, type ColumnConfig } from '@/components/leads/ColumnManager';
+import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
 import { useTagConfig } from '@/contexts/TagConfigContext';
 import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
-
-const CLIENT_COLUMNS_KEY = 'clientKanbanColumns';
-
-const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
-  { id: 'active', title: 'Ativos', color: 'bg-success/10', isDefault: true },
-  { id: 'vip', title: 'VIP', color: 'bg-primary/10', isDefault: true },
-  { id: 'inactive', title: 'Inativos', color: 'bg-muted', isDefault: true },
-];
 
 export default function Clients() {
   const { isAdmin, isBarber, profile, user } = useAuth();
@@ -53,7 +39,12 @@ export default function Clients() {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
-  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_CLIENT_COLUMNS);
+  const columns: ColumnConfig[] = contactTagOptions.map((tag) => ({
+    id: tag.value,
+    title: tag.label,
+    color: 'bg-muted/40',
+    isDefault: true,
+  }));
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -67,39 +58,6 @@ export default function Clients() {
   };
 
   useEffect(() => { loadReferrals(); }, [isBarber, profile]);
-
-  useEffect(() => {
-    const loadColumns = async () => {
-      const dbColumns = await getGlobalSetting<ColumnConfig[]>('client_columns');
-      if (dbColumns && dbColumns.length > 0) {
-        setColumns(dbColumns);
-        localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(dbColumns));
-        return;
-      }
-
-      const savedColumns = localStorage.getItem(CLIENT_COLUMNS_KEY);
-      if (savedColumns) {
-        setColumns(JSON.parse(savedColumns));
-      }
-    };
-
-    loadColumns();
-  }, []);
-
-  const handleColumnsChange = async (newColumns: ColumnConfig[]) => {
-    setColumns(newColumns);
-    localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(newColumns));
-
-    if (!user) return;
-
-    const saved = await upsertSetting(user.id, 'client_columns', newColumns);
-    if (!saved) {
-      toast.error('Erro ao salvar colunas no banco de dados');
-      return;
-    }
-
-    toast.success('Colunas de clientes salvas');
-  };
 
   // Filter by active tags
   const filteredReferrals = activeTags.length > 0
@@ -175,13 +133,7 @@ export default function Clients() {
     const referral = referrals.find((item) => item.id === referralId);
     if (!referral) return;
 
-    const nextTag = columnId === 'active'
-      ? null
-      : columnId === 'vip'
-        ? 'sql'
-        : columnId === 'inactive'
-          ? 'cold'
-          : columnId;
+    const nextTag = columnId;
 
     if (referral.contact_tag === nextTag) return;
 
@@ -271,7 +223,6 @@ export default function Clients() {
             <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setTagSettingsOpen(true)}>
               Tags
             </Button>
-            <ColumnManager columns={columns} onColumnsChange={handleColumnsChange} />
           </div>
         </div>
 
