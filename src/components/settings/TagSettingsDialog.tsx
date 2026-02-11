@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Plus, Trash2, RotateCcw, Tag } from 'lucide-react';
 import { useTagConfig } from '@/contexts/TagConfigContext';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ export function TagSettingsDialog({ open, onOpenChange }: TagSettingsDialogProps
   const { tags, presetColors, addTag, updateTag, removeTag, resetToDefaults } = useTagConfig();
   const [newLabel, setNewLabel] = useState('');
   const [newColor, setNewColor] = useState(presetColors[0].className);
+  const [newShowInClientColumns, setNewShowInClientColumns] = useState(true);
 
   const handleAdd = () => {
     const label = newLabel.trim();
@@ -27,8 +29,9 @@ export function TagSettingsDialog({ open, onOpenChange }: TagSettingsDialogProps
       toast.error('Tag já existe');
       return;
     }
-    addTag({ value, label, className: newColor });
+    addTag({ value, label, className: newColor, showInClientColumns: newShowInClientColumns });
     setNewLabel('');
+    setNewShowInClientColumns(true);
     toast.success('Tag adicionada');
   };
 
@@ -80,6 +83,13 @@ export function TagSettingsDialog({ open, onOpenChange }: TagSettingsDialogProps
                     ))}
                   </SelectContent>
                 </Select>
+                <div className="flex items-center gap-2 px-1">
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">Coluna em clientes</span>
+                  <Switch
+                    checked={tag.showInClientColumns !== false}
+                    onCheckedChange={(checked) => updateTag(tag.value, { showInClientColumns: checked })}
+                  />
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -118,6 +128,10 @@ export function TagSettingsDialog({ open, onOpenChange }: TagSettingsDialogProps
                 ))}
               </SelectContent>
             </Select>
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap">Criar coluna</span>
+              <Switch checked={newShowInClientColumns} onCheckedChange={setNewShowInClientColumns} />
+            </div>
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleAdd}>
               <Plus className="h-3.5 w-3.5" />
             </Button>
