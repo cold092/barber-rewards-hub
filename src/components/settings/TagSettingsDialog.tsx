@@ -42,103 +42,115 @@ export function TagSettingsDialog({ open, onOpenChange }: TagSettingsDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card w-[min(95vw,32rem)] max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="glass-card w-[min(96vw,44rem)] max-w-2xl max-h-[88vh] overflow-y-auto p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50">
           <DialogTitle className="font-display flex items-center gap-2">
             <Tag className="h-5 w-5 text-primary" />
             Configurar Tags
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Gerencie as etiquetas desta área.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-5 px-6 py-5">
           {/* Existing tags */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             {tags.map((tag) => (
-              <div key={tag.value} className="flex items-center gap-2 p-2 rounded-lg border border-border/50">
-                <Badge variant="outline" className={cn("text-xs", tag.className)}>
-                  {tag.label}
-                </Badge>
-                <Input
-                  value={tag.label}
-                  onChange={(e) => updateTag(tag.value, { label: e.target.value })}
-                  className="h-8 flex-1 text-sm"
-                />
-                <Select
-                  value={tag.className}
-                  onValueChange={(val) => updateTag(tag.value, { className: val })}
-                >
-                  <SelectTrigger className="h-8 w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {presetColors.map((color) => (
-                      <SelectItem key={color.className} value={color.className}>
-                        <Badge variant="outline" className={cn("text-[10px]", color.className)}>
-                          {color.label}
-                        </Badge>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex items-center gap-2 px-1">
-                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">Coluna em clientes</span>
-                  <Switch
-                    checked={tag.showInClientColumns !== false}
-                    onCheckedChange={(checked) => updateTag(tag.value, { showInClientColumns: checked })}
-                  />
+              <div key={tag.value} className="rounded-xl border border-border/60 bg-card/50 p-3 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Badge variant="outline" className={cn("text-xs", tag.className)}>
+                    {tag.label}
+                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Coluna em clientes</span>
+                    <Switch
+                      checked={tag.showInClientColumns !== false}
+                      onCheckedChange={(checked) => updateTag(tag.value, { showInClientColumns: checked })}
+                    />
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  onClick={() => {
-                    removeTag(tag.value);
-                    toast.success('Tag removida');
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_140px_auto] gap-2 items-center">
+                  <Input
+                    value={tag.label}
+                    onChange={(e) => updateTag(tag.value, { label: e.target.value })}
+                    className="h-9 text-sm"
+                    placeholder="Nome da tag"
+                  />
+                  <Select
+                    value={tag.className}
+                    onValueChange={(val) => updateTag(tag.value, { className: val })}
+                  >
+                    <SelectTrigger className="h-9 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {presetColors.map((color) => (
+                        <SelectItem key={color.className} value={color.className}>
+                          <Badge variant="outline" className={cn("text-[10px]", color.className)}>
+                            {color.label}
+                          </Badge>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-destructive hover:text-destructive justify-self-end"
+                    onClick={() => {
+                      removeTag(tag.value);
+                      toast.success('Tag removida');
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
 
           {/* Add new tag */}
-          <div className="flex items-center gap-2 p-3 rounded-lg border border-dashed border-border/50 bg-secondary/20">
-            <Input
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="Nome da tag..."
-              className="h-8 flex-1 text-sm"
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            />
-            <Select value={newColor} onValueChange={setNewColor}>
-              <SelectTrigger className="h-8 w-28">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {presetColors.map((color) => (
-                  <SelectItem key={color.className} value={color.className}>
-                    <Badge variant="outline" className={cn("text-[10px]", color.className)}>
-                      {color.label}
-                    </Badge>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2 px-1">
-              <span className="text-[11px] text-muted-foreground whitespace-nowrap">Criar coluna</span>
-              <Switch checked={newShowInClientColumns} onCheckedChange={setNewShowInClientColumns} />
+          <div className="rounded-xl border border-dashed border-border/60 bg-secondary/20 p-3 space-y-3">
+            <div className="text-xs font-medium text-muted-foreground">Nova tag</div>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_140px_auto_auto] gap-2 items-center">
+              <Input
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                placeholder="Nome da tag..."
+                className="h-9 text-sm"
+                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              />
+              <Select value={newColor} onValueChange={setNewColor}>
+                <SelectTrigger className="h-9 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {presetColors.map((color) => (
+                    <SelectItem key={color.className} value={color.className}>
+                      <Badge variant="outline" className={cn("text-[10px]", color.className)}>
+                        {color.label}
+                      </Badge>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center gap-2 px-1 justify-self-start md:justify-self-center">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Criar coluna</span>
+                <Switch checked={newShowInClientColumns} onCheckedChange={setNewShowInClientColumns} />
+              </div>
+
+              <Button variant="outline" size="icon" className="h-9 w-9 justify-self-end" onClick={handleAdd}>
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleAdd}>
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
 
-        <DialogFooter className="flex-row justify-between">
+        <DialogFooter className="px-6 py-4 border-t border-border/50 flex-row justify-between">
           <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" onClick={handleReset}>
             <RotateCcw className="h-3.5 w-3.5" />
             Restaurar padrão
