@@ -191,6 +191,16 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                   </>
                 ) : (
                   <>
+                    <div
+                      draggable
+                      onDragStart={() => handleDragStart(col.id)}
+                      onDragEnd={handleDragEnd}
+                      className="flex items-center gap-1.5 rounded-md border border-border/50 bg-background/40 px-2 py-1 cursor-grab active:cursor-grabbing"
+                      title="Arraste para reordenar"
+                    >
+                      <GripVertical className="h-4 w-4 text-muted-foreground/70" />
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Arrastar</span>
+                    </div>
                     <div className={cn("w-3 h-3 rounded shrink-0", col.color)} />
                     <span className="text-sm flex-1 truncate">{col.title}</span>
                     {col.isDefault && (
