@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -57,6 +57,21 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
     }
     onColumnsChange(columns.filter(c => c.id !== id));
     toast.success('Coluna removida');
+  };
+
+
+  const handleMoveColumn = (id: string, direction: 'up' | 'down') => {
+    const index = columns.findIndex((column) => column.id === id);
+    if (index === -1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= columns.length) return;
+
+    const nextColumns = [...columns];
+    const [moved] = nextColumns.splice(index, 1);
+    nextColumns.splice(targetIndex, 0, moved);
+    onColumnsChange(nextColumns);
+    toast.success('Ordem das colunas atualizada');
   };
 
   const handleStartEdit = (col: ColumnConfig) => {
@@ -129,6 +144,24 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                     {col.isDefault && (
                       <span className="text-[10px] text-muted-foreground">padrão</span>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleMoveColumn(col.id, 'up')}
+                      disabled={columns.findIndex((column) => column.id === col.id) === 0}
+                    >
+                      <ArrowUp className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleMoveColumn(col.id, 'down')}
+                      disabled={columns.findIndex((column) => column.id === col.id) === columns.length - 1}
+                    >
+                      <ArrowDown className="h-3 w-3 text-muted-foreground" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEdit(col)}>
                       <Pencil className="h-3 w-3 text-muted-foreground" />
                     </Button>
