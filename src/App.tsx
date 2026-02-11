@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { TagFilterProvider } from "@/contexts/TagFilterContext";
-import { TagConfigProvider } from "@/contexts/TagConfigContext";
+import { LeadTagConfigProvider, ClientTagConfigProvider } from "@/contexts/TagConfigContext";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Leads from "./pages/Leads";
@@ -64,7 +64,9 @@ const AppRoutes = () => (
       path="/"
       element={
         <ProtectedRoute>
-          <Dashboard />
+          <LeadTagConfigProvider>
+            <Dashboard />
+          </LeadTagConfigProvider>
         </ProtectedRoute>
       }
     />
@@ -72,7 +74,9 @@ const AppRoutes = () => (
       path="/leads"
       element={
         <ProtectedRoute>
-          <Leads />
+          <LeadTagConfigProvider>
+            <Leads />
+          </LeadTagConfigProvider>
         </ProtectedRoute>
       }
     />
@@ -80,7 +84,9 @@ const AppRoutes = () => (
       path="/clientes"
       element={
         <ProtectedRoute>
-          <Clients />
+          <ClientTagConfigProvider>
+            <Clients />
+          </ClientTagConfigProvider>
         </ProtectedRoute>
       }
     />
@@ -88,7 +94,9 @@ const AppRoutes = () => (
       path="/nova-indicacao"
       element={
         <ProtectedRoute>
-          <NewReferral />
+          <LeadTagConfigProvider>
+            <NewReferral />
+          </LeadTagConfigProvider>
         </ProtectedRoute>
       }
     />
@@ -112,7 +120,9 @@ const AppRoutes = () => (
       path="/whatsapp"
       element={
         <ProtectedRoute>
-          <WhatsApp />
+          <LeadTagConfigProvider>
+            <WhatsApp />
+          </LeadTagConfigProvider>
         </ProtectedRoute>
       }
     />
@@ -120,7 +130,9 @@ const AppRoutes = () => (
       path="/configuracoes"
       element={
         <ProtectedRoute>
-          <SettingsPage />
+          <LeadTagConfigProvider>
+            <SettingsPage />
+          </LeadTagConfigProvider>
         </ProtectedRoute>
       }
     />
@@ -147,17 +159,15 @@ const AppRoutes = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <TagConfigProvider>
-        <TagFilterProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AuthProvider>
-              <AppRoutes />
-            </AuthProvider>
-          </BrowserRouter>
-        </TagFilterProvider>
-      </TagConfigProvider>
+      <TagFilterProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TagFilterProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

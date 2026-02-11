@@ -49,7 +49,7 @@ export function TagSettingsDialog({ open, onOpenChange }: TagSettingsDialogProps
             Configurar Tags
           </DialogTitle>
           <DialogDescription>
-            Gerencie as etiquetas usadas em Leads, Clientes e WhatsApp.
+            Gerencie as etiquetas desta área.
           </DialogDescription>
         </DialogHeader>
 
