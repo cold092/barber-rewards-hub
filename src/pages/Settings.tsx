@@ -235,7 +235,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="font-display">Etiquetas (Tags)</CardTitle>
                 <CardDescription>
-                  Tags são sincronizadas entre Leads, Clientes e WhatsApp.
+                  Tags usadas para Leads e WhatsApp.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

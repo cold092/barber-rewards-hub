@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type SettingKey = 'tags' | 'plan_overrides' | 'lead_message' | 'client_message' | 'lead_columns' | 'client_columns';
+export type SettingKey = 'tags' | 'client_tags' | 'plan_overrides' | 'lead_message' | 'client_message' | 'lead_columns' | 'client_columns';
 
 export async function getSetting<T>(userId: string, key: SettingKey): Promise<T | null> {
   const { data, error } = await supabase

@@ -8,6 +8,7 @@ import type { ColumnConfig } from './ColumnManager';
 interface KanbanBoardProps {
   referrals: Referral[];
   onStatusChange: (referralId: string, newStatus: ReferralStatus) => Promise<void>;
+  onColumnChange?: (referralId: string, columnId: string) => Promise<void>;
   onOpenDetails: (referral: Referral) => void;
   onWhatsApp: (referral: Referral) => void;
   isAdmin: boolean;
@@ -24,6 +25,7 @@ const DEFAULT_COLUMNS: { id: ReferralStatus; title: string; color: string }[] = 
 export function KanbanBoard({
   referrals,
   onStatusChange,
+  onColumnChange,
   onOpenDetails,
   onWhatsApp,
   isAdmin,
@@ -63,11 +65,23 @@ export function KanbanBoard({
     if (!over) return;
 
     const referralId = active.id as string;
-    const newStatus = over.id as ReferralStatus;
+    const destinationColumnId = over.id as string;
     const referral = referrals.find(r => r.id === referralId);
 
-    if (referral && referral.status !== newStatus) {
-      await onStatusChange(referralId, newStatus);
+    if (!referral) return;
+
+    const isStatusColumn = ['new', 'contacted', 'converted'].includes(destinationColumnId);
+
+    if (isStatusColumn) {
+      const newStatus = destinationColumnId as ReferralStatus;
+      if (referral.status !== newStatus) {
+        await onStatusChange(referralId, newStatus);
+      }
+      return;
+    }
+
+    if (onColumnChange) {
+      await onColumnChange(referralId, destinationColumnId);
     }
   };
 
