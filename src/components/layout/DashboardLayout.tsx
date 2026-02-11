@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/leads', label: 'Leads', icon: Users },
   { path: '/clientes', label: 'Clientes', icon: UserCheck },
-  { path: '/whatsapp', label: 'WhatsApp', icon: MessageSquare },
+  { path: '/whatsapp', label: 'WhatsApp', icon: MessageSquare, adminOnly: true },
   { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
   { path: '/relatorios', label: 'Relatórios', icon: BarChart3, adminOnly: true },
