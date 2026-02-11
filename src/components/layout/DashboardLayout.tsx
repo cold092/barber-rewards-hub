@@ -51,7 +51,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   
   // Filter nav items based on role
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
-  const showReports = isAdmin;
 
   const handleSignOut = async () => {
     await signOut();
@@ -105,7 +104,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-4">
+          <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
             {filteredNavItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -126,34 +125,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </Button>
               );
             })}
-            {showReports && (
-              <div className="space-y-2">
-                <p className="px-2 text-xs uppercase tracking-wide text-muted-foreground">
-                  Relatórios
-                </p>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start gap-3 h-11",
-                    location.pathname === '/relatorios' && "bg-sidebar-accent text-primary"
-                  )}
-                  onClick={() => {
-                    navigate('/relatorios');
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <UserCheck className={cn("h-5 w-5", location.pathname === '/relatorios' && "text-primary")} />
-                  Visualizar relatórios
-                </Button>
-              </div>
-            )}
           </nav>
 
           {/* User Info & Logout */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="mb-4 p-3 rounded-lg bg-sidebar-accent/50">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-sm truncate">{profile?.name || 'Usuário'}</p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {role === 'admin' ? 'Administrador' : role === 'barber' ? 'Barbeiro' : 'Cliente'}
