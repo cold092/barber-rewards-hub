@@ -24,6 +24,7 @@ import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
 
 export default function Clients() {
   const { isAdmin, isBarber, profile, user } = useAuth();
