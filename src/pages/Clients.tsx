@@ -42,6 +42,20 @@ const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
   { id: 'clients', title: 'Clientes', color: 'bg-success/10', isDefault: true },
 ];
 
+const parseClientColumns = (savedColumns: string | null): ColumnConfig[] => {
+  if (!savedColumns) {
+    return DEFAULT_CLIENT_COLUMNS;
+  }
+
+  try {
+    const parsed = JSON.parse(savedColumns);
+    return Array.isArray(parsed) ? parsed : DEFAULT_CLIENT_COLUMNS;
+  } catch {
+    localStorage.removeItem(CLIENT_COLUMNS_KEY);
+    return DEFAULT_CLIENT_COLUMNS;
+  }
+};
+
 const ensureClientColumn = (columns: ColumnConfig[]): ColumnConfig[] => {
   const hasClientsColumn = columns.some((column) => column.id === 'clients');
   if (hasClientsColumn) {
@@ -76,7 +90,7 @@ export default function Clients() {
   });
   const [columns, setColumns] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(CLIENT_COLUMNS_KEY);
-    return saved ? ensureClientColumn(JSON.parse(saved)) : DEFAULT_CLIENT_COLUMNS;
+    return ensureClientColumn(parseClientColumns(saved));
   });
 
   const loadReferrals = async () => {
