@@ -50,6 +50,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
@@ -58,7 +59,12 @@ const VIEW_MODE_STORAGE_KEY = 'leadsViewMode';
 type PlanDraft = Record<string, { points: string; price: string }>;
 type ViewMode = 'kanban' | 'list';
 
-const LEADS_COLUMNS_KEY = 'leadsKanbanColumns';
+const DEFAULT_LEAD_COLUMNS: ColumnConfig[] = [
+  { id: 'new', title: 'Novos', color: 'bg-info/10', isDefault: true },
+  { id: 'contacted', title: 'Contatados', color: 'bg-warning/10', isDefault: true },
+  { id: 'converted', title: 'Convertidos', color: 'bg-success/10', isDefault: true },
+];
+
 
 const DEFAULT_LEAD_COLUMNS: ColumnConfig[] = [
   { id: 'new', title: 'Novos', color: 'bg-info/10', isDefault: true },
@@ -92,10 +98,7 @@ export default function Leads() {
     const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
     return (saved === 'list' || saved === 'kanban') ? saved : 'kanban';
   });
-  const [leadColumns, setLeadColumns] = useState<ColumnConfig[]>(() => {
-    const saved = localStorage.getItem(LEADS_COLUMNS_KEY);
-    return parseLeadColumns(saved);
-  });
+  const [leadColumns, setLeadColumns] = useState<ColumnConfig[]>(DEFAULT_LEAD_COLUMNS);
   const [leadMessageTemplate, setLeadMessageTemplate] = useState(DEFAULT_LEAD_MESSAGE);
   const [leadMessageDraft, setLeadMessageDraft] = useState(DEFAULT_LEAD_MESSAGE);
   const [clientMessageTemplate, setClientMessageTemplate] = useState(DEFAULT_CLIENT_MESSAGE);
@@ -127,6 +130,22 @@ export default function Leads() {
   useEffect(() => {
     loadReferrals();
   }, [isBarber, profile]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const dbLeadColumns = await getGlobalSetting<ColumnConfig[]>('lead_columns');
+      if (cancelled || !Array.isArray(dbLeadColumns)) {
+        return;
+      }
+      setLeadColumns(dbLeadColumns);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const storedLeadMessage = localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY);
@@ -207,9 +226,17 @@ export default function Leads() {
     return referral.status === filter;
   });
 
-  const handleColumnsChange = (newColumns: ColumnConfig[]) => {
+  const handleColumnsChange = async (newColumns: ColumnConfig[]) => {
     setLeadColumns(newColumns);
-    localStorage.setItem(LEADS_COLUMNS_KEY, JSON.stringify(newColumns));
+
+    if (!isAdmin || !user) {
+      return;
+    }
+
+    const success = await upsertSetting(user.id, 'lead_columns', newColumns);
+    if (!success) {
+      toast.error('Erro ao salvar colunas no servidor');
+    }
   };
 
   const handleContact = async (referral: Referral) => {
