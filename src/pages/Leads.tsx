@@ -66,6 +66,26 @@ const DEFAULT_LEAD_COLUMNS: ColumnConfig[] = [
 ];
 
 
+const DEFAULT_LEAD_COLUMNS: ColumnConfig[] = [
+  { id: 'new', title: 'Novos', color: 'bg-info/10', isDefault: true },
+  { id: 'contacted', title: 'Contatados', color: 'bg-warning/10', isDefault: true },
+  { id: 'converted', title: 'Convertidos', color: 'bg-success/10', isDefault: true },
+];
+
+const parseLeadColumns = (savedColumns: string | null): ColumnConfig[] => {
+  if (!savedColumns) {
+    return DEFAULT_LEAD_COLUMNS;
+  }
+
+  try {
+    const parsed = JSON.parse(savedColumns);
+    return Array.isArray(parsed) ? parsed : DEFAULT_LEAD_COLUMNS;
+  } catch {
+    localStorage.removeItem(LEADS_COLUMNS_KEY);
+    return DEFAULT_LEAD_COLUMNS;
+  }
+};
+
 export default function Leads() {
   const { isAdmin, isBarber, profile, user } = useAuth();
   const { activeTags } = useTagFilter();
