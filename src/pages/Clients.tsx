@@ -34,8 +34,8 @@ import type { Referral, ReferralStatus } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
 
-const CLIENT_COLUMNS_KEY = 'clientKanbanColumns';
 const CLIENT_VIEW_MODE_KEY = 'clientsViewMode';
 
 const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
@@ -74,10 +74,7 @@ export default function Clients() {
     const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
     return saved === 'list' ? 'list' : 'kanban';
   });
-  const [columns, setColumns] = useState<ColumnConfig[]>(() => {
-    const saved = localStorage.getItem(CLIENT_COLUMNS_KEY);
-    return saved ? ensureClientColumn(JSON.parse(saved)) : DEFAULT_CLIENT_COLUMNS;
-  });
+  const [columns, setColumns] = useState<ColumnConfig[]>(ensureClientColumn(DEFAULT_CLIENT_COLUMNS));
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -92,6 +89,23 @@ export default function Clients() {
 
   useEffect(() => { loadReferrals(); }, [isBarber, profile]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const dbClientColumns = await getGlobalSetting<ColumnConfig[]>('client_columns');
+      if (cancelled || !Array.isArray(dbClientColumns)) {
+        return;
+      }
+
+      setColumns(ensureClientColumn(dbClientColumns));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Filter by active tags
   const filteredReferrals = activeTags.length > 0
     ? referrals.filter(r => r.contact_tag && activeTags.includes(r.contact_tag))
@@ -102,10 +116,18 @@ export default function Clients() {
     localStorage.setItem(CLIENT_VIEW_MODE_KEY, mode);
   };
 
-  const handleColumnsChange = (nextColumns: ColumnConfig[]) => {
+  const handleColumnsChange = async (nextColumns: ColumnConfig[]) => {
     const normalizedColumns = ensureClientColumn(nextColumns);
     setColumns(normalizedColumns);
-    localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(normalizedColumns));
+
+    if (!isAdmin || !user) {
+      return;
+    }
+
+    const success = await upsertSetting(user.id, 'client_columns', normalizedColumns);
+    if (!success) {
+      toast.error('Erro ao salvar colunas no servidor');
+    }
   };
 
   const openDetailsDialog = (referral: Referral) => {

@@ -39,6 +39,30 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+
+// Admin-only route component
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading, isAdmin } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 // Auth route - redirects to dashboard if logged in
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -119,11 +143,11 @@ const AppRoutes = () => (
     <Route
       path="/whatsapp"
       element={
-        <ProtectedRoute>
+        <AdminRoute>
           <LeadTagConfigProvider>
             <WhatsApp />
           </LeadTagConfigProvider>
-        </ProtectedRoute>
+        </AdminRoute>
       }
     />
     <Route
