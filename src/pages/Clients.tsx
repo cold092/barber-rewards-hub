@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
 
 const CLIENT_VIEW_MODE_KEY = 'clientsViewMode';
+const CLIENT_COLUMNS_KEY = 'clientColumns';
 
 const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
   { id: 'clients', title: 'Clientes', color: 'bg-success/10', isDefault: true },
@@ -273,7 +274,7 @@ export default function Clients() {
         referral.status,
         referral.contact_tag || 'Sem tag',
         referral.converted_plan_id || '-',
-        referral.lead_points,
+        String(referral.lead_points),
         referral.referrer_name,
         new Date(referral.created_at).toLocaleDateString('pt-BR'),
       ]),

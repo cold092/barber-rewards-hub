@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Scissors, Mail, Lock, User } from 'lucide-react';
+import { Scissors, Mail, Lock, User, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
@@ -16,26 +18,24 @@ const loginSchema = z.object({
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+  barbershopName: z.string().min(2, 'Nome da barbearia deve ter no mínimo 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
 });
 
 export default function Auth() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   const [loading, setLoading] = useState(false);
   
-  // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   
-  // Signup form state
   const [signupName, setSignupName] = useState('');
+  const [signupBarbershopName, setSignupBarbershopName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
 
-  // Redirect if already logged in
   if (user) {
     navigate('/');
     return null;
@@ -43,23 +43,18 @@ export default function Auth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     const validation = loginSchema.safeParse({ email: loginEmail, password: loginPassword });
     if (!validation.success) {
       toast.error(validation.error.errors[0].message);
       return;
     }
-    
     setLoading(true);
     const { error } = await signIn(loginEmail, loginPassword);
     setLoading(false);
-    
     if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('Email ou senha incorretos');
-      } else {
-        toast.error('Erro ao fazer login. Tente novamente.');
-      }
+      toast.error(error.message.includes('Invalid login credentials')
+        ? 'Email ou senha incorretos'
+        : 'Erro ao fazer login. Tente novamente.');
     } else {
       toast.success('Login realizado com sucesso!');
       navigate('/');
@@ -68,36 +63,57 @@ export default function Auth() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const validation = signupSchema.safeParse({ 
-      name: signupName, 
-      email: signupEmail, 
-      password: signupPassword 
+    const validation = signupSchema.safeParse({
+      name: signupName,
+      barbershopName: signupBarbershopName,
+      email: signupEmail,
+      password: signupPassword,
     });
     if (!validation.success) {
       toast.error(validation.error.errors[0].message);
       return;
     }
-    
+
     setLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupName);
-    setLoading(false);
-    
-    if (error) {
-      if (error.message.includes('already registered')) {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      const { data, error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: { name: signupName },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        const { error: rpcError } = await supabase.rpc('create_organization_and_owner', {
+          org_name: signupBarbershopName,
+          owner_user_id: data.user.id,
+        });
+        if (rpcError) {
+          console.error('RPC error:', rpcError);
+          toast.error('Conta criada, mas houve um erro ao configurar a barbearia. Contate o suporte.');
+        } else {
+          toast.success('Conta criada! Verifique seu email para confirmar.');
+        }
+      }
+    } catch (err: any) {
+      if (err.message?.includes('already registered')) {
         toast.error('Este email já está cadastrado');
       } else {
         toast.error('Erro ao criar conta. Tente novamente.');
       }
-    } else {
-      toast.success('Conta criada! Verifique seu email para confirmar.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-secondary/20">
       <div className="w-full max-w-md animate-fade-in">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full gold-gradient gold-glow mb-4">
             <Scissors className="w-8 h-8 text-primary-foreground" />
@@ -126,39 +142,17 @@ export default function Auth() {
                     <Label htmlFor="login-email">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
+                      <Input id="login-email" type="email" placeholder="seu@email.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="pl-10" required />
                     </div>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="login-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
+                      <Input id="login-password" type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="pl-10" required />
                     </div>
                   </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full gold-gradient gold-glow text-primary-foreground font-semibold"
-                    disabled={loading}
-                  >
+                  <Button type="submit" className="w-full gold-gradient gold-glow text-primary-foreground font-semibold" disabled={loading}>
                     {loading ? 'Entrando...' : 'Entrar'}
                   </Button>
                 </form>
@@ -167,59 +161,35 @@ export default function Auth() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome</Label>
+                    <Label htmlFor="signup-name">Seu Nome</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="Seu nome"
-                        value={signupName}
-                        onChange={(e) => setSignupName(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
+                      <Input id="signup-name" type="text" placeholder="Seu nome completo" value={signupName} onChange={(e) => setSignupName(e.target.value)} className="pl-10" required />
                     </div>
                   </div>
-                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-barbershop">Nome da Barbearia</Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="signup-barbershop" type="text" placeholder="Ex: Barbearia Premium" value={signupBarbershopName} onChange={(e) => setSignupBarbershopName(e.target.value)} className="pl-10" required />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
+                      <Input id="signup-email" type="email" placeholder="seu@email.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="pl-10" required />
                     </div>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
+                      <Input id="signup-password" type="password" placeholder="Mínimo 6 caracteres" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="pl-10" required />
                     </div>
                   </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full gold-gradient gold-glow text-primary-foreground font-semibold"
-                    disabled={loading}
-                  >
-                    {loading ? 'Cadastrando...' : 'Criar Conta'}
+                  <Button type="submit" className="w-full gold-gradient gold-glow text-primary-foreground font-semibold" disabled={loading}>
+                    {loading ? 'Cadastrando...' : 'Criar Barbearia'}
                   </Button>
                 </form>
               </TabsContent>
@@ -228,7 +198,7 @@ export default function Auth() {
         </Card>
         
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Apenas para uso interno da equipe
+          Cadastre sua barbearia e comece a gerenciar indicações
         </p>
       </div>
     </div>
