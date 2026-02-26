@@ -109,12 +109,31 @@ export type Database = {
           },
         ]
       }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           id: string
           lifetime_points: number
           name: string
+          organization_id: string | null
           phone: string | null
           updated_at: string
           user_id: string | null
@@ -125,6 +144,7 @@ export type Database = {
           id?: string
           lifetime_points?: number
           name: string
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string | null
@@ -135,12 +155,21 @@ export type Database = {
           id?: string
           lifetime_points?: number
           name?: string
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string | null
           wallet_balance?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referrals: {
         Row: {
@@ -246,6 +275,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_organization_and_owner: {
+        Args: { org_name: string; owner_user_id: string }
+        Returns: string
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -259,7 +292,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "barber" | "client"
+      app_role: "admin" | "barber" | "client" | "owner"
       lead_event_type:
         | "status_change"
         | "tag_change"
@@ -396,7 +429,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "barber", "client"],
+      app_role: ["admin", "barber", "client", "owner"],
       lead_event_type: [
         "status_change",
         "tag_change",

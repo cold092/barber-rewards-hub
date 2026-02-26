@@ -59,12 +59,7 @@ const VIEW_MODE_STORAGE_KEY = 'leadsViewMode';
 type PlanDraft = Record<string, { points: string; price: string }>;
 type ViewMode = 'kanban' | 'list';
 
-const DEFAULT_LEAD_COLUMNS: ColumnConfig[] = [
-  { id: 'new', title: 'Novos', color: 'bg-info/10', isDefault: true },
-  { id: 'contacted', title: 'Contatados', color: 'bg-warning/10', isDefault: true },
-  { id: 'converted', title: 'Convertidos', color: 'bg-success/10', isDefault: true },
-];
-
+const LEADS_COLUMNS_KEY = 'leadsColumns';
 
 const DEFAULT_LEAD_COLUMNS: ColumnConfig[] = [
   { id: 'new', title: 'Novos', color: 'bg-info/10', isDefault: true },
