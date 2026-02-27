@@ -35,7 +35,7 @@ import type { Referral, ReferralStatus } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
+import { getSetting, upsertSetting } from '@/services/settingsService';
 import { RegisterClientDialog } from '@/components/clients/RegisterClientDialog';
 
 const CLIENT_VIEW_MODE_KEY = 'clientsViewMode';
@@ -92,7 +92,9 @@ export default function Clients() {
     const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
     return saved === 'list' ? 'list' : 'kanban';
   });
-  const [columns, setColumns] = useState<ColumnConfig[]>(ensureClientColumn(DEFAULT_CLIENT_COLUMNS));
+  const [columns, setColumns] = useState<ColumnConfig[]>(() =>
+    ensureClientColumn(parseClientColumns(localStorage.getItem(CLIENT_COLUMNS_KEY)))
+  );
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -111,18 +113,35 @@ export default function Clients() {
     let cancelled = false;
 
     (async () => {
-      const dbClientColumns = await getGlobalSetting<ColumnConfig[]>('client_columns');
-      if (cancelled || !Array.isArray(dbClientColumns)) {
+      const localColumns = ensureClientColumn(parseClientColumns(localStorage.getItem(CLIENT_COLUMNS_KEY)));
+
+      if (!user) {
+        if (!cancelled) {
+          setColumns(localColumns);
+        }
         return;
       }
 
-      setColumns(ensureClientColumn(dbClientColumns));
+      const userColumns = await getSetting<ColumnConfig[]>(user.id, 'client_columns');
+      if (cancelled) {
+        return;
+      }
+
+      if (Array.isArray(userColumns) && userColumns.length > 0) {
+        const normalized = ensureClientColumn(userColumns);
+        setColumns(normalized);
+        localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(normalized));
+        return;
+      }
+
+      setColumns(localColumns);
+      await upsertSetting(user.id, 'client_columns', localColumns);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   // Filter by active tags
   const filteredReferrals = activeTags.length > 0
@@ -137,8 +156,9 @@ export default function Clients() {
   const handleColumnsChange = async (nextColumns: ColumnConfig[]) => {
     const normalizedColumns = ensureClientColumn(nextColumns);
     setColumns(normalizedColumns);
+    localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(normalizedColumns));
 
-    if (!isAdmin || !user) {
+    if (!user) {
       return;
     }
 
