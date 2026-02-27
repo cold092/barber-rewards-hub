@@ -77,29 +77,21 @@ export default function Auth() {
     setLoading(true);
     try {
       const redirectUrl = `${window.location.origin}/`;
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
         options: {
           emailRedirectTo: redirectUrl,
-          data: { name: signupName },
+          data: {
+            name: signupName,
+            organization_name: signupBarbershopName,
+            role: 'owner',
+          },
         },
       });
 
       if (error) throw error;
-
-      if (data.user) {
-        const { error: rpcError } = await supabase.rpc('create_organization_and_owner', {
-          org_name: signupBarbershopName,
-          owner_user_id: data.user.id,
-        });
-        if (rpcError) {
-          console.error('RPC error:', rpcError);
-          toast.error('Conta criada, mas houve um erro ao configurar a barbearia. Contate o suporte.');
-        } else {
-          toast.success('Conta criada! Verifique seu email para confirmar.');
-        }
-      }
+      toast.success('Conta criada! Verifique seu email para confirmar.');
     } catch (err: any) {
       if (err.message?.includes('already registered')) {
         toast.error('Este email já está cadastrado');
