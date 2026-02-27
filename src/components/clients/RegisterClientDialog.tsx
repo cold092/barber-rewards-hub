@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { UserPlus, User, Phone, Mail } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { registerClient } from '@/services/referralService';
 
 const clientSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
@@ -24,7 +24,7 @@ interface RegisterClientDialogProps {
 }
 
 export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: RegisterClientDialogProps) {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -47,25 +47,26 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
       return;
     }
 
-    if (!profile?.organization_id) {
-      toast.error('Organização não encontrada. Faça login novamente.');
+    if (!profile) {
+      toast.error('Perfil não encontrado. Faça login novamente.');
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.from('clients').insert({
-      organization_id: profile.organization_id,
-      name,
-      phone,
-      email: email || null,
-      notes: notes || null,
-      created_by: profile.user_id,
-    });
+    const createdBy = role ? { id: profile.id, name: profile.name, role } : undefined;
+    const result = await registerClient(
+      profile.id,
+      profile.name,
+      {
+        clientName: name.trim(),
+        clientPhone: phone.trim(),
+      },
+      createdBy
+    );
     setLoading(false);
 
-    if (error) {
-      console.error('Error creating client:', error);
-      toast.error('Erro ao cadastrar cliente');
+    if (!result.success) {
+      toast.error(result.error || 'Erro ao cadastrar cliente');
       return;
     }
 
