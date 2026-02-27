@@ -146,7 +146,6 @@ export async function registerClient(
       .insert(insertPayload)
       .select()
       .single();
-
     if (error && hasMissingCreatedByColumns(error)) {
       ({ data: referral, error } = await supabase
         .from('referrals')
