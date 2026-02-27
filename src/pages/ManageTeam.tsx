@@ -150,20 +150,19 @@ export default function ManageTeam() {
     if (!memberToDelete) return;
     
     try {
-      if (memberToDelete.profile.user_id) {
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', memberToDelete.profile.user_id);
+      const { data, error } = await supabase.functions.invoke('remove-team-member', {
+        body: { member_user_id: memberToDelete.profile.user_id },
+      });
+
+      if (error) {
+        toast.error('Erro ao remover membro');
+        console.error('Error:', error);
+      } else if (data?.error) {
+        toast.error(data.error);
+      } else {
+        toast.success('Membro removido com sucesso');
+        loadTeamMembers();
       }
-      
-      await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', memberToDelete.profile.id);
-      
-      toast.success('Membro removido');
-      loadTeamMembers();
     } catch (error) {
       console.error('Error deleting member:', error);
       toast.error('Erro ao remover membro');
