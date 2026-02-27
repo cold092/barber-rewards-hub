@@ -643,7 +643,7 @@ export async function getAllLeadsAsReferrers(): Promise<{ data: { id: string; na
     const { data, error } = await supabase
       .from('referrals')
       .select('id, lead_name, lead_phone')
-      .eq('status', 'converted')
+      .in('status', ['client', 'converted'])
       .order('lead_name');
 
     if (error) {
