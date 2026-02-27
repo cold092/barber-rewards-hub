@@ -92,7 +92,9 @@ export default function Clients() {
     const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
     return saved === 'list' ? 'list' : 'kanban';
   });
-  const [columns, setColumns] = useState<ColumnConfig[]>(ensureClientColumn(DEFAULT_CLIENT_COLUMNS));
+  const [columns, setColumns] = useState<ColumnConfig[]>(() =>
+    ensureClientColumn(parseClientColumns(localStorage.getItem(CLIENT_COLUMNS_KEY)))
+  );
 
   const loadReferrals = async () => {
     setLoading(true);
@@ -111,12 +113,19 @@ export default function Clients() {
     let cancelled = false;
 
     (async () => {
+      const hasLocalColumns = Boolean(localStorage.getItem(CLIENT_COLUMNS_KEY));
+      if (hasLocalColumns) {
+        return;
+      }
+
       const dbClientColumns = await getGlobalSetting<ColumnConfig[]>('client_columns');
       if (cancelled || !Array.isArray(dbClientColumns)) {
         return;
       }
 
-      setColumns(ensureClientColumn(dbClientColumns));
+      const normalized = ensureClientColumn(dbClientColumns);
+      setColumns(normalized);
+      localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(normalized));
     })();
 
     return () => {
@@ -137,6 +146,7 @@ export default function Clients() {
   const handleColumnsChange = async (nextColumns: ColumnConfig[]) => {
     const normalizedColumns = ensureClientColumn(nextColumns);
     setColumns(normalizedColumns);
+    localStorage.setItem(CLIENT_COLUMNS_KEY, JSON.stringify(normalizedColumns));
 
     if (!isAdmin || !user) {
       return;
