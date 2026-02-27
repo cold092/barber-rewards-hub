@@ -98,12 +98,15 @@ Deno.serve(async (req) => {
 
     const newUserId = newUserData.user.id;
 
-    // Create profile with same organization_id
-    const { error: profileError } = await adminClient.from('profiles').insert({
-      user_id: newUserId,
-      name,
-      organization_id: callerProfile.organization_id,
-    });
+    // Upsert profile to handle trigger-created duplicates
+    const { error: profileError } = await adminClient.from('profiles').upsert(
+      {
+        user_id: newUserId,
+        name,
+        organization_id: callerProfile.organization_id,
+      },
+      { onConflict: 'user_id' }
+    );
 
     if (profileError) {
       console.error('Error creating profile:', profileError);
@@ -113,11 +116,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Assign selected role
-    const { error: roleError } = await adminClient.from('user_roles').insert({
-      user_id: newUserId,
-      role: assignedRole,
-    });
+    // Upsert role to handle trigger-created duplicates
+    const { error: roleError } = await adminClient.from('user_roles').upsert(
+      { user_id: newUserId, role: assignedRole },
+      { onConflict: 'user_id,role' }
+    );
 
     if (roleError) {
       console.error('Error assigning role:', roleError);
