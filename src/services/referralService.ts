@@ -133,7 +133,7 @@ export async function registerClient(
       referrer_name: referrerName,
       lead_name: clientData.clientName,
       lead_phone: clientData.clientPhone,
-      status: 'contacted' as ReferralStatus,
+      status: 'converted' as ReferralStatus,
       is_client: true,
       client_since: new Date().toISOString(),
       created_by_id: createdBy?.id,

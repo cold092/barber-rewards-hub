@@ -59,8 +59,7 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
       phone,
       email: email || null,
       notes: notes || null,
-      referrer_id: profile.id,
-      referrer_name: profile.name,
+      created_by: profile.user_id,
     });
     setLoading(false);
 

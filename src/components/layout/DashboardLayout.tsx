@@ -134,7 +134,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="min-w-0">
                   <p className="font-medium text-sm truncate">{profile?.name || 'Usuário'}</p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {role === 'owner' ? 'Dono' : role === 'admin' ? 'Administrador' : role === 'barber' ? 'Barbeiro' : 'Cliente'}
+                    {role === 'owner' ? 'Dono' : role === 'admin' ? 'Administrador' : role === 'barber' ? 'Colaborador' : 'Cliente'}
                   </p>
                 </div>
                 <NotificationCenter />
