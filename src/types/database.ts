@@ -1,5 +1,5 @@
 export type AppRole = 'admin' | 'barber' | 'client' | 'owner';
-export type ReferralStatus = 'new' | 'contacted' | 'converted' | 'client';
+export type ReferralStatus = 'new' | 'contacted' | 'converted';
 export type LeadEventType = 'status_change' | 'tag_change' | 'qualification_change' | 'note_added' | 'whatsapp_contact' | 'conversion' | 'created';
 
 export interface Profile {

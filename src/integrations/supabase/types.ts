@@ -400,7 +400,7 @@ export type Database = {
         | "whatsapp_contact"
         | "conversion"
         | "created"
-      referral_status: "new" | "contacted" | "converted" | "client"
+      referral_status: "new" | "contacted" | "converted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -538,7 +538,7 @@ export const Constants = {
         "conversion",
         "created",
       ],
-      referral_status: ["new", "contacted", "converted", "client"],
+      referral_status: ["new", "contacted", "converted"],
     },
   },
 } as const
