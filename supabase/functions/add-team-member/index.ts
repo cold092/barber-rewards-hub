@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { name, email, password } = await req.json();
+    const { name, email, password, role } = await req.json();
 
     if (!name || !email || !password) {
       return new Response(JSON.stringify({ error: 'Nome, email e senha são obrigatórios' }), {
@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    const validRoles = ['owner', 'barber'];
+    const assignedRole = validRoles.includes(role) ? role : 'barber';
 
     // Create user via admin API (bypasses email confirmation)
     const { data: newUserData, error: createError } = await adminClient.auth.admin.createUser({
@@ -110,10 +113,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Assign barber role
+    // Assign selected role
     const { error: roleError } = await adminClient.from('user_roles').insert({
       user_id: newUserId,
-      role: 'barber',
+      role: assignedRole,
     });
 
     if (roleError) {

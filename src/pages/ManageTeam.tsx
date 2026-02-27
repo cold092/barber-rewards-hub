@@ -6,6 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   UserPlus, 
   Mail, 
@@ -43,7 +51,7 @@ interface TeamMember {
 }
 
 export default function ManageTeam() {
-  const { isAdmin, loading: authLoading, session } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
@@ -51,6 +59,7 @@ export default function ManageTeam() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'owner' | 'barber'>('barber');
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
@@ -106,11 +115,11 @@ export default function ManageTeam() {
     
     try {
       const { data, error } = await supabase.functions.invoke('add-team-member', {
-        body: { name, email, password },
+        body: { name, email, password, role: selectedRole },
       });
 
       if (error) {
-        toast.error('Erro ao criar colaborador');
+        toast.error('Erro ao criar membro');
         setLoading(false);
         return;
       }
@@ -121,15 +130,17 @@ export default function ManageTeam() {
         return;
       }
 
-      toast.success(`Colaborador ${name} criado com sucesso!`);
+      const roleLabel = selectedRole === 'owner' ? 'Admin' : 'Colaborador';
+      toast.success(`${roleLabel} ${name} criado com sucesso!`);
       setName('');
       setEmail('');
       setPassword('');
+      setSelectedRole('barber');
       
       setTimeout(() => loadTeamMembers(), 1000);
     } catch (error: any) {
-      console.error('Error creating collaborator:', error);
-      toast.error(error.message || 'Erro ao criar colaborador');
+      console.error('Error creating member:', error);
+      toast.error(error.message || 'Erro ao criar membro');
     }
     
     setLoading(false);
@@ -168,11 +179,16 @@ export default function ManageTeam() {
 
   const getRoleLabel = (role: AppRole) => {
     switch (role) {
-      case 'owner': return 'Dono';
+      case 'owner': return 'Admin';
       case 'admin': return 'Administrador';
       case 'barber': return 'Colaborador';
       default: return 'Cliente';
     }
+  };
+
+  const getRoleBadgeVariant = (role: AppRole) => {
+    if (role === 'owner' || role === 'admin') return 'default';
+    return 'secondary';
   };
 
   return (
@@ -183,7 +199,7 @@ export default function ManageTeam() {
             Gerenciar <span className="gold-text">Equipe</span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Cadastre e gerencie os colaboradores da equipe
+            Cadastre e gerencie os membros da equipe
           </p>
         </div>
 
@@ -192,7 +208,7 @@ export default function ManageTeam() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-display">
                 <UserPlus className="h-5 w-5 text-primary" />
-                Novo Colaborador
+                Novo Membro
               </CardTitle>
               <CardDescription>
                 Crie login e senha para um novo membro da equipe
@@ -207,7 +223,7 @@ export default function ManageTeam() {
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Nome do colaborador"
+                      placeholder="Nome do membro"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-10"
@@ -223,7 +239,7 @@ export default function ManageTeam() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="email@colaborador.com"
+                      placeholder="email@membro.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -247,13 +263,29 @@ export default function ManageTeam() {
                     />
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">Nível de Acesso</Label>
+                  <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'owner' | 'barber')}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o cargo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="barber">Colaborador</SelectItem>
+                      <SelectItem value="owner">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Admin tem acesso total. Colaborador gerencia seus próprios leads.
+                  </p>
+                </div>
                 
                 <Button 
                   type="submit" 
                   className="w-full gold-gradient gold-glow text-primary-foreground font-semibold"
                   disabled={loading}
                 >
-                  {loading ? 'Criando...' : 'Criar Colaborador'}
+                  {loading ? 'Criando...' : 'Criar Membro'}
                 </Button>
               </form>
             </CardContent>
@@ -298,9 +330,9 @@ export default function ManageTeam() {
                         </div>
                         <div>
                           <p className="font-medium">{member.profile.name}</p>
-                          <p className="text-xs text-muted-foreground capitalize">
+                          <Badge variant={getRoleBadgeVariant(member.role)} className="mt-0.5 text-[10px]">
                             {getRoleLabel(member.role)}
-                          </p>
+                          </Badge>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -338,10 +370,10 @@ export default function ManageTeam() {
               <div>
                 <h3 className="font-semibold">Como funciona?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  1. Crie login/senha para cada colaborador<br />
-                  2. O colaborador acessa com seu email e senha<br />
-                  3. Cada colaborador cadastra seus próprios leads<br />
-                  4. Você (Dono) vê todos os leads e converte as vendas
+                  1. Crie login/senha para cada membro<br />
+                  2. Escolha o nível de acesso: Admin ou Colaborador<br />
+                  3. O membro acessa com seu email e senha<br />
+                  4. Admins veem tudo, Colaboradores gerenciam seus leads
                 </p>
               </div>
             </div>
