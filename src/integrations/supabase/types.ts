@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          contact_tag: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lifetime_points: number
+          name: string
+          notes: string | null
+          organization_id: string
+          phone: string
+          referrer_id: string | null
+          referrer_name: string | null
+          updated_at: string
+          wallet_balance: number
+        }
+        Insert: {
+          contact_tag?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lifetime_points?: number
+          name: string
+          notes?: string | null
+          organization_id: string
+          phone: string
+          referrer_id?: string | null
+          referrer_name?: string | null
+          updated_at?: string
+          wallet_balance?: number
+        }
+        Update: {
+          contact_tag?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lifetime_points?: number
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          phone?: string
+          referrer_id?: string | null
+          referrer_name?: string | null
+          updated_at?: string
+          wallet_balance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_settings: {
         Row: {
           created_at: string
@@ -186,6 +249,7 @@ export type Database = {
           lead_phone: string
           lead_points: number
           notes: string | null
+          organization_id: string | null
           referred_by_lead_id: string | null
           referrer_id: string
           referrer_name: string
@@ -206,6 +270,7 @@ export type Database = {
           lead_phone: string
           lead_points?: number
           notes?: string | null
+          organization_id?: string | null
           referred_by_lead_id?: string | null
           referrer_id: string
           referrer_name: string
@@ -226,6 +291,7 @@ export type Database = {
           lead_phone?: string
           lead_points?: number
           notes?: string | null
+          organization_id?: string | null
           referred_by_lead_id?: string | null
           referrer_id?: string
           referrer_name?: string
@@ -233,6 +299,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "referrals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "referrals_referred_by_lead_id_fkey"
             columns: ["referred_by_lead_id"]
@@ -279,6 +352,7 @@ export type Database = {
         Args: { org_name: string; owner_user_id: string }
         Returns: string
       }
+      get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

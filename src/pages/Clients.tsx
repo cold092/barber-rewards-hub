@@ -15,6 +15,7 @@ import {
   List,
   Menu,
   Phone,
+  UserPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
@@ -35,6 +36,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
+import { RegisterClientDialog } from '@/components/clients/RegisterClientDialog';
 
 const CLIENT_VIEW_MODE_KEY = 'clientsViewMode';
 const CLIENT_COLUMNS_KEY = 'clientColumns';
@@ -85,6 +87,7 @@ export default function Clients() {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [converting, setConverting] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
+  const [registerClientOpen, setRegisterClientOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ClientViewMode>(() => {
     const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
     return saved === 'list' ? 'list' : 'kanban';
@@ -319,6 +322,14 @@ export default function Clients() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              className="gap-2 text-xs gold-gradient gold-glow text-primary-foreground"
+              onClick={() => setRegisterClientOpen(true)}
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Cadastrar Cliente
+            </Button>
             <div className="flex items-center rounded-lg border border-border/50 bg-secondary/50 p-0.5">
               <Button
                 variant={viewMode === 'kanban' ? 'default' : 'ghost'}
@@ -533,6 +544,7 @@ export default function Clients() {
       </Dialog>
 
       <TagSettingsDialog open={tagSettingsOpen} onOpenChange={setTagSettingsOpen} />
+      <RegisterClientDialog open={registerClientOpen} onOpenChange={setRegisterClientOpen} onClientCreated={loadReferrals} />
     </DashboardLayout>
   );
 }
