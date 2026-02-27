@@ -77,12 +77,18 @@ export function LeadDetailsDialog({
 
   const rewardPlans = getRewardPlans();
 
-  const getStatusBadge = (status: Referral['status']) => {
-    switch (status) {
+  const getStatusBadge = (item: Referral) => {
+    if (item.is_client && item.status !== 'converted') {
+      return <Badge variant="outline" className="bg-success/15 text-success border-success/30">Cliente</Badge>;
+    }
+
+    switch (item.status) {
       case 'new':
         return <Badge variant="outline" className="bg-info/20 text-info border-info/30">Novo</Badge>;
       case 'contacted':
         return <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30">Contatado</Badge>;
+      case 'client':
+        return <Badge variant="outline" className="bg-success/15 text-success border-success/30">Cliente</Badge>;
       case 'converted':
         return <Badge variant="outline" className="bg-success/20 text-success border-success/30">Convertido</Badge>;
     }
@@ -105,7 +111,7 @@ export function LeadDetailsDialog({
         <DialogHeader>
           <DialogTitle className="font-display text-xl flex items-center gap-3">
             {referral.lead_name}
-            {getStatusBadge(referral.status)}
+            {getStatusBadge(referral)}
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2">
             <Phone className="h-4 w-4" />
@@ -212,7 +218,7 @@ export function LeadDetailsDialog({
                 </Button>
               )}
 
-              {referral.status === 'new' && (
+              {!referral.is_client && referral.status === 'new' && (
                 <Button
                   size="sm"
                   variant="secondary"
