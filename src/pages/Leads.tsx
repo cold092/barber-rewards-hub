@@ -393,12 +393,22 @@ export default function Leads() {
       return;
     }
 
+    // Optimistic UI update
+    const previousStatus = referral.status;
+    setReferrals((prev) =>
+      prev.map((r) => r.id === referralId ? { ...r, status: newStatus } : r)
+    );
+
     const { error } = await supabase
       .from('referrals')
       .update({ status: newStatus })
       .eq('id', referralId);
 
     if (error) {
+      // Revert on failure
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referralId ? { ...r, status: previousStatus } : r)
+      );
       toast.error('Erro ao atualizar status');
       return;
     }
@@ -406,13 +416,41 @@ export default function Leads() {
     await addHistoryEvent({
       referralId,
       eventType: 'status_change',
-      eventData: { from_status: referral.status, to_status: newStatus },
+      eventData: { from_status: previousStatus, to_status: newStatus },
       createdById: user?.id,
       createdByName: profile?.name
     });
 
     toast.success('Status atualizado');
-    loadReferrals();
+  };
+
+  const handleColumnChange = async (referralId: string, columnId: string) => {
+    const referral = referrals.find(r => r.id === referralId);
+    if (!referral) return;
+
+    const previousTag = referral.contact_tag;
+    const newTag = columnId || null;
+
+    // Optimistic UI
+    setReferrals((prev) =>
+      prev.map((r) => r.id === referralId ? { ...r, contact_tag: newTag } : r)
+    );
+
+    const { error } = await supabase
+      .from('referrals')
+      .update({ contact_tag: newTag })
+      .eq('id', referralId);
+
+    if (error) {
+      // Revert
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referralId ? { ...r, contact_tag: previousTag } : r)
+      );
+      toast.error('Erro ao mover lead');
+      return;
+    }
+
+    toast.success('Lead movido');
   };
 
   const handleExport = () => {
@@ -854,6 +892,7 @@ export default function Leads() {
           <KanbanBoard
             referrals={tagFilteredReferrals.filter(r => !isClientReferral(r))}
             onStatusChange={handleStatusChange}
+            onColumnChange={handleColumnChange}
             onOpenDetails={openDetailsDialog}
             onWhatsApp={openWhatsApp}
             isAdmin={isAdmin}

@@ -17,7 +17,9 @@ interface KanbanBoardProps {
   onColumnsReorder?: (columns: ColumnConfig[]) => void;
 }
 
-const DEFAULT_COLUMNS: { id: ReferralStatus; title: string; color: string }[] = [
+const DEFAULT_STATUS_IDS = new Set(['new', 'contacted', 'converted']);
+
+const DEFAULT_COLUMNS: { id: string; title: string; color: string }[] = [
   { id: 'new', title: 'Novos', color: 'bg-info/10' },
   { id: 'contacted', title: 'Contatados', color: 'bg-warning/10' },
   { id: 'converted', title: 'Convertidos', color: 'bg-success/10' }
@@ -37,6 +39,11 @@ export function KanbanBoard({
   const [activeReferral, setActiveReferral] = useState<Referral | null>(null);
 
   const columns = customColumns || DEFAULT_COLUMNS;
+
+  // Build set of all custom (non-default) column IDs
+  const customColumnIds = new Set(
+    columns.filter(c => !DEFAULT_STATUS_IDS.has(c.id)).map(c => c.id)
+  );
 
   const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
   const [columnDropTargetId, setColumnDropTargetId] = useState<string | null>(null);
@@ -75,26 +82,33 @@ export function KanbanBoard({
 
     if (!referral) return;
 
-    const isStatusColumn = ['new', 'contacted', 'converted'].includes(destinationColumnId);
+    const isDefaultStatus = DEFAULT_STATUS_IDS.has(destinationColumnId);
 
-    if (isStatusColumn) {
+    if (isDefaultStatus) {
       const newStatus = destinationColumnId as ReferralStatus;
-      if (referral.status !== newStatus) {
+      // Moving to a default column: update status AND clear contact_tag (custom column marker)
+      if (referral.status !== newStatus || referral.contact_tag) {
+        // If the lead was in a custom column, clear it first
+        if (referral.contact_tag && customColumnIds.has(referral.contact_tag) && onColumnChange) {
+          // Clear custom column tag by setting to empty
+          await onColumnChange(referralId, '');
+        }
         await onStatusChange(referralId, newStatus);
       }
       return;
     }
 
-    if (onColumnChange) {
-      await onColumnChange(referralId, destinationColumnId);
+    // Moving to a custom column: store the column ID in contact_tag
+    if (referral.contact_tag !== destinationColumnId) {
+      if (onColumnChange) {
+        await onColumnChange(referralId, destinationColumnId);
+      }
     }
   };
-
 
   const handleColumnDragStart = (columnId: string) => {
     setDraggingColumnId(columnId);
   };
-
 
   const handleColumnDragOver = (columnId: string) => {
     if (!draggingColumnId || draggingColumnId === columnId) return;
@@ -131,30 +145,16 @@ export function KanbanBoard({
   };
 
   const getReferralsByColumn = (columnId: string) => {
-    // For default status columns, filter by status
-    if (['new', 'contacted', 'converted'].includes(columnId)) {
-      return referrals.filter(r => r.status === columnId);
+    if (DEFAULT_STATUS_IDS.has(columnId)) {
+      // Default status columns show leads with matching status
+      // that are NOT assigned to any custom column
+      return referrals.filter(r => 
+        r.status === columnId && 
+        (!r.contact_tag || !customColumnIds.has(r.contact_tag))
+      );
     }
 
-    // Default client bucket: every client without an explicit custom column mapping
-    if (columnId === 'clients') {
-      const customColumnIds = new Set(columns.map((column) => column.id));
-      return referrals.filter((referral) => !referral.contact_tag || !customColumnIds.has(referral.contact_tag));
-    }
-
-    // Client-specific columns
-    if (columnId === 'vip') {
-      return referrals.filter(r => r.contact_tag === 'sql');
-    }
-    if (columnId === 'inactive') {
-      return referrals.filter(r => r.contact_tag === 'cold');
-    }
-    if (columnId === 'active') {
-      // Active = all clients not in VIP or inactive
-      return referrals.filter(r => r.contact_tag !== 'sql' && r.contact_tag !== 'cold');
-    }
-
-    // Custom tag-based columns: match column id to contact_tag
+    // Custom columns: match contact_tag to column id
     return referrals.filter(r => r.contact_tag === columnId);
   };
 
