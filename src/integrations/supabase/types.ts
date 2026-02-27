@@ -16,49 +16,40 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
-          contact_tag: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           id: string
-          lifetime_points: number
           name: string
           notes: string | null
           organization_id: string
-          phone: string
-          referrer_id: string | null
-          referrer_name: string | null
+          phone: string | null
+          plan_id: string | null
           updated_at: string
-          wallet_balance: number
         }
         Insert: {
-          contact_tag?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id?: string
-          lifetime_points?: number
           name: string
           notes?: string | null
           organization_id: string
-          phone: string
-          referrer_id?: string | null
-          referrer_name?: string | null
+          phone?: string | null
+          plan_id?: string | null
           updated_at?: string
-          wallet_balance?: number
         }
         Update: {
-          contact_tag?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id?: string
-          lifetime_points?: number
           name?: string
           notes?: string | null
           organization_id?: string
-          phone?: string
-          referrer_id?: string | null
-          referrer_name?: string | null
+          phone?: string | null
+          plan_id?: string | null
           updated_at?: string
-          wallet_balance?: number
         }
         Relationships: [
           {
@@ -66,13 +57,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "clients_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -172,6 +156,56 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          phone: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
@@ -199,18 +233,18 @@ export type Database = {
           organization_id: string | null
           phone: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
           wallet_balance: number
         }
         Insert: {
           created_at?: string
           id?: string
           lifetime_points?: number
-          name: string
+          name?: string
           organization_id?: string | null
           phone?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
           wallet_balance?: number
         }
         Update: {
@@ -221,7 +255,7 @@ export type Database = {
           organization_id?: string | null
           phone?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           wallet_balance?: number
         }
         Relationships: [
@@ -240,6 +274,9 @@ export type Database = {
           contact_tag: string | null
           converted_plan_id: string | null
           created_at: string
+          created_by_id: string | null
+          created_by_name: string | null
+          created_by_role: Database["public"]["Enums"]["app_role"] | null
           follow_up_date: string | null
           follow_up_note: string | null
           id: string
@@ -261,19 +298,22 @@ export type Database = {
           contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          created_by_role?: Database["public"]["Enums"]["app_role"] | null
           follow_up_date?: string | null
           follow_up_note?: string | null
           id?: string
           is_client?: boolean
           is_qualified?: boolean | null
-          lead_name: string
-          lead_phone: string
+          lead_name?: string
+          lead_phone?: string
           lead_points?: number
           notes?: string | null
           organization_id?: string | null
           referred_by_lead_id?: string | null
           referrer_id: string
-          referrer_name: string
+          referrer_name?: string
           status?: Database["public"]["Enums"]["referral_status"]
           updated_at?: string
         }
@@ -282,6 +322,9 @@ export type Database = {
           contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          created_by_role?: Database["public"]["Enums"]["app_role"] | null
           follow_up_date?: string | null
           follow_up_note?: string | null
           id?: string
@@ -304,20 +347,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referrals_referred_by_lead_id_fkey"
-            columns: ["referred_by_lead_id"]
-            isOneToOne: false
-            referencedRelation: "referrals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referrals_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -348,10 +377,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_organization_and_owner: {
-        Args: { org_name: string; owner_user_id: string }
-        Returns: string
-      }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
@@ -366,7 +391,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "barber" | "client" | "owner"
+      app_role: "owner" | "admin" | "barber" | "client"
       lead_event_type:
         | "status_change"
         | "tag_change"
@@ -503,7 +528,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "barber", "client", "owner"],
+      app_role: ["owner", "admin", "barber", "client"],
       lead_event_type: [
         "status_change",
         "tag_change",
