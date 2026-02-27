@@ -110,6 +110,11 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
   };
 
   const handleStartEdit = (col: ColumnConfig) => {
+    if (col.isDefault) {
+      toast.error('Colunas padrão não podem ser personalizadas');
+      return;
+    }
+
     setEditingId(col.id);
     setEditTitle(col.title);
     setEditColor(col.color);
@@ -224,9 +229,11 @@ export function ColumnManager({ columns, onColumnsChange }: ColumnManagerProps) 
                     >
                       <ArrowDown className="h-3 w-3 text-muted-foreground" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEdit(col)}>
-                      <Pencil className="h-3 w-3 text-muted-foreground" />
-                    </Button>
+                    {!col.isDefault && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEdit(col)}>
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    )}
                     {!col.isDefault && (
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemove(col.id)}>
                         <Trash2 className="h-3 w-3 text-destructive/70" />

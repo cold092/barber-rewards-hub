@@ -28,16 +28,50 @@ export async function getGlobalSetting<T>(key: SettingKey): Promise<T | null> {
 }
 
 export async function upsertSetting(userId: string, key: SettingKey, value: unknown): Promise<boolean> {
-  const { error } = await supabase
-    .from('crm_settings')
-    .upsert(
-      { user_id: userId, setting_key: key, setting_value: value as any },
-      { onConflict: 'user_id,setting_key' }
-    );
+  const payload = { user_id: userId, setting_key: key, setting_value: value as any };
 
-  if (error) {
-    console.error('Error saving setting:', key, error);
+  const { error: upsertError } = await supabase
+    .from('crm_settings')
+    .upsert(payload, { onConflict: 'user_id,setting_key' });
+
+  if (!upsertError) {
+    return true;
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from('crm_settings')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('setting_key', key)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error('Error loading existing setting:', key, existingError);
     return false;
   }
+
+  if (existing?.id) {
+    const { error: updateError } = await supabase
+      .from('crm_settings')
+      .update({ setting_value: value as any })
+      .eq('id', existing.id);
+
+    if (updateError) {
+      console.error('Error updating setting:', key, updateError);
+      return false;
+    }
+
+    return true;
+  }
+
+  const { error: insertError } = await supabase
+    .from('crm_settings')
+    .insert(payload);
+
+  if (insertError) {
+    console.error('Error inserting setting:', key, insertError);
+    return false;
+  }
+
   return true;
 }

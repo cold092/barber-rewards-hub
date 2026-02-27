@@ -87,7 +87,7 @@ export default function Leads() {
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted'>('all');
+  const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'client'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
@@ -178,7 +178,7 @@ export default function Leads() {
       setListType('leads');
     }
 
-    if (statusParam === 'new' || statusParam === 'contacted' || statusParam === 'converted') {
+    if (statusParam === 'new' || statusParam === 'contacted' || statusParam === 'converted' || statusParam === 'client') {
       setFilter(statusParam);
     } else if (viewParam === 'converted-clients') {
       setFilter('converted');
@@ -541,12 +541,18 @@ export default function Leads() {
 
   const rewardPlans = getRewardPlans();
 
-  const getStatusBadge = (status: Referral['status']) => {
-    switch (status) {
+  const getStatusBadge = (referral: Referral) => {
+    if (referral.is_client && referral.status !== 'converted') {
+      return <Badge variant="outline" className="bg-success/15 text-success border-success/30">Cliente</Badge>;
+    }
+
+    switch (referral.status) {
       case 'new':
         return <Badge variant="outline" className="bg-info/20 text-info border-info/30">Novo</Badge>;
       case 'contacted':
         return <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30">Contatado</Badge>;
+      case 'client':
+        return <Badge variant="outline" className="bg-success/15 text-success border-success/30">Cliente</Badge>;
       case 'converted':
         return <Badge variant="outline" className="bg-success/20 text-success border-success/30">Convertido</Badge>;
     }
@@ -791,6 +797,7 @@ export default function Leads() {
                   <SelectItem value="new">Novos</SelectItem>
                   <SelectItem value="contacted">Contatados</SelectItem>
                   <SelectItem value="converted">Convertidos</SelectItem>
+                  {listType === 'clients' && <SelectItem value="client">Clientes Diretos</SelectItem>}
                 </SelectContent>
               </Select>
             )}
@@ -949,7 +956,7 @@ export default function Leads() {
                           </p>
                         </div>
                         <div className="flex flex-wrap justify-end gap-2">
-                          {getStatusBadge(referral.status)}
+                          {getStatusBadge(referral)}
                           {getContactTagBadge(referral.contact_tag)}
                           {getClientBadge(isClientReferral(referral))}
                           {referral.status === 'converted' && referral.converted_plan_id && (
@@ -997,7 +1004,7 @@ export default function Leads() {
                               </Button>
                             )}
                             
-                            {referral.status === 'new' && (
+                            {!referral.is_client && referral.status === 'new' && (
                               <Button
                                 size="sm"
                                 variant="secondary"
@@ -1008,7 +1015,7 @@ export default function Leads() {
                                 Marcar Contatado
                               </Button>
                             )}
-                            {referral.status === 'contacted' && (
+                            {!referral.is_client && referral.status === 'contacted' && (
                               <Button
                                 size="sm"
                                 variant="ghost"

@@ -133,7 +133,7 @@ export async function registerClient(
       referrer_name: referrerName,
       lead_name: clientData.clientName,
       lead_phone: clientData.clientPhone,
-      status: 'converted' as ReferralStatus,
+      status: 'client' as ReferralStatus,
       is_client: true,
       client_since: new Date().toISOString(),
       created_by_id: createdBy?.id,
@@ -146,7 +146,6 @@ export async function registerClient(
       .insert(insertPayload)
       .select()
       .single();
-
     if (error && hasMissingCreatedByColumns(error)) {
       ({ data: referral, error } = await supabase
         .from('referrals')
@@ -644,7 +643,7 @@ export async function getAllLeadsAsReferrers(): Promise<{ data: { id: string; na
     const { data, error } = await supabase
       .from('referrals')
       .select('id, lead_name, lead_phone')
-      .eq('status', 'converted')
+      .in('status', ['client', 'converted'])
       .order('lead_name');
 
     if (error) {

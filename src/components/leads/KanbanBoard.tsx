@@ -154,6 +154,13 @@ export function KanbanBoard({
       );
     }
 
+    // Special default bucket used by Clients page: untagged clients stay in "clients" column
+    if (columnId === 'clients') {
+      return referrals.filter(
+        (r) => !r.contact_tag || !customColumnIds.has(r.contact_tag)
+      );
+    }
+
     // Custom columns: match contact_tag to column id
     return referrals.filter(r => r.contact_tag === columnId);
   };
