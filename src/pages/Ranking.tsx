@@ -220,7 +220,7 @@ export default function Ranking() {
         {isAdmin ? (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="barbers">Barbeiros</TabsTrigger>
+              <TabsTrigger value="barbers">Colaboradores</TabsTrigger>
               <TabsTrigger value="clients">Clientes</TabsTrigger>
             </TabsList>
             
@@ -229,7 +229,7 @@ export default function Ranking() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-display">
                     <Trophy className="h-5 w-5 text-primary" />
-                    Ranking de Barbeiros
+                    Ranking de Colaboradores
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -257,7 +257,7 @@ export default function Ranking() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-display">
                 <Trophy className="h-5 w-5 text-primary" />
-                Ranking de Barbeiros
+                Ranking de Colaboradores
               </CardTitle>
             </CardHeader>
             <CardContent>

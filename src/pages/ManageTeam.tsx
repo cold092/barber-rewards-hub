@@ -14,7 +14,7 @@ import {
   Users,
   Trash2,
   Shield,
-  Scissors
+  Briefcase
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -43,17 +43,15 @@ interface TeamMember {
 }
 
 export default function ManageTeam() {
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, loading: authLoading, session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   
-  // New barber form
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
 
@@ -64,7 +62,6 @@ export default function ManageTeam() {
   const loadTeamMembers = async () => {
     setLoadingTeam(true);
     try {
-      // Get all profiles with their roles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -78,7 +75,6 @@ export default function ManageTeam() {
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with roles
       const members: TeamMember[] = (profiles || [])
         .map(profile => {
           const userRole = roles?.find(r => r.user_id === profile.user_id);
@@ -87,7 +83,7 @@ export default function ManageTeam() {
             role: (userRole?.role as AppRole) || 'client'
           };
         })
-        .filter(m => m.role === 'barber' || m.role === 'admin');
+        .filter(m => m.role === 'barber' || m.role === 'admin' || m.role === 'owner');
 
       setTeamMembers(members);
     } catch (error) {
@@ -109,90 +105,31 @@ export default function ManageTeam() {
     setLoading(true);
     
     try {
-      const { data: currentSessionData, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        throw sessionError;
-      }
-
-      const currentSession = currentSessionData.session;
-
-      // Create the user using Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: { name, role: 'barber' }
-        }
+      const { data, error } = await supabase.functions.invoke('add-team-member', {
+        body: { name, email, password },
       });
 
-      if (authError) {
-        if (authError.message.includes('already registered')) {
-          toast.error('Este email já está cadastrado');
-        } else {
-          throw authError;
-        }
+      if (error) {
+        toast.error('Erro ao criar colaborador');
         setLoading(false);
         return;
       }
 
-      if (!authData.user) {
-        throw new Error('Usuário não criado');
-      }
-
-      if (!currentSession) {
-        toast.error('Sessão do admin expirada. Faça login novamente.');
+      if (data?.error) {
+        toast.error(data.error);
         setLoading(false);
         return;
       }
 
-      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
-
-      if (signOutError) {
-        console.error('Error clearing barber session:', signOutError);
-      }
-
-      const { error: restoreError } = await supabase.auth.setSession({
-        access_token: currentSession.access_token,
-        refresh_token: currentSession.refresh_token
-      });
-
-      if (restoreError) {
-        console.error('Error restoring admin session:', restoreError);
-        toast.error('Erro ao restaurar sessão do admin');
-        setLoading(false);
-        return;
-      }
-
-      // Assign barber role via direct insert
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'barber' as AppRole
-        });
-
-      if (roleError) {
-        console.error('Error assigning role:', roleError);
-        toast.error('Erro ao atribuir perfil de barbeiro');
-        setLoading(false);
-        return;
-      }
-
-      toast.success(`Barbeiro ${name} criado com sucesso!`);
-      
-      // Clear form
+      toast.success(`Colaborador ${name} criado com sucesso!`);
       setName('');
       setEmail('');
       setPassword('');
       
-      // Reload team list
       setTimeout(() => loadTeamMembers(), 1000);
-      
     } catch (error: any) {
-      console.error('Error creating barber:', error);
-      toast.error(error.message || 'Erro ao criar barbeiro');
+      console.error('Error creating collaborator:', error);
+      toast.error(error.message || 'Erro ao criar colaborador');
     }
     
     setLoading(false);
@@ -202,9 +139,6 @@ export default function ManageTeam() {
     if (!memberToDelete) return;
     
     try {
-      // Note: We can only delete the profile and role, not the auth user
-      // The auth user would need admin SDK or be done through Supabase dashboard
-      
       if (memberToDelete.profile.user_id) {
         await supabase
           .from('user_roles')
@@ -228,10 +162,18 @@ export default function ManageTeam() {
     setMemberToDelete(null);
   };
 
-  // Only admin can access this page
   if (!authLoading && !isAdmin) {
     return <Navigate to="/" replace />;
   }
+
+  const getRoleLabel = (role: AppRole) => {
+    switch (role) {
+      case 'owner': return 'Dono';
+      case 'admin': return 'Administrador';
+      case 'barber': return 'Colaborador';
+      default: return 'Cliente';
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -241,17 +183,16 @@ export default function ManageTeam() {
             Gerenciar <span className="gold-text">Equipe</span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Cadastre e gerencie os barbeiros da equipe
+            Cadastre e gerencie os colaboradores da equipe
           </p>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          {/* Create new barber */}
           <Card className="glass-card border-border/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-display">
                 <UserPlus className="h-5 w-5 text-primary" />
-                Novo Barbeiro
+                Novo Colaborador
               </CardTitle>
               <CardDescription>
                 Crie login e senha para um novo membro da equipe
@@ -266,7 +207,7 @@ export default function ManageTeam() {
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Nome do barbeiro"
+                      placeholder="Nome do colaborador"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-10"
@@ -282,7 +223,7 @@ export default function ManageTeam() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="email@barbeiro.com"
+                      placeholder="email@colaborador.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -312,13 +253,12 @@ export default function ManageTeam() {
                   className="w-full gold-gradient gold-glow text-primary-foreground font-semibold"
                   disabled={loading}
                 >
-                  {loading ? 'Criando...' : 'Criar Barbeiro'}
+                  {loading ? 'Criando...' : 'Criar Colaborador'}
                 </Button>
               </form>
             </CardContent>
           </Card>
 
-          {/* Team list */}
           <Card className="glass-card border-border/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-display">
@@ -348,18 +288,18 @@ export default function ManageTeam() {
                       <div className="flex items-center gap-3">
                         <div className={`
                           w-10 h-10 rounded-full flex items-center justify-center
-                          ${member.role === 'admin' ? 'bg-primary/20' : 'bg-muted'}
+                          ${member.role === 'admin' || member.role === 'owner' ? 'bg-primary/20' : 'bg-muted'}
                         `}>
-                          {member.role === 'admin' ? (
+                          {member.role === 'admin' || member.role === 'owner' ? (
                             <Shield className="h-5 w-5 text-primary" />
                           ) : (
-                            <Scissors className="h-5 w-5 text-muted-foreground" />
+                            <Briefcase className="h-5 w-5 text-muted-foreground" />
                           )}
                         </div>
                         <div>
                           <p className="font-medium">{member.profile.name}</p>
                           <p className="text-xs text-muted-foreground capitalize">
-                            {member.role === 'admin' ? 'Administrador' : 'Barbeiro'}
+                            {getRoleLabel(member.role)}
                           </p>
                         </div>
                       </div>
@@ -367,7 +307,7 @@ export default function ManageTeam() {
                         <span className="text-sm text-primary font-medium">
                           {member.profile.lifetime_points} pts
                         </span>
-                        {member.role !== 'admin' && (
+                        {member.role !== 'admin' && member.role !== 'owner' && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -389,7 +329,6 @@ export default function ManageTeam() {
           </Card>
         </div>
 
-        {/* Info card */}
         <Card className="glass-card border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-start gap-4">
@@ -399,10 +338,10 @@ export default function ManageTeam() {
               <div>
                 <h3 className="font-semibold">Como funciona?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  1. Crie login/senha para cada barbeiro<br />
-                  2. O barbeiro acessa com seu email e senha<br />
-                  3. Cada barbeiro cadastra seus próprios leads<br />
-                  4. Você (Admin) vê todos os leads e converte as vendas
+                  1. Crie login/senha para cada colaborador<br />
+                  2. O colaborador acessa com seu email e senha<br />
+                  3. Cada colaborador cadastra seus próprios leads<br />
+                  4. Você (Dono) vê todos os leads e converte as vendas
                 </p>
               </div>
             </div>
@@ -410,7 +349,6 @@ export default function ManageTeam() {
         </Card>
       </div>
 
-      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
