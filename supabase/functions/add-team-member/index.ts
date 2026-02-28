@@ -116,10 +116,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Upsert role to handle trigger-created duplicates
-    const { error: roleError } = await adminClient.from('user_roles').upsert(
-      { user_id: newUserId, role: assignedRole },
-      { onConflict: 'user_id,role' }
+    // Delete any existing roles created by trigger, then insert the correct one
+    await adminClient.from('user_roles').delete().eq('user_id', newUserId);
+    const { error: roleError } = await adminClient.from('user_roles').insert(
+      { user_id: newUserId, role: assignedRole }
     );
 
     if (roleError) {

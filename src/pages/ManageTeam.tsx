@@ -84,12 +84,14 @@ export default function ManageTeam() {
 
       if (rolesError) throw rolesError;
 
+      const rolePriority: Record<string, number> = { owner: 3, admin: 2, barber: 1, client: 0 };
       const members: TeamMember[] = (profiles || [])
         .map(profile => {
-          const userRole = roles?.find(r => r.user_id === profile.user_id);
+          const userRoles = roles?.filter(r => r.user_id === profile.user_id) || [];
+          const bestRole = userRoles.sort((a, b) => (rolePriority[b.role] || 0) - (rolePriority[a.role] || 0))[0];
           return {
             profile: profile as Profile,
-            role: (userRole?.role as AppRole) || 'client'
+            role: (bestRole?.role as AppRole) || 'client'
           };
         })
         .filter(m => m.role === 'barber' || m.role === 'admin' || m.role === 'owner');
