@@ -50,6 +50,8 @@ interface TeamMember {
   role: AppRole;
 }
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export default function ManageTeam() {
   const { isAdmin, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -116,9 +118,23 @@ export default function ManageTeam() {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('add-team-member', {
-        body: { name, email, password, role: selectedRole },
-      });
+      const requestBody = { name, email, password, role: selectedRole };
+      let data: any = null;
+      let error: any = null;
+
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const response = await supabase.functions.invoke('add-team-member', {
+          body: requestBody,
+        });
+
+        data = response.data;
+        error = response.error;
+
+        const transientFailure = Boolean(error);
+        if (!transientFailure || attempt === 2) break;
+
+        await wait(700);
+      }
 
       if (error) {
         toast.error('Erro ao criar membro');
