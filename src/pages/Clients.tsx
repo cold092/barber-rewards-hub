@@ -145,7 +145,7 @@ export default function Clients() {
 
   // Filter by active tags
   const filteredReferrals = activeTags.length > 0
-    ? referrals.filter(r => r.contact_tag && activeTags.includes(r.contact_tag))
+    ? referrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
     : referrals;
 
   const handleViewModeChange = (mode: ClientViewMode) => {
@@ -190,20 +190,21 @@ export default function Clients() {
   };
 
   const handleTagChange = async (referral: Referral, value: string) => {
-    const nextTag = value === 'none' ? null : value;
-    const result = await updateContactTag(referral.id, nextTag);
+    const newTags = value ? value.split(',').filter(Boolean) : [];
+    const { updateLeadTags } = await import('@/services/referralService');
+    const result = await updateLeadTags(referral.id, newTags);
     if (result.success) {
       await addHistoryEvent({
         referralId: referral.id,
         eventType: 'tag_change',
-        eventData: { tag: nextTag || 'none', previous_tag: referral.contact_tag },
+        eventData: { tags: newTags, previous_tags: referral.tags || [] },
         createdById: user?.id,
         createdByName: profile?.name,
       });
-      setReferrals(prev => prev.map(item => item.id === referral.id ? { ...item, contact_tag: nextTag } : item));
-      toast.success('Tag atualizada');
+      setReferrals(prev => prev.map(item => item.id === referral.id ? { ...item, tags: newTags } : item));
+      toast.success('Tags atualizadas');
     } else {
-      toast.error(result.error || 'Erro ao atualizar tag');
+      toast.error(result.error || 'Erro ao atualizar tags');
     }
   };
 
@@ -490,11 +491,14 @@ export default function Clients() {
                           <Badge variant="outline" className="bg-success/15 text-success border-success/30">
                             Cliente
                           </Badge>
-                          {referral.contact_tag && (
-                            <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
-                              {contactTagOptions.find((option) => option.value === referral.contact_tag)?.label || referral.contact_tag}
-                            </Badge>
-                          )}
+                          {(referral.tags || []).map(tag => {
+                            const opt = contactTagOptions.find(o => o.value === tag);
+                            return opt ? (
+                              <Badge key={tag} variant="outline" className="bg-primary/15 text-primary border-primary/30">
+                                {opt.label}
+                              </Badge>
+                            ) : null;
+                          })}
                           {referral.converted_plan_id && (
                             <Badge variant="outline" className="bg-accent/15 text-accent border-accent/30">
                               {getPlanById(referral.converted_plan_id)?.label}

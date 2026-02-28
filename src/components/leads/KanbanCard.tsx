@@ -76,7 +76,10 @@ export function KanbanCard({
           </p>
           
           <div className="flex flex-wrap gap-1 mt-2">
-            {getTagBadge(referral.contact_tag)}
+            {(referral.tags || []).map(tag => {
+              const badge = getTagBadge(tag);
+              return badge ? <span key={tag}>{badge}</span> : null;
+            })}
             {referral.is_client && (
               <Badge variant="outline" className="text-[10px] bg-success/15 text-success border-success/30">
                 Cliente
