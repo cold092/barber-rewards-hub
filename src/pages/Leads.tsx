@@ -213,7 +213,7 @@ export default function Leads() {
   
   // Apply tag filter
   const tagFilteredReferrals = activeTags.length > 0
-    ? baseReferrals.filter(r => r.contact_tag && activeTags.includes(r.contact_tag))
+    ? baseReferrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
     : baseReferrals;
   
   const filteredReferrals = tagFilteredReferrals.filter((referral) => {
@@ -301,26 +301,27 @@ export default function Leads() {
   };
 
   const handleTagChange = async (referral: Referral, value: string) => {
-    const nextTag = value === 'none' ? null : value;
-    const result = await updateContactTag(referral.id, nextTag);
+    const newTags = value ? value.split(',').filter(Boolean) : [];
+    const { updateLeadTags } = await import('@/services/referralService');
+    const result = await updateLeadTags(referral.id, newTags);
 
     if (result.success) {
       await addHistoryEvent({
         referralId: referral.id,
         eventType: 'tag_change',
-        eventData: { tag: nextTag || 'none', previous_tag: referral.contact_tag },
+        eventData: { tags: newTags, previous_tags: referral.tags || [] },
         createdById: user?.id,
         createdByName: profile?.name
       });
 
       setReferrals((prev) =>
         prev.map((item) =>
-          item.id === referral.id ? { ...item, contact_tag: nextTag } : item
+          item.id === referral.id ? { ...item, tags: newTags } : item
         )
       );
-      toast.success('Tag atualizada');
+      toast.success('Tags atualizadas');
     } else {
-      toast.error(result.error || 'Erro ao atualizar tag');
+      toast.error(result.error || 'Erro ao atualizar tags');
     }
   };
 
@@ -957,7 +958,9 @@ export default function Leads() {
                         </div>
                         <div className="flex flex-wrap justify-end gap-2">
                           {getStatusBadge(referral)}
-                          {getContactTagBadge(referral.contact_tag)}
+                          {(referral.tags || []).map(tag => (
+                            <span key={tag}>{getContactTagBadge(tag)}</span>
+                          ))}
                           {getClientBadge(isClientReferral(referral))}
                           {referral.status === 'converted' && referral.converted_plan_id && (
                             <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
@@ -966,25 +969,33 @@ export default function Leads() {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3 text-sm" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">Tag de contato:</span>
-                            <Select
-                              value={referral.contact_tag ?? 'none'}
-                              onValueChange={(value) => handleTagChange(referral, value)}
-                            >
-                              <SelectTrigger className="h-8 w-36">
-                                <SelectValue placeholder="Sem tag" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Sem tag</SelectItem>
-                                {contactTagOptions.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                        <div className="flex flex-wrap items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
+                          <span className="text-muted-foreground">Tags:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {contactTagOptions.map((option) => {
+                              const isSelected = (referral.tags || []).includes(option.value);
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => {
+                                    const currentTags = referral.tags || [];
+                                    const newTags = isSelected
+                                      ? currentTags.filter(t => t !== option.value)
+                                      : [...currentTags, option.value];
+                                    handleTagChange(referral, newTags.join(','));
+                                  }}
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all",
+                                    isSelected
+                                      ? option.className + " ring-1 ring-primary/30"
+                                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/30"
+                                  )}
+                                >
+                                  {option.label}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>

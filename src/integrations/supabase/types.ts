@@ -291,6 +291,7 @@ export type Database = {
           referrer_id: string
           referrer_name: string
           status: Database["public"]["Enums"]["referral_status"]
+          tags: string[]
           updated_at: string
         }
         Insert: {
@@ -315,6 +316,7 @@ export type Database = {
           referrer_id: string
           referrer_name?: string
           status?: Database["public"]["Enums"]["referral_status"]
+          tags?: string[]
           updated_at?: string
         }
         Update: {
@@ -339,6 +341,7 @@ export type Database = {
           referrer_id?: string
           referrer_name?: string
           status?: Database["public"]["Enums"]["referral_status"]
+          tags?: string[]
           updated_at?: string
         }
         Relationships: [

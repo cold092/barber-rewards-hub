@@ -41,6 +41,7 @@ export interface Referral {
   is_qualified: boolean | null;
   follow_up_date: string | null;
   follow_up_note: string | null;
+  tags: string[];
   created_at: string;
   updated_at: string;
 }

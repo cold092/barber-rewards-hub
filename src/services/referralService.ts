@@ -240,6 +240,31 @@ export async function updateContactTag(
 }
 
 /**
+ * Update lead tags (multiple tags array)
+ */
+export async function updateLeadTags(
+  referralId: string,
+  tags: string[]
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update({ tags } as any)
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error updating tags:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in updateLeadTags:', error);
+    return { success: false, error: 'Erro ao atualizar tags' };
+  }
+}
+
+/**
  * Confirm a conversion - awards plan points to the referrer
  */
 export async function confirmConversion(
@@ -679,7 +704,7 @@ export async function getAllReferrals(): Promise<{ data: Referral[]; error?: str
       return { data: [], error: error.message };
     }
 
-    return { data: data || [] };
+    return { data: (data || []) as unknown as Referral[] };
   } catch (error) {
     console.error('Error in getAllReferrals:', error);
     return { data: [], error: 'Erro ao buscar indicações' };

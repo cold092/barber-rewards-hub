@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { LeadTimeline } from './LeadTimeline';
 import { FollowUpPicker } from './FollowUpPicker';
 import { updateLeadNotes } from '@/services/leadHistoryService';
@@ -153,7 +154,10 @@ export function LeadDetailsDialog({
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 items-center">
-              {getTagBadge(referral.contact_tag)}
+              {(referral.tags || []).map(tag => {
+                const tagBadge = getTagBadge(tag);
+                return tagBadge ? <span key={tag}>{tagBadge}</span> : null;
+              })}
               {referral.is_client && (
                 <Badge variant="outline" className="bg-success/15 text-success border-success/30">
                   Cliente
@@ -161,25 +165,35 @@ export function LeadDetailsDialog({
               )}
             </div>
 
-            {/* Tag Selector */}
+            {/* Multi-Tag Selector */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tag de contato</label>
-              <Select
-                value={referral.contact_tag ?? 'none'}
-                onValueChange={(value) => onTagChange(referral, value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione uma tag" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem tag</SelectItem>
-                  {contactTagOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+              <label className="text-sm font-medium">Tags</label>
+              <div className="flex flex-wrap gap-2">
+                {contactTagOptions.map((option) => {
+                  const isSelected = (referral.tags || []).includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        const currentTags = referral.tags || [];
+                        const newTags = isSelected
+                          ? currentTags.filter(t => t !== option.value)
+                          : [...currentTags, option.value];
+                        onTagChange(referral, newTags.join(','));
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                        isSelected
+                          ? option.className + " ring-2 ring-primary/30"
+                          : "bg-muted/50 text-muted-foreground border-border hover:border-primary/30"
+                      )}
+                    >
                       {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Notes */}
