@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { registerClient } from '@/services/referralService';
+import { addHistoryEvent } from '@/services/leadHistoryService';
 
 const clientSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
@@ -24,7 +25,7 @@ interface RegisterClientDialogProps {
 }
 
 export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: RegisterClientDialogProps) {
-  const { profile, role } = useAuth();
+  const { profile, role, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -68,6 +69,21 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
     if (!result.success) {
       toast.error(result.error || 'Erro ao cadastrar cliente');
       return;
+    }
+
+    // Log history event
+    if (result.referralId) {
+      await addHistoryEvent({
+        referralId: result.referralId,
+        eventType: 'created',
+        eventData: {
+          client_name: name.trim(),
+          client_phone: phone.trim(),
+          registered_as_client: true,
+        },
+        createdById: user?.id,
+        createdByName: profile?.name,
+      });
     }
 
     toast.success(`${name} cadastrado no programa de indicações!`);

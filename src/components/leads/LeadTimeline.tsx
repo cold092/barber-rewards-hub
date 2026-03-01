@@ -26,8 +26,10 @@ const eventConfig: Record<LeadEventType, {
   created: {
     icon: Sparkles,
     color: 'text-primary bg-primary/20',
-    label: 'Lead criado',
-    getDescription: () => 'Lead foi adicionado ao sistema'
+    label: 'Cadastro',
+    getDescription: (data) => data.registered_as_client 
+      ? `Cliente "${data.client_name || ''}" cadastrado diretamente`
+      : 'Lead foi adicionado ao sistema'
   },
   status_change: {
     icon: ArrowRight,
