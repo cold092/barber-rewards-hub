@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Phone, 
   MessageCircle, 
@@ -58,6 +58,12 @@ export function LeadDetailsDialog({
   const [notes, setNotes] = useState(referral?.notes || '');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [localTags, setLocalTags] = useState<string[]>(referral?.tags || []);
+
+  // Sync local tags when referral prop changes
+  useEffect(() => {
+    setLocalTags(referral?.tags || []);
+  }, [referral?.id, referral?.tags]);
 
   const handleSaveNotes = async () => {
     if (!referral) return;
@@ -154,7 +160,7 @@ export function LeadDetailsDialog({
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 items-center">
-              {(referral.tags || []).map(tag => {
+              {localTags.map(tag => {
                 const tagBadge = getTagBadge(tag);
                 return tagBadge ? <span key={tag}>{tagBadge}</span> : null;
               })}
@@ -170,16 +176,16 @@ export function LeadDetailsDialog({
               <label className="text-sm font-medium">Tags</label>
               <div className="flex flex-wrap gap-2">
                 {contactTagOptions.map((option) => {
-                  const isSelected = (referral.tags || []).includes(option.value);
+                  const isSelected = localTags.includes(option.value);
                   return (
                     <button
                       key={option.value}
                       type="button"
                       onClick={() => {
-                        const currentTags = referral.tags || [];
                         const newTags = isSelected
-                          ? currentTags.filter(t => t !== option.value)
-                          : [...currentTags, option.value];
+                          ? localTags.filter(t => t !== option.value)
+                          : [...localTags, option.value];
+                        setLocalTags(newTags);
                         onTagChange(referral, newTags.join(','));
                       }}
                       className={cn(
