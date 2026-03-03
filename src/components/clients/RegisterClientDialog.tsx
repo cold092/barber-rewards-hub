@@ -71,7 +71,6 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
       return;
     }
 
-    // Log history event
     if (result.referralId) {
       await addHistoryEvent({
         referralId: result.referralId,
@@ -94,45 +93,47 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display">
-            <UserPlus className="h-5 w-5 text-success" />
+      <DialogContent className="sm:max-w-md p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
+          <DialogTitle className="flex items-center gap-2.5 font-display text-lg">
+            <div className="p-1.5 rounded-lg bg-success/15">
+              <UserPlus className="h-4 w-4 text-success" />
+            </div>
             Cadastrar Cliente no Programa
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Insira o cliente diretamente no programa de recompensas, sem passar pelo funil de leads.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="client-name">Nome</Label>
+            <Label htmlFor="client-name" className="text-xs uppercase tracking-wide text-muted-foreground">Nome</Label>
             <div className="relative">
-              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input id="client-name" placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="pl-10" required />
+              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+              <Input id="client-name" placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 bg-background/50" required />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="client-phone">Telefone</Label>
+            <Label htmlFor="client-phone" className="text-xs uppercase tracking-wide text-muted-foreground">Telefone</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input id="client-phone" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10" required />
+              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+              <Input id="client-phone" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 bg-background/50" required />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="client-email">Email (opcional)</Label>
+            <Label htmlFor="client-email" className="text-xs uppercase tracking-wide text-muted-foreground">Email (opcional)</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input id="client-email" type="email" placeholder="email@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" />
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+              <Input id="client-email" type="email" placeholder="email@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 bg-background/50" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="client-notes">Observações (opcional)</Label>
-            <Textarea id="client-notes" placeholder="Alguma observação sobre o cliente..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+            <Label htmlFor="client-notes" className="text-xs uppercase tracking-wide text-muted-foreground">Observações (opcional)</Label>
+            <Textarea id="client-notes" placeholder="Alguma observação sobre o cliente..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="bg-background/50 resize-none" />
           </div>
-          <DialogFooter>
+          <DialogFooter className="pt-2 border-t border-border/30">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" className="gold-gradient gold-glow text-primary-foreground" disabled={loading}>
+            <Button type="submit" className="lavender-gradient text-primary-foreground font-medium" disabled={loading}>
               {loading ? 'Cadastrando...' : 'Cadastrar Cliente'}
             </Button>
           </DialogFooter>
