@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, GripVertical } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -48,40 +48,38 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex flex-col h-full min-h-[400px] rounded-xl border transition-all duration-200",
-        isOver ? "border-primary/50 bg-primary/5 shadow-[0_0_20px_hsl(262_83%_68%/0.1)]" : "border-border/30 bg-secondary/20",
-        isColumnDropTarget && "ring-2 ring-primary/40 border-primary/60"
+        "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200",
+        isOver ? "bg-primary/5 shadow-[0_0_20px_hsl(262_83%_68%/0.1)]" : "bg-transparent",
+        isColumnDropTarget && "ring-2 ring-primary/40"
       )}
     >
-      <div className={cn("p-3.5 border-b border-border/30 rounded-t-xl", color)}>
-        <div
-          className={cn(
-            "flex items-center justify-between gap-2",
-            columnDragEnabled && "cursor-grab active:cursor-grabbing"
-          )}
-          draggable={columnDragEnabled}
-          onDragStart={onColumnDragStart}
-          onDragEnd={onColumnDragEnd}
-          onDragOver={(event) => {
-            event.preventDefault();
-            onColumnDragOver?.();
-          }}
-          onDrop={onColumnDrop}
-          title={columnDragEnabled ? 'Clique e arraste a coluna para reordenar' : undefined}
-        >
-          <h3 className="font-semibold text-xs uppercase tracking-widest text-foreground/80 truncate">{title}</h3>
-          <span className="text-[11px] bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full font-semibold tabular-nums shrink-0">
-            {count}
-          </span>
-        </div>
-        {columnDragEnabled && (
-          <p className="mt-1 text-[10px] text-foreground/60">
-            Clique e arraste a coluna para outra posição
-          </p>
+      {/* Column Header — Ploomes style */}
+      <div
+        className={cn(
+          "flex items-center justify-between px-1 py-3 mb-2",
+          columnDragEnabled && "cursor-grab active:cursor-grabbing"
         )}
+        draggable={columnDragEnabled}
+        onDragStart={onColumnDragStart}
+        onDragEnd={onColumnDragEnd}
+        onDragOver={(event) => {
+          event.preventDefault();
+          onColumnDragOver?.();
+        }}
+        onDrop={onColumnDrop}
+        title={columnDragEnabled ? 'Clique e arraste a coluna para reordenar' : undefined}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className={cn("w-2 h-2 rounded-full shrink-0", color.replace('/10', ''))} />
+          <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
+        </div>
+        <span className="text-xs text-muted-foreground font-medium">
+          {count} {count === 1 ? 'lead' : 'leads'}
+        </span>
       </div>
 
-      <div className="flex-1 p-2.5 space-y-2 overflow-y-auto">
+      {/* Cards */}
+      <div className="flex-1 space-y-2.5 overflow-y-auto">
         {visibleItems}
         {hasMore && (
           <Button
