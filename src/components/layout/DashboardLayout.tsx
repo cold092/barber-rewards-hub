@@ -204,17 +204,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
               )}
             </div>
-            <button
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 mt-1 text-sm font-medium text-muted-foreground/60 hover:text-destructive rounded-lg transition-colors duration-200",
-                collapsed && "lg:justify-center lg:px-0"
-              )}
-              onClick={handleSignOut}
-              title={collapsed ? 'Sair' : undefined}
-            >
-              <LogOut className="h-[18px] w-[18px]" />
-              <span className={cn(collapsed && "lg:hidden")}>Sair</span>
-            </button>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 mt-1 text-sm font-medium text-muted-foreground/60 hover:text-destructive rounded-lg transition-colors duration-200",
+                      collapsed && "lg:justify-center lg:px-0"
+                    )}
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="h-[18px] w-[18px]" />
+                    <span className={cn(collapsed && "lg:hidden")}>Sair</span>
+                  </button>
+                </TooltipTrigger>
+                {collapsed && (
+                  <TooltipContent side="right" className="hidden lg:block font-medium">
+                    Sair
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </aside>

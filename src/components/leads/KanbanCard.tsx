@@ -98,21 +98,34 @@ export function KanbanCard({
           </div>
 
           {/* Tags row */}
-          <div className="flex flex-wrap gap-1 mt-1.5">
+          <div className="flex flex-wrap gap-1.5 mt-2">
             {(referral.tags || []).map(tag => {
-              const badge = getTagBadge(tag);
-              return badge ? <span key={tag}>{badge}</span> : null;
+              if (!tag) return null;
+              const tagOption = contactTagOptions.find(option => option.value === tag);
+              if (!tagOption) return null;
+              return (
+                <span
+                  key={tag}
+                  className={cn(
+                    "inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                    "bg-primary/15 text-primary border border-primary/20",
+                    tagOption.className
+                  )}
+                >
+                  {tagOption.label}
+                </span>
+              );
             })}
             {referral.is_client && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-success/15 text-success border-success/30">
+              <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                 Cliente
-              </Badge>
+              </span>
             )}
             {referral.notes && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border">
-                <FileText className="h-2.5 w-2.5 mr-0.5" />
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground border border-border/40">
+                <FileText className="h-2.5 w-2.5" />
                 Obs
-              </Badge>
+              </span>
             )}
           </div>
 
