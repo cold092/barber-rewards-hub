@@ -471,44 +471,48 @@ export default function NewReferral() {
                       </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="self" className="mt-4">
-                      <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
-                          <Users className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Indicando como</p>
-                          <p className="font-semibold text-primary">{profile.name}</p>
+                    {barberReferrerType === 'self' && (
+                      <div className="mt-4">
+                        <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+                            <Users className="h-5 w-5 text-primary-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Indicando como</p>
+                            <p className="font-semibold text-primary">{profile.name}</p>
+                          </div>
                         </div>
                       </div>
-                    </TabsContent>
+                    )}
                     
-                    <TabsContent value="client" className="mt-4">
-                      <Select
-                        value={selectedBarberClientId}
-                        onValueChange={setSelectedBarberClientId}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione o cliente indicador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingReferrers ? (
-                            <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                          ) : barberClients.length === 0 ? (
-                            <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
-                          ) : (
-                            barberClients.map((client) => (
-                              <SelectItem key={client.id} value={client.id}>
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4 text-muted-foreground" />
-                                  {client.name} ({client.phone})
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </TabsContent>
+                    {barberReferrerType === 'client' && (
+                      <div className="mt-4">
+                        <Select
+                          value={selectedBarberClientId}
+                          onValueChange={setSelectedBarberClientId}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione o cliente indicador" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {loadingReferrers ? (
+                              <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                            ) : barberClients.length === 0 ? (
+                              <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
+                            ) : (
+                              barberClients.map((client) => (
+                                <SelectItem key={client.id} value={client.id}>
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    {client.name} ({client.phone})
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </Tabs>
                 </div>
               )}
