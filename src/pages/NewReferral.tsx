@@ -364,69 +364,14 @@ export default function NewReferral() {
                       </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="user" className="mt-4">
-                      <Select
-                        value={selectedReferrerId}
-                        onValueChange={setSelectedReferrerId}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione o colaborador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingReferrers ? (
-                            <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                          ) : referrers.length === 0 ? (
-                             <SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>
-                          ) : (
-                            referrers.map((referrer) => (
-                              <SelectItem key={referrer.id} value={referrer.id}>
-                                <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4 text-muted-foreground" />
-                                  {referrer.name}
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </TabsContent>
-                    
-                    <TabsContent value="lead" className="mt-4 space-y-3">
-                      <div className="space-y-2">
-                        <Label>Cliente indicador</Label>
-                        <Select
-                          value={selectedLeadReferrerId}
-                          onValueChange={setSelectedLeadReferrerId}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione o cliente indicador" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {loadingReferrers ? (
-                              <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                            ) : leadReferrers.length === 0 ? (
-                              <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
-                            ) : (
-                              leadReferrers.map((lead) => (
-                                <SelectItem key={lead.id} value={lead.id}>
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-muted-foreground" />
-                                    {lead.name} ({lead.phone})
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Colaborador responsável</Label>
+                    {referrerType === 'user' && (
+                      <div className="mt-4">
                         <Select
                           value={selectedReferrerId}
                           onValueChange={setSelectedReferrerId}
                         >
                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Selecione o colaborador" />
+                            <SelectValue placeholder="Selecione o colaborador" />
                           </SelectTrigger>
                           <SelectContent>
                             {loadingReferrers ? (
@@ -446,7 +391,66 @@ export default function NewReferral() {
                           </SelectContent>
                         </Select>
                       </div>
-                    </TabsContent>
+                    )}
+                    
+                    {referrerType === 'lead' && (
+                      <div className="mt-4 space-y-3">
+                        <div className="space-y-2">
+                          <Label>Cliente indicador</Label>
+                          <Select
+                            value={selectedLeadReferrerId}
+                            onValueChange={setSelectedLeadReferrerId}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecione o cliente indicador" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {loadingReferrers ? (
+                                <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                              ) : leadReferrers.length === 0 ? (
+                                <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
+                              ) : (
+                                leadReferrers.map((lead) => (
+                                  <SelectItem key={lead.id} value={lead.id}>
+                                    <div className="flex items-center gap-2">
+                                      <User className="h-4 w-4 text-muted-foreground" />
+                                      {lead.name} ({lead.phone})
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Colaborador responsável</Label>
+                          <Select
+                            value={selectedReferrerId}
+                            onValueChange={setSelectedReferrerId}
+                          >
+                            <SelectTrigger className="w-full">
+                               <SelectValue placeholder="Selecione o colaborador" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {loadingReferrers ? (
+                                <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                              ) : referrers.length === 0 ? (
+                                 <SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>
+                              ) : (
+                                referrers.map((referrer) => (
+                                  <SelectItem key={referrer.id} value={referrer.id}>
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-4 w-4 text-muted-foreground" />
+                                      {referrer.name}
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
                   </Tabs>
                 </div>
               )}
