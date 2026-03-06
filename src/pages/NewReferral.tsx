@@ -348,236 +348,101 @@ export default function NewReferral() {
               {isAdmin && entryType === 'lead' && (
                 <div className="space-y-4">
                   <Label>Tipo de Indicador</Label>
-                  <Tabs value={referrerType} onValueChange={(v) => setReferrerType(v as 'user' | 'lead')}>
-                    <TabsList className="grid w-full grid-cols-2">
-                     <TabsTrigger value="user" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Colaborador
-                      </TabsTrigger>
-                      <TabsTrigger value="lead" className="flex items-center gap-2">
-                        <Link className="h-4 w-4" />
-                        Cliente existente
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    {referrerType === 'user' && (
-                      <div className="mt-4">
-                        <Select
-                          value={selectedReferrerId}
-                          onValueChange={setSelectedReferrerId}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione o colaborador" />
-                          </SelectTrigger>
+                  <div className="grid grid-cols-2 gap-2 p-1 rounded-lg bg-muted/50 border border-border/30">
+                    <button type="button" onClick={() => setReferrerType('user')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", referrerType === 'user' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                      <Users className="h-4 w-4" /> Colaborador
+                    </button>
+                    <button type="button" onClick={() => setReferrerType('lead')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", referrerType === 'lead' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                      <Link className="h-4 w-4" /> Cliente existente
+                    </button>
+                  </div>
+                  {referrerType === 'user' && (
+                    <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                      <SelectContent>
+                        {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>) : referrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>) : referrers.map((r) => (<SelectItem key={r.id} value={r.id}><div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />{r.name}</div></SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {referrerType === 'lead' && (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>Cliente indicador</Label>
+                        <Select value={selectedLeadReferrerId} onValueChange={setSelectedLeadReferrerId}>
+                          <SelectTrigger className="w-full"><SelectValue placeholder="Selecione o cliente indicador" /></SelectTrigger>
                           <SelectContent>
-                            {loadingReferrers ? (
-                              <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                            ) : referrers.length === 0 ? (
-                               <SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>
-                            ) : (
-                              referrers.map((referrer) => (
-                                <SelectItem key={referrer.id} value={referrer.id}>
-                                  <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4 text-muted-foreground" />
-                                    {referrer.name}
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
+                            {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>) : leadReferrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>) : leadReferrers.map((lead) => (<SelectItem key={lead.id} value={lead.id}><div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" />{lead.name} ({lead.phone})</div></SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
-                    )}
-                    
-                    {referrerType === 'lead' && (
-                      <div className="mt-4 space-y-3">
-                        <div className="space-y-2">
-                          <Label>Cliente indicador</Label>
-                          <Select
-                            value={selectedLeadReferrerId}
-                            onValueChange={setSelectedLeadReferrerId}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione o cliente indicador" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {loadingReferrers ? (
-                                <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                              ) : leadReferrers.length === 0 ? (
-                                <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
-                              ) : (
-                                leadReferrers.map((lead) => (
-                                  <SelectItem key={lead.id} value={lead.id}>
-                                    <div className="flex items-center gap-2">
-                                      <User className="h-4 w-4 text-muted-foreground" />
-                                      {lead.name} ({lead.phone})
-                                    </div>
-                                  </SelectItem>
-                                ))
-                              )}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Colaborador responsável</Label>
-                          <Select
-                            value={selectedReferrerId}
-                            onValueChange={setSelectedReferrerId}
-                          >
-                            <SelectTrigger className="w-full">
-                               <SelectValue placeholder="Selecione o colaborador" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {loadingReferrers ? (
-                                <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                              ) : referrers.length === 0 ? (
-                                 <SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>
-                              ) : (
-                                referrers.map((referrer) => (
-                                  <SelectItem key={referrer.id} value={referrer.id}>
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-4 w-4 text-muted-foreground" />
-                                      {referrer.name}
-                                    </div>
-                                  </SelectItem>
-                                ))
-                              )}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="space-y-2">
+                        <Label>Colaborador responsável</Label>
+                        <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
+                          <SelectTrigger className="w-full"><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                          <SelectContent>
+                            {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>) : referrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>) : referrers.map((r) => (<SelectItem key={r.id} value={r.id}><div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />{r.name}</div></SelectItem>))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
-                  </Tabs>
+                    </div>
+                  )}
                 </div>
               )}
-
-              {/* Barber view: can select self or one of their clients */}
               {!isAdmin && profile && entryType === 'lead' && (
                 <div className="space-y-4">
                   <Label>Quem está indicando?</Label>
-                  <Tabs value={barberReferrerType} onValueChange={(v) => setBarberReferrerType(v as 'self' | 'client')}>
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="self" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Eu mesmo
-                      </TabsTrigger>
-                      <TabsTrigger value="client" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Meu cliente
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    {barberReferrerType === 'self' && (
-                      <div className="mt-4">
-                        <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
-                            <Users className="h-5 w-5 text-primary-foreground" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Indicando como</p>
-                            <p className="font-semibold text-primary">{profile.name}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {barberReferrerType === 'client' && (
-                      <div className="mt-4">
-                        <Select
-                          value={selectedBarberClientId}
-                          onValueChange={setSelectedBarberClientId}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione o cliente indicador" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {loadingReferrers ? (
-                              <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                            ) : barberClients.length === 0 ? (
-                              <SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>
-                            ) : (
-                              barberClients.map((client) => (
-                                <SelectItem key={client.id} value={client.id}>
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-muted-foreground" />
-                                    {client.name} ({client.phone})
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </Tabs>
+                  <div className="grid grid-cols-2 gap-2 p-1 rounded-lg bg-muted/50 border border-border/30">
+                    <button type="button" onClick={() => setBarberReferrerType('self')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", barberReferrerType === 'self' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                      <Users className="h-4 w-4" /> Eu mesmo
+                    </button>
+                    <button type="button" onClick={() => setBarberReferrerType('client')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", barberReferrerType === 'client' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                      <User className="h-4 w-4" /> Meu cliente
+                    </button>
+                  </div>
+                  {barberReferrerType === 'self' && (
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center"><Users className="h-5 w-5 text-primary-foreground" /></div>
+                      <div><p className="text-sm text-muted-foreground">Indicando como</p><p className="font-semibold text-primary">{profile.name}</p></div>
+                    </div>
+                  )}
+                  {barberReferrerType === 'client' && (
+                    <Select value={selectedBarberClientId} onValueChange={setSelectedBarberClientId}>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Selecione o cliente indicador" /></SelectTrigger>
+                      <SelectContent>
+                        {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>) : barberClients.length === 0 ? (<SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>) : barberClients.map((client) => (<SelectItem key={client.id} value={client.id}><div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" />{client.name} ({client.phone})</div></SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               )}
-              
-              {/* Barber view for client registration: just show their name */}
               {!isAdmin && profile && entryType === 'client' && (
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Registrando como colaborador</p>
-                    <p className="font-semibold text-primary">{profile.name}</p>
-                  </div>
+                  <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center"><Users className="h-5 w-5 text-primary-foreground" /></div>
+                  <div><p className="text-sm text-muted-foreground">Registrando como colaborador</p><p className="font-semibold text-primary">{profile.name}</p></div>
                 </div>
               )}
-
               {isAdmin && entryType === 'client' && (
                 <div className="space-y-2">
                   <Label>Responsável pelo cadastro</Label>
-                  <Tabs
-                    value={clientReferrerType}
-                    onValueChange={(v) => setClientReferrerType(v as 'barber' | 'team')}
-                  >
-                    <TabsList className="grid w-full grid-cols-2">
-                       <TabsTrigger value="barber" className="flex items-center gap-2">
-                         <Users className="h-4 w-4" />
-                         Colaborador
-                      </TabsTrigger>
-                      <TabsTrigger value="team" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Equipe
-                      </TabsTrigger>
-                    </TabsList>
-
-                    {clientReferrerType === 'barber' && (
-                      <div className="mt-4">
-                        <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione o colaborador" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {loadingReferrers ? (
-                              <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                            ) : barbers.length === 0 ? (
-                              <SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>
-                            ) : (
-                              barbers.map((referrer) => (
-                                <SelectItem key={referrer.id} value={referrer.id}>
-                                  <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4 text-muted-foreground" />
-                                    {referrer.name}
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {clientReferrerType === 'team' && (
-                      <div className="mt-4">
-                        <div className="p-4 rounded-lg bg-secondary/60 border border-border/50">
-                          <p className="text-sm text-muted-foreground">Cadastro feito pela equipe.</p>
-                        </div>
-                      </div>
-                    )}
-                  </Tabs>
+                  <div className="grid grid-cols-2 gap-2 p-1 rounded-lg bg-muted/50 border border-border/30">
+                    <button type="button" onClick={() => setClientReferrerType('barber')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", clientReferrerType === 'barber' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                      <Users className="h-4 w-4" /> Colaborador
+                    </button>
+                    <button type="button" onClick={() => setClientReferrerType('team')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", clientReferrerType === 'team' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                      <User className="h-4 w-4" /> Equipe
+                    </button>
+                  </div>
+                  {clientReferrerType === 'barber' && (
+                    <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                      <SelectContent>
+                        {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>) : barbers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>) : barbers.map((r) => (<SelectItem key={r.id} value={r.id}><div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />{r.name}</div></SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {clientReferrerType === 'team' && (
+                    <div className="p-4 rounded-lg bg-secondary/60 border border-border/50"><p className="text-sm text-muted-foreground">Cadastro feito pela equipe.</p></div>
+                  )}
                 </div>
               )}
 
