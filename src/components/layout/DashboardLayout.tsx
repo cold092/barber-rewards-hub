@@ -250,15 +250,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           collapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"
         )}
       >
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="p-4 lg:p-8 max-w-[1600px]"
-        >
+        <div className="p-4 lg:p-8 max-w-[1600px]">
           {children}
-        </motion.div>
+        </div>
       </main>
     </div>
   );
