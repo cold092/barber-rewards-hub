@@ -334,18 +334,14 @@ export default function NewReferral() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <Label>Tipo de Cadastro</Label>
-                <Tabs value={entryType} onValueChange={(v) => setEntryType(v as 'lead' | 'client')}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="lead" className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Lead
-                    </TabsTrigger>
-                    <TabsTrigger value="client" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Cliente
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <div className="grid grid-cols-2 gap-2 p-1 rounded-lg bg-muted/50 border border-border/30">
+                  <button type="button" onClick={() => setEntryType('lead')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", entryType === 'lead' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                    <Users className="h-4 w-4" /> Lead
+                  </button>
+                  <button type="button" onClick={() => setEntryType('client')} className={cn("flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors", entryType === 'client' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                    <User className="h-4 w-4" /> Cliente
+                  </button>
+                </div>
               </div>
 
               {/* Referrer selection (only for admin) */}
