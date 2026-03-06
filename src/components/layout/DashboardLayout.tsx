@@ -131,31 +131,47 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-0.5">
-            {filteredNavItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <button
-                  key={item.path}
-                  className={cn(
-                    "nav-item w-full flex items-center gap-3 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
-                    collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5" : "px-3 py-2.5",
-                    isActive && "nav-item-active text-sidebar-primary bg-sidebar-accent"
-                  )}
-                  onClick={() => {
-                    navigate(item.path);
-                    setSidebarOpen(false);
-                  }}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <item.icon className={cn(
-                    "shrink-0 transition-colors",
-                    collapsed ? "h-5 w-5" : "h-[18px] w-[18px]",
-                    isActive ? "text-primary" : "text-sidebar-foreground/50"
-                  )} />
-                  <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
-                </button>
-              );
-            })}
+            <TooltipProvider delayDuration={0}>
+              {filteredNavItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                const navButton = (
+                  <button
+                    key={item.path}
+                    className={cn(
+                      "nav-item w-full flex items-center gap-3 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
+                      collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5" : "px-3 py-2.5",
+                      isActive && "nav-item-active text-sidebar-primary bg-sidebar-accent"
+                    )}
+                    onClick={() => {
+                      navigate(item.path);
+                      setSidebarOpen(false);
+                    }}
+                  >
+                    <item.icon className={cn(
+                      "shrink-0 transition-colors",
+                      collapsed ? "h-5 w-5" : "h-[18px] w-[18px]",
+                      isActive ? "text-primary" : "text-sidebar-foreground/50"
+                    )} />
+                    <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
+                  </button>
+                );
+
+                if (collapsed) {
+                  return (
+                    <Tooltip key={item.path}>
+                      <TooltipTrigger asChild>
+                        {navButton}
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="hidden lg:block font-medium">
+                        {item.label}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+
+                return navButton;
+              })}
+            </TooltipProvider>
           </nav>
 
           {/* User Info & Logout */}
