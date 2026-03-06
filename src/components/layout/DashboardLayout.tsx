@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Scissors, 
   LayoutDashboard, 
