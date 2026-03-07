@@ -74,7 +74,7 @@ export function KanbanColumn({
         title={columnDragEnabled ? 'Clique e arraste a coluna para reordenar' : undefined}
       >
         <div className="flex items-center gap-2.5">
-          <div className={cn("w-2 h-2 rounded-full shrink-0", color.replace('/10', ''))} />
+          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: `hsl(${color})` }} />
           <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
         </div>
         <span className="text-xs text-muted-foreground font-medium">

@@ -20,9 +20,9 @@ interface KanbanBoardProps {
 const DEFAULT_STATUS_IDS = new Set(['new', 'contacted', 'converted']);
 
 const DEFAULT_COLUMNS: { id: string; title: string; color: string }[] = [
-  { id: 'new', title: 'Novos', color: 'bg-info/10' },
-  { id: 'contacted', title: 'Contatados', color: 'bg-warning/10' },
-  { id: 'converted', title: 'Convertidos', color: 'bg-success/10' }
+  { id: 'new', title: 'Novos', color: '217 91% 60%' },
+  { id: 'contacted', title: 'Contatados', color: '38 92% 50%' },
+  { id: 'converted', title: 'Convertidos', color: '142 71% 45%' }
 ];
 
 export function KanbanBoard({
