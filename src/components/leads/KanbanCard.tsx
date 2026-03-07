@@ -130,7 +130,7 @@ export function KanbanCard({
           </div>
 
           {/* Footer: avatar, value, time */}
-          <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-border/20">
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/30">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6 border border-border/40">
                 <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-bold">
