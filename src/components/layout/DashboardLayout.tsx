@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/button';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,6 +20,8 @@ import {
   UserCheck,
   BarChart3,
   ChevronLeft,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -50,6 +53,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { profile, role, signOut, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
@@ -173,6 +177,37 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               })}
             </TooltipProvider>
           </nav>
+
+          {/* Theme Toggle */}
+          <div className="px-3">
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleTheme}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-colors duration-200",
+                      collapsed && "lg:justify-center lg:px-0"
+                    )}
+                  >
+                    {theme === 'dark' ? (
+                      <Sun className="h-[18px] w-[18px] shrink-0" />
+                    ) : (
+                      <Moon className="h-[18px] w-[18px] shrink-0" />
+                    )}
+                    <span className={cn("truncate", collapsed && "lg:hidden")}>
+                      {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                {collapsed && (
+                  <TooltipContent side="right" className="hidden lg:block font-medium">
+                    {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
 
           {/* User Info & Logout */}
           <div className="p-3">
