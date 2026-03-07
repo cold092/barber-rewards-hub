@@ -53,6 +53,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { profile, role, signOut, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
