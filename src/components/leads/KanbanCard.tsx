@@ -69,13 +69,13 @@ export function KanbanCard({
         isDueToday && "border-warning/50 bg-warning/8"
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1.5">
         <button
           {...attributes}
           {...listeners}
-          className="mt-1 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="mt-0.5 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>
         
         <div className="flex-1 min-w-0" onClick={() => onOpenDetails(referral)}>
