@@ -178,6 +178,37 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </TooltipProvider>
           </nav>
 
+          {/* Theme Toggle */}
+          <div className="px-3">
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleTheme}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-colors duration-200",
+                      collapsed && "lg:justify-center lg:px-0"
+                    )}
+                  >
+                    {theme === 'dark' ? (
+                      <Sun className="h-[18px] w-[18px] shrink-0" />
+                    ) : (
+                      <Moon className="h-[18px] w-[18px] shrink-0" />
+                    )}
+                    <span className={cn("truncate", collapsed && "lg:hidden")}>
+                      {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                {collapsed && (
+                  <TooltipContent side="right" className="hidden lg:block font-medium">
+                    {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
           {/* User Info & Logout */}
           <div className="p-3">
             <div className="mx-1 mb-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
