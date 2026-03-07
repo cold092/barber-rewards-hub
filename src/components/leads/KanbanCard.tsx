@@ -98,7 +98,7 @@ export function KanbanCard({
           </div>
 
           {/* Tags row */}
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="flex flex-wrap gap-1 mt-1.5">
             {(referral.tags || []).map(tag => {
               if (!tag) return null;
               const tagOption = contactTagOptions.find(option => option.value === tag);
@@ -107,8 +107,8 @@ export function KanbanCard({
                 <span
                   key={tag}
                   className={cn(
-                    "inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full",
-                    "bg-primary/15 text-primary border border-primary/20",
+                    "inline-flex items-center text-[9px] font-medium px-1.5 py-px rounded",
+                    "bg-primary/12 text-primary",
                     tagOption.className
                   )}
                 >
@@ -117,12 +117,12 @@ export function KanbanCard({
               );
             })}
             {referral.is_client && (
-              <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-px rounded bg-success/12 text-success">
                 Cliente
               </span>
             )}
             {referral.notes && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground border border-border/40">
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-muted text-muted-foreground">
                 <FileText className="h-2.5 w-2.5" />
                 Obs
               </span>
