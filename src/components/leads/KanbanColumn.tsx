@@ -48,8 +48,8 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200 p-2.5",
-        isOver ? "bg-primary/8 shadow-[0_0_20px_hsl(262_83%_68%/0.1)]" : "bg-muted/30 border border-border/20",
+        "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200 p-3",
+        isOver ? "bg-secondary/80 border border-primary/30 shadow-[0_0_24px_hsl(262_83%_68%/0.15)]" : "bg-secondary/60 border border-border/40",
         isColumnDropTarget && "ring-2 ring-primary/40"
       )}
     >
@@ -79,7 +79,7 @@ export function KanbanColumn({
       </div>
 
       {/* Cards */}
-      <div className="flex-1 space-y-2.5 overflow-y-auto">
+      <div className="flex-1 space-y-2 overflow-y-auto">
         {visibleItems}
         {hasMore && (
           <Button

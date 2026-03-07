@@ -63,19 +63,19 @@ export function KanbanCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group p-3.5 rounded-xl bg-card/60 border border-border/30 hover:border-primary/30 transition-all cursor-pointer backdrop-blur-sm",
+        "group p-3 rounded-lg bg-card border border-border/50 hover:border-primary/40 transition-all cursor-pointer shadow-sm",
         isDragging && "opacity-50 shadow-lg ring-2 ring-primary",
-        isOverdue && "border-destructive/40 bg-destructive/5",
-        isDueToday && "border-warning/40 bg-warning/5"
+        isOverdue && "border-destructive/50 bg-destructive/8",
+        isDueToday && "border-warning/50 bg-warning/8"
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1.5">
         <button
           {...attributes}
           {...listeners}
-          className="mt-1 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="mt-0.5 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>
         
         <div className="flex-1 min-w-0" onClick={() => onOpenDetails(referral)}>
@@ -98,7 +98,7 @@ export function KanbanCard({
           </div>
 
           {/* Tags row */}
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="flex flex-wrap gap-1 mt-1.5">
             {(referral.tags || []).map(tag => {
               if (!tag) return null;
               const tagOption = contactTagOptions.find(option => option.value === tag);
@@ -107,8 +107,8 @@ export function KanbanCard({
                 <span
                   key={tag}
                   className={cn(
-                    "inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full",
-                    "bg-primary/15 text-primary border border-primary/20",
+                    "inline-flex items-center text-[9px] font-medium px-1.5 py-px rounded",
+                    "bg-primary/12 text-primary",
                     tagOption.className
                   )}
                 >
@@ -117,12 +117,12 @@ export function KanbanCard({
               );
             })}
             {referral.is_client && (
-              <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-px rounded bg-success/12 text-success">
                 Cliente
               </span>
             )}
             {referral.notes && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground border border-border/40">
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-muted text-muted-foreground">
                 <FileText className="h-2.5 w-2.5" />
                 Obs
               </span>
@@ -130,7 +130,7 @@ export function KanbanCard({
           </div>
 
           {/* Footer: avatar, value, time */}
-          <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-border/20">
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/30">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6 border border-border/40">
                 <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-bold">
