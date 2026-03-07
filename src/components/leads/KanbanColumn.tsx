@@ -48,10 +48,14 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200 p-3",
-        isOver ? "bg-secondary/80 border border-primary/30 shadow-[0_0_24px_hsl(262_83%_68%/0.15)]" : "bg-secondary/60 border border-border/40",
+        "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200 p-3 border",
+        isOver ? "border-primary/30 shadow-[0_0_24px_hsl(262_83%_68%/0.15)]" : "border-border/40",
         isColumnDropTarget && "ring-2 ring-primary/40"
       )}
+      style={{
+        backgroundColor: `hsl(${color} / 0.06)`,
+        borderColor: isOver ? undefined : `hsl(${color} / 0.15)`,
+      }}
     >
       {/* Column Header — Ploomes style */}
       <div
@@ -70,7 +74,7 @@ export function KanbanColumn({
         title={columnDragEnabled ? 'Clique e arraste a coluna para reordenar' : undefined}
       >
         <div className="flex items-center gap-2.5">
-          <div className={cn("w-2 h-2 rounded-full shrink-0", color.replace('/10', ''))} />
+          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: `hsl(${color})` }} />
           <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
         </div>
         <span className="text-xs text-muted-foreground font-medium">
