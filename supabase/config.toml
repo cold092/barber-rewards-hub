@@ -1,1 +1,7 @@
 project_id = "tlenacsoodhklnfttolh"
+
+[functions.add-team-member]
+verify_jwt = false
+
+[functions.remove-team-member]
+verify_jwt = false
