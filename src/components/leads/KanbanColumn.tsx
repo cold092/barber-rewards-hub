@@ -53,8 +53,8 @@ export function KanbanColumn({
         isColumnDropTarget && "ring-2 ring-primary/40"
       )}
       style={{
-        backgroundColor: `hsl(${color} / 0.06)`,
-        borderColor: isOver ? undefined : `hsl(${color} / 0.15)`,
+        backgroundColor: `hsl(${color} / 0.12)`,
+        borderColor: isOver ? undefined : `hsl(${color} / 0.25)`,
       }}
     >
       {/* Column Header — Ploomes style */}
