@@ -60,13 +60,9 @@ export function KanbanColumn({
       {/* Column Header */}
       <div
         className={cn(
-          "flex items-center justify-between px-3 py-3 mb-3 rounded-lg border",
+          "flex items-center justify-between px-3 py-2.5 mb-3",
           columnDragEnabled && "cursor-grab active:cursor-grabbing"
         )}
-        style={{
-          background: `linear-gradient(135deg, hsl(${color} / 0.14), hsl(${color} / 0.06))`,
-          borderColor: `hsl(${color} / 0.3)`,
-        }}
         draggable={columnDragEnabled}
         onDragStart={onColumnDragStart}
         onDragEnd={onColumnDragEnd}
@@ -77,24 +73,14 @@ export function KanbanColumn({
         onDrop={onColumnDrop}
         title={columnDragEnabled ? 'Clique e arraste a coluna para reordenar' : undefined}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <div
-            className="w-3 h-3 rounded-full shrink-0 ring-2"
-            style={{
-              backgroundColor: `hsl(${color})`,
-              boxShadow: `0 0 0 3px hsl(${color} / 0.3), 0 0 8px hsl(${color} / 0.4)`,
-            }}
+            className="w-1 h-5 rounded-full"
+            style={{ backgroundColor: `hsl(${color})` }}
           />
           <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
         </div>
-        <span
-          className="text-xs font-bold px-2.5 py-1 rounded-md"
-          style={{
-            backgroundColor: `hsl(${color} / 0.2)`,
-            color: `hsl(${color})`,
-            border: `1px solid hsl(${color} / 0.25)`,
-          }}
-        >
+        <span className="text-xs text-muted-foreground font-medium tabular-nums">
           {count}
         </span>
       </div>
