@@ -57,12 +57,16 @@ export function KanbanColumn({
         borderColor: isOver ? undefined : `hsl(${color} / 0.25)`,
       }}
     >
-      {/* Column Header — Ploomes style */}
+      {/* Column Header */}
       <div
         className={cn(
-          "flex items-center justify-between px-1 py-3 mb-2",
+          "flex items-center justify-between px-3 py-2.5 mb-2 rounded-lg",
           columnDragEnabled && "cursor-grab active:cursor-grabbing"
         )}
+        style={{
+          backgroundColor: `hsl(${color} / 0.18)`,
+          borderLeft: `3px solid hsl(${color})`,
+        }}
         draggable={columnDragEnabled}
         onDragStart={onColumnDragStart}
         onDragEnd={onColumnDragEnd}
@@ -75,10 +79,16 @@ export function KanbanColumn({
       >
         <div className="flex items-center gap-2.5">
           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: `hsl(${color})` }} />
-          <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
+          <h3 className="font-display font-semibold text-sm" style={{ color: `hsl(${color})` }}>{title}</h3>
         </div>
-        <span className="text-xs text-muted-foreground font-medium">
-          {count} {count === 1 ? 'lead' : 'leads'}
+        <span
+          className="text-xs font-semibold px-2 py-0.5 rounded-full"
+          style={{
+            backgroundColor: `hsl(${color} / 0.15)`,
+            color: `hsl(${color})`,
+          }}
+        >
+          {count}
         </span>
       </div>
 
