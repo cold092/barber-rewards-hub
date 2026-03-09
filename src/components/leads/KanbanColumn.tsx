@@ -82,8 +82,7 @@ export function KanbanColumn({
             className="w-3 h-3 rounded-full shrink-0 ring-2"
             style={{
               backgroundColor: `hsl(${color})`,
-              ringColor: `hsl(${color} / 0.3)`,
-              boxShadow: `0 0 8px hsl(${color} / 0.4)`,
+              boxShadow: `0 0 0 3px hsl(${color} / 0.3), 0 0 8px hsl(${color} / 0.4)`,
             }}
           />
           <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
