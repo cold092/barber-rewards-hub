@@ -349,19 +349,12 @@ export default function ManageTeam() {
                       className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`
-                          w-10 h-10 rounded-full flex items-center justify-center
-                          ${member.role === 'admin' || member.role === 'owner' ? 'bg-primary/20' : 'bg-muted'}
-                        `}>
-                          {member.role === 'admin' || member.role === 'owner' ? (
-                            <Shield className="h-5 w-5 text-primary" />
-                          ) : (
-                            <Briefcase className="h-5 w-5 text-muted-foreground" />
-                          )}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getRoleAvatarClass(member.role)}`}>
+                          {getRoleIcon(member.role)}
                         </div>
                         <div>
                           <p className="font-medium">{member.profile.name}</p>
-                          <Badge variant={getRoleBadgeVariant(member.role)} className="mt-0.5 text-[10px]">
+                          <Badge variant="outline" className={`mt-0.5 text-[10px] ${getRoleBadgeClass(member.role)}`}>
                             {getRoleLabel(member.role)}
                           </Badge>
                         </div>
