@@ -62,7 +62,7 @@ export default function ManageTeam() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'owner' | 'barber'>('barber');
+  const [selectedRole, setSelectedRole] = useState<'admin' | 'barber'>('barber');
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
@@ -149,7 +149,7 @@ export default function ManageTeam() {
         return;
       }
 
-      const roleLabel = selectedRole === 'owner' ? 'Admin' : 'Colaborador';
+      const roleLabel = selectedRole === 'admin' ? 'Admin' : 'Colaborador';
       toast.success(`${roleLabel} ${name} criado com sucesso!`);
       setName('');
       setEmail('');
@@ -297,13 +297,13 @@ export default function ManageTeam() {
 
                 <div className="space-y-2">
                   <Label htmlFor="role">Nível de Acesso</Label>
-                  <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'owner' | 'barber')}>
+                  <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'admin' | 'barber')}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o cargo" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="barber">Colaborador</SelectItem>
-                      <SelectItem value="owner">Admin</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
