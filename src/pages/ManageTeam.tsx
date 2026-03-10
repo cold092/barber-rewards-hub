@@ -297,13 +297,13 @@ export default function ManageTeam() {
 
                 <div className="space-y-2">
                   <Label htmlFor="role">Nível de Acesso</Label>
-                  <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'owner' | 'barber')}>
+                  <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'admin' | 'barber')}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o cargo" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="barber">Colaborador</SelectItem>
-                      <SelectItem value="owner">Admin</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
