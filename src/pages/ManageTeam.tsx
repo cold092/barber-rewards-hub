@@ -196,16 +196,29 @@ export default function ManageTeam() {
 
   const getRoleLabel = (role: AppRole) => {
     switch (role) {
-      case 'owner': return 'Admin';
-      case 'admin': return 'Administrador';
+      case 'owner': return 'Dono';
+      case 'admin': return 'Admin';
       case 'barber': return 'Colaborador';
       default: return 'Cliente';
     }
   };
 
-  const getRoleBadgeVariant = (role: AppRole) => {
-    if (role === 'owner' || role === 'admin') return 'default';
-    return 'secondary';
+  const getRoleBadgeClass = (role: AppRole) => {
+    if (role === 'owner') return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+    if (role === 'admin') return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+    return '';
+  };
+
+  const getRoleIcon = (role: AppRole) => {
+    if (role === 'owner') return <Crown className="h-5 w-5 text-amber-400" />;
+    if (role === 'admin') return <Shield className="h-5 w-5 text-blue-400" />;
+    return <Briefcase className="h-5 w-5 text-muted-foreground" />;
+  };
+
+  const getRoleAvatarClass = (role: AppRole) => {
+    if (role === 'owner') return 'bg-amber-500/20';
+    if (role === 'admin') return 'bg-blue-500/20';
+    return 'bg-muted';
   };
 
   return (
