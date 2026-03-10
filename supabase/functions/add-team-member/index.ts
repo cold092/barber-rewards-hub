@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const validRoles = ['owner', 'barber'];
+    const validRoles = ['owner', 'admin', 'barber'];
     const assignedRole = validRoles.includes(role) ? role : 'barber';
 
     // Create user via admin API (bypasses email confirmation)
