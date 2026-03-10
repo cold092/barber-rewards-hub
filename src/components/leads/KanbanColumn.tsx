@@ -96,7 +96,7 @@ export function KanbanColumn({
       </div>
 
       {/* Cards */}
-      <div className="flex-1 space-y-2 overflow-y-auto">
+      <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {visibleItems}
         {hasMore && (
           <Button
