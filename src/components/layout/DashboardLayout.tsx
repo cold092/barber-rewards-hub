@@ -22,6 +22,9 @@ import {
   ChevronLeft,
   Sun,
   Moon,
+  Crown,
+  Shield,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
