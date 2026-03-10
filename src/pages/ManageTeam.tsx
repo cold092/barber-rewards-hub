@@ -62,7 +62,7 @@ export default function ManageTeam() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'owner' | 'barber'>('barber');
+  const [selectedRole, setSelectedRole] = useState<'admin' | 'barber'>('barber');
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
