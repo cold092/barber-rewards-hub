@@ -22,7 +22,8 @@ import {
   Users,
   Trash2,
   Shield,
-  Briefcase
+  Briefcase,
+  Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
