@@ -22,7 +22,8 @@ import {
   Users,
   Trash2,
   Shield,
-  Briefcase
+  Briefcase,
+  Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -196,16 +197,29 @@ export default function ManageTeam() {
 
   const getRoleLabel = (role: AppRole) => {
     switch (role) {
-      case 'owner': return 'Admin';
-      case 'admin': return 'Administrador';
+      case 'owner': return 'Dono';
+      case 'admin': return 'Admin';
       case 'barber': return 'Colaborador';
       default: return 'Cliente';
     }
   };
 
-  const getRoleBadgeVariant = (role: AppRole) => {
-    if (role === 'owner' || role === 'admin') return 'default';
-    return 'secondary';
+  const getRoleBadgeClass = (role: AppRole) => {
+    if (role === 'owner') return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+    if (role === 'admin') return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+    return '';
+  };
+
+  const getRoleIcon = (role: AppRole) => {
+    if (role === 'owner') return <Crown className="h-5 w-5 text-amber-400" />;
+    if (role === 'admin') return <Shield className="h-5 w-5 text-blue-400" />;
+    return <Briefcase className="h-5 w-5 text-muted-foreground" />;
+  };
+
+  const getRoleAvatarClass = (role: AppRole) => {
+    if (role === 'owner') return 'bg-amber-500/20';
+    if (role === 'admin') return 'bg-blue-500/20';
+    return 'bg-muted';
   };
 
   return (
@@ -335,19 +349,12 @@ export default function ManageTeam() {
                       className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`
-                          w-10 h-10 rounded-full flex items-center justify-center
-                          ${member.role === 'admin' || member.role === 'owner' ? 'bg-primary/20' : 'bg-muted'}
-                        `}>
-                          {member.role === 'admin' || member.role === 'owner' ? (
-                            <Shield className="h-5 w-5 text-primary" />
-                          ) : (
-                            <Briefcase className="h-5 w-5 text-muted-foreground" />
-                          )}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getRoleAvatarClass(member.role)}`}>
+                          {getRoleIcon(member.role)}
                         </div>
                         <div>
                           <p className="font-medium">{member.profile.name}</p>
-                          <Badge variant={getRoleBadgeVariant(member.role)} className="mt-0.5 text-[10px]">
+                          <Badge variant="outline" className={`mt-0.5 text-[10px] ${getRoleBadgeClass(member.role)}`}>
                             {getRoleLabel(member.role)}
                           </Badge>
                         </div>

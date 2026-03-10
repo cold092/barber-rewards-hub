@@ -22,6 +22,9 @@ import {
   ChevronLeft,
   Sun,
   Moon,
+  Crown,
+  Shield,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -217,16 +220,40 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               collapsed && "lg:p-2"
             )}>
               <div className="flex items-center gap-2.5">
-                <Avatar className={cn("shrink-0 border-2 border-primary/30", collapsed ? "h-9 w-9" : "h-9 w-9")}>
-                  <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">
+                <Avatar className={cn(
+                  "shrink-0 border-2",
+                  role === 'owner' ? "border-amber-400/50" : role === 'admin' ? "border-blue-400/50" : "border-primary/30",
+                  collapsed ? "h-9 w-9" : "h-9 w-9"
+                )}>
+                  <AvatarFallback className={cn(
+                    "text-xs font-semibold",
+                    role === 'owner' ? "bg-amber-500/15 text-amber-400" : role === 'admin' ? "bg-blue-500/15 text-blue-400" : "bg-primary/15 text-primary"
+                  )}>
                     {getInitials(profile?.name || 'U')}
                   </AvatarFallback>
                 </Avatar>
                 <div className={cn("min-w-0 flex-1", collapsed && "lg:hidden")}>
                   <p className="font-medium text-sm truncate text-sidebar-foreground">{profile?.name || 'Usuário'}</p>
-                  <p className="text-[11px] text-muted-foreground/60 capitalize font-medium">
-                    {role === 'owner' ? 'Dono' : role === 'admin' ? 'Administrador' : role === 'barber' ? 'Colaborador' : 'Cliente'}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {role === 'owner' ? (
+                      <>
+                        <Crown className="h-3 w-3 text-amber-400" />
+                        <span className="text-[11px] text-amber-400 font-semibold">Dono</span>
+                      </>
+                    ) : role === 'admin' ? (
+                      <>
+                        <Shield className="h-3 w-3 text-blue-400" />
+                        <span className="text-[11px] text-blue-400 font-semibold">Admin</span>
+                      </>
+                    ) : role === 'barber' ? (
+                      <>
+                        <Briefcase className="h-3 w-3 text-muted-foreground/60" />
+                        <span className="text-[11px] text-muted-foreground/60 font-medium">Colaborador</span>
+                      </>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground/60 font-medium">Cliente</span>
+                    )}
+                  </div>
                 </div>
                 <div className={cn(collapsed && "lg:hidden")}>
                   <NotificationCenter />
