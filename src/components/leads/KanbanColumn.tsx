@@ -48,21 +48,25 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200 p-3 border",
-        isOver ? "border-primary/30 shadow-[0_0_24px_hsl(262_83%_68%/0.15)]" : "border-border/40",
+        "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200 border",
+        isOver ? "border-primary/30 shadow-[0_0_24px_hsl(262_83%_68%/0.15)]" : "border-border/60",
         isColumnDropTarget && "ring-2 ring-primary/40"
       )}
       style={{
-        backgroundColor: `hsl(${color} / 0.12)`,
-        borderColor: isOver ? undefined : `hsl(${color} / 0.25)`,
+        backgroundColor: `hsl(${color} / 0.06)`,
+        borderColor: isOver ? undefined : `hsl(${color} / 0.35)`,
       }}
     >
       {/* Column Header */}
       <div
         className={cn(
-          "flex items-center justify-between px-3 py-2.5 mb-3",
+          "flex items-center justify-between px-4 py-3 rounded-t-xl",
           columnDragEnabled && "cursor-grab active:cursor-grabbing"
         )}
+        style={{
+          background: `linear-gradient(135deg, hsl(${color} / 0.35), hsl(${color} / 0.15))`,
+          borderBottom: `1px solid hsl(${color} / 0.3)`,
+        }}
         draggable={columnDragEnabled}
         onDragStart={onColumnDragStart}
         onDragEnd={onColumnDragEnd}
@@ -73,14 +77,20 @@ export function KanbanColumn({
         onDrop={onColumnDrop}
         title={columnDragEnabled ? 'Clique e arraste a coluna para reordenar' : undefined}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div
-            className="w-1 h-5 rounded-full"
-            style={{ backgroundColor: `hsl(${color})` }}
+            className="w-1.5 h-5 rounded-full shadow-sm"
+            style={{ backgroundColor: `hsl(${color})`, boxShadow: `0 0 8px hsl(${color} / 0.5)` }}
           />
           <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
         </div>
-        <span className="text-xs text-muted-foreground font-medium tabular-nums">
+        <span
+          className="text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full"
+          style={{
+            backgroundColor: `hsl(${color} / 0.25)`,
+            color: `hsl(${color})`,
+          }}
+        >
           {count}
         </span>
       </div>
