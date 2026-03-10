@@ -149,7 +149,7 @@ export default function ManageTeam() {
         return;
       }
 
-      const roleLabel = selectedRole === 'owner' ? 'Admin' : 'Colaborador';
+      const roleLabel = selectedRole === 'admin' ? 'Admin' : 'Colaborador';
       toast.success(`${roleLabel} ${name} criado com sucesso!`);
       setName('');
       setEmail('');
