@@ -354,8 +354,12 @@ export default function Leads() {
         `Conversão confirmada! ${convertingReferral.referrer_name} ganhou +${result.pointsAwarded} pontos`,
         { duration: 5000 }
       );
+      setReferrals((prev) =>
+        prev.map((r) => r.id === convertingReferral.id
+          ? { ...r, status: 'converted' as ReferralStatus, converted_plan_id: selectedPlan, is_client: true }
+          : r)
+      );
       setConvertDialogOpen(false);
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao confirmar conversão');
     }
