@@ -238,7 +238,6 @@ export default function Leads() {
     const result = await markAsContacted(referral.id);
     
     if (result.success) {
-      // Log to history
       await addHistoryEvent({
         referralId: referral.id,
         eventType: 'status_change',
@@ -247,8 +246,10 @@ export default function Leads() {
         createdByName: profile?.name
       });
       
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referral.id ? { ...r, status: 'contacted' as ReferralStatus } : r)
+      );
       toast.success('Status atualizado para "Contatado"');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao atualizar status');
     }
@@ -266,8 +267,10 @@ export default function Leads() {
         createdByName: profile?.name
       });
       
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referral.id ? { ...r, status: 'new' as ReferralStatus } : r)
+      );
       toast.success('Contato desfeito');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao desfazer contato');
     }
@@ -351,8 +354,12 @@ export default function Leads() {
         `Conversão confirmada! ${convertingReferral.referrer_name} ganhou +${result.pointsAwarded} pontos`,
         { duration: 5000 }
       );
+      setReferrals((prev) =>
+        prev.map((r) => r.id === convertingReferral.id
+          ? { ...r, status: 'converted' as ReferralStatus, converted_plan_id: selectedPlan, is_client: true }
+          : r)
+      );
       setConvertDialogOpen(false);
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao confirmar conversão');
     }
@@ -362,8 +369,12 @@ export default function Leads() {
     const result = await undoConversion(referral.id);
 
     if (result.success) {
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referral.id
+          ? { ...r, status: 'contacted' as ReferralStatus, converted_plan_id: null, is_client: false }
+          : r)
+      );
       toast.success('Conversão desfeita');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao desfazer conversão');
     }
@@ -377,8 +388,8 @@ export default function Leads() {
     const result = await deleteReferral(referral.id);
 
     if (result.success) {
+      setReferrals((prev) => prev.filter((r) => r.id !== referral.id));
       toast.success('Lead excluído');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao excluir lead');
     }
