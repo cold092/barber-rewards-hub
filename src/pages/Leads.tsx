@@ -388,8 +388,8 @@ export default function Leads() {
     const result = await deleteReferral(referral.id);
 
     if (result.success) {
+      setReferrals((prev) => prev.filter((r) => r.id !== referral.id));
       toast.success('Lead excluído');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao excluir lead');
     }
