@@ -267,8 +267,10 @@ export default function Leads() {
         createdByName: profile?.name
       });
       
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referral.id ? { ...r, status: 'new' as ReferralStatus } : r)
+      );
       toast.success('Contato desfeito');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao desfazer contato');
     }
