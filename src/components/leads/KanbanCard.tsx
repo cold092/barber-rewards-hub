@@ -82,7 +82,7 @@ export function KanbanCard({
           {/* Card title with tags */}
           <div className="flex items-start justify-between gap-2">
             <p className="font-semibold text-sm text-foreground leading-snug">{referral.lead_name}</p>
-            {isAdmin && referral.status !== 'converted' && (
+            {referral.status !== 'converted' && (
               <Button
                 size="icon"
                 variant="ghost"
