@@ -238,7 +238,6 @@ export default function Leads() {
     const result = await markAsContacted(referral.id);
     
     if (result.success) {
-      // Log to history
       await addHistoryEvent({
         referralId: referral.id,
         eventType: 'status_change',
@@ -247,8 +246,10 @@ export default function Leads() {
         createdByName: profile?.name
       });
       
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referral.id ? { ...r, status: 'contacted' as ReferralStatus } : r)
+      );
       toast.success('Status atualizado para "Contatado"');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao atualizar status');
     }
