@@ -369,8 +369,12 @@ export default function Leads() {
     const result = await undoConversion(referral.id);
 
     if (result.success) {
+      setReferrals((prev) =>
+        prev.map((r) => r.id === referral.id
+          ? { ...r, status: 'contacted' as ReferralStatus, converted_plan_id: null, is_client: false }
+          : r)
+      );
       toast.success('Conversão desfeita');
-      loadReferrals();
     } else {
       toast.error(result.error || 'Erro ao desfazer conversão');
     }
