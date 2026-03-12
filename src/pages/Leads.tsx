@@ -514,7 +514,7 @@ export default function Leads() {
     setConfigDialogOpen(false);
   };
 
-  const handleSavePlans = () => {
+  const handleSavePlans = async () => {
     const nextOverrides = Object.fromEntries(
       Object.entries(planDraft).map(([planId, values]) => {
         const basePlan = REWARD_PLANS[planId];
@@ -531,7 +531,9 @@ export default function Leads() {
         ];
       })
     );
+    setPlanOverridesCache(nextOverrides);
     localStorage.setItem(PLAN_OVERRIDES_STORAGE_KEY, JSON.stringify(nextOverrides));
+    if (user) await upsertSetting(user.id, 'plan_overrides', nextOverrides);
     const nextDraft: PlanDraft = Object.fromEntries(
       Object.entries(nextOverrides).map(([planId, values]) => [
         planId,
