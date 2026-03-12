@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { setPlanOverridesCache, type RewardPlanOverrides } from '@/config/plans';
+import { getGlobalSetting } from '@/services/settingsService';
 import type { Profile, AppRole } from '@/types/database';
 
 interface AuthContextType {
