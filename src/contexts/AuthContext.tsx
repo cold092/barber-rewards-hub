@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { setPlanOverridesCache, type RewardPlanOverrides } from '@/config/plans';
+import { getGlobalSetting } from '@/services/settingsService';
 import type { Profile, AppRole } from '@/types/database';
 
 interface AuthContextType {
@@ -32,26 +34,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (userId: string) => {
     try {
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      // Fetch profile, role, and plan overrides in parallel
+      const [profileResult, roleResult, planOverrides] = await Promise.all([
+        supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle(),
+        getGlobalSetting<RewardPlanOverrides>('plan_overrides'),
+      ]);
 
-      if (profileData) {
-        setProfile(profileData as Profile);
+      if (profileResult.data) {
+        setProfile(profileResult.data as Profile);
       }
 
-      // Fetch role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+      if (roleResult.data) {
+        setRole(roleResult.data.role as AppRole);
+      }
 
-      if (roleData) {
-        setRole(roleData.role as AppRole);
+      // Load plan overrides into memory cache
+      if (planOverrides) {
+        setPlanOverridesCache(planOverrides);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);

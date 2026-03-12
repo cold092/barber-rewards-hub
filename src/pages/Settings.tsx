@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
-import { getRewardPlans, REWARD_PLANS, PLAN_OVERRIDES_STORAGE_KEY } from '@/config/plans';
+import { getRewardPlans, REWARD_PLANS, PLAN_OVERRIDES_STORAGE_KEY, setPlanOverridesCache } from '@/config/plans';
 import { DEFAULT_LEAD_MESSAGE, DEFAULT_CLIENT_MESSAGE } from '@/utils/whatsapp';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -112,6 +112,8 @@ export default function SettingsPage() {
         return [id, { points: Number.isFinite(points) ? points : base.points, price: Number.isFinite(price) ? price : base.price }];
       })
     );
+    // Update in-memory cache so all components see changes immediately
+    setPlanOverridesCache(overrides);
     localStorage.setItem(PLAN_OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
     if (user) await upsertSetting(user.id, 'plan_overrides', overrides);
     toast.success('Planos salvos com sucesso');

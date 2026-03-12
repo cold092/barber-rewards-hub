@@ -35,7 +35,7 @@ import {
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
 import { addHistoryEvent, logWhatsAppContact } from '@/services/leadHistoryService';
-import { getPlanById, getRewardPlans, PLAN_OVERRIDES_STORAGE_KEY, REWARD_PLANS } from '@/config/plans';
+import { getPlanById, getRewardPlans, PLAN_OVERRIDES_STORAGE_KEY, REWARD_PLANS, setPlanOverridesCache } from '@/config/plans';
 import { DEFAULT_CLIENT_MESSAGE, DEFAULT_LEAD_MESSAGE, generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
 import { KanbanBoard } from '@/components/leads/KanbanBoard';
@@ -514,7 +514,7 @@ export default function Leads() {
     setConfigDialogOpen(false);
   };
 
-  const handleSavePlans = () => {
+  const handleSavePlans = async () => {
     const nextOverrides = Object.fromEntries(
       Object.entries(planDraft).map(([planId, values]) => {
         const basePlan = REWARD_PLANS[planId];
@@ -531,7 +531,9 @@ export default function Leads() {
         ];
       })
     );
+    setPlanOverridesCache(nextOverrides);
     localStorage.setItem(PLAN_OVERRIDES_STORAGE_KEY, JSON.stringify(nextOverrides));
+    if (user) await upsertSetting(user.id, 'plan_overrides', nextOverrides);
     const nextDraft: PlanDraft = Object.fromEntries(
       Object.entries(nextOverrides).map(([planId, values]) => [
         planId,
