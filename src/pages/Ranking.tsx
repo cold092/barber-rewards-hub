@@ -217,54 +217,40 @@ export default function Ranking() {
         )}
 
         {/* Full Rankings */}
-        {isAdmin ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="barbers">Colaboradores</TabsTrigger>
-              <TabsTrigger value="clients">Clientes</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="barbers">
-              <Card className="glass-card border-border/50 mt-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-display">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    Ranking de Colaboradores
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RankingList data={barberRanking} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="clients">
-              <Card className="glass-card border-border/50 mt-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-display">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    Ranking de Clientes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ClientRankingList data={clientRanking} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-display">
-                <Trophy className="h-5 w-5 text-primary" />
-                Ranking de Colaboradores
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RankingList data={barberRanking} />
-            </CardContent>
-          </Card>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="barbers">Colaboradores</TabsTrigger>
+            <TabsTrigger value="clients">Clientes</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="barbers">
+            <Card className="glass-card border-border/50 mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-display">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Ranking de Colaboradores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RankingList data={barberRanking} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="clients">
+            <Card className="glass-card border-border/50 mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-display">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Ranking de Indicações (Clientes)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ClientRankingList data={clientRanking} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
