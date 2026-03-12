@@ -129,7 +129,7 @@ export function KanbanCard({
             )}
           </div>
 
-          {/* Footer: avatar, value, time */}
+          {/* Footer: avatar, referrer, value, time */}
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/30">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6 border border-border/40">
@@ -137,6 +137,9 @@ export function KanbanCard({
                   {getInitials(referral.referrer_name || 'U')}
                 </AvatarFallback>
               </Avatar>
+              <span className="text-[10px] text-muted-foreground truncate max-w-[80px]" title={`Indicado por ${referral.referrer_name}`}>
+                {referral.referrer_name}
+              </span>
               {plan && (
                 <div className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />

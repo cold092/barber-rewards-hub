@@ -130,7 +130,9 @@ export default function Leads() {
     let cancelled = false;
 
     (async () => {
-      const dbLeadColumns = await getGlobalSetting<ColumnConfig[]>('lead_columns');
+      if (!user) return;
+      const { getSetting } = await import('@/services/settingsService');
+      const dbLeadColumns = await getSetting<ColumnConfig[]>(user.id, 'lead_columns');
       if (cancelled || !Array.isArray(dbLeadColumns)) {
         return;
       }
@@ -140,7 +142,7 @@ export default function Leads() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const storedLeadMessage = localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY);
@@ -224,7 +226,7 @@ export default function Leads() {
   const handleColumnsChange = async (newColumns: ColumnConfig[]) => {
     setLeadColumns(newColumns);
 
-    if (!isAdmin || !user) {
+    if (!user) {
       return;
     }
 
