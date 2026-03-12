@@ -112,6 +112,8 @@ export default function SettingsPage() {
         return [id, { points: Number.isFinite(points) ? points : base.points, price: Number.isFinite(price) ? price : base.price }];
       })
     );
+    // Update in-memory cache so all components see changes immediately
+    setPlanOverridesCache(overrides);
     localStorage.setItem(PLAN_OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
     if (user) await upsertSetting(user.id, 'plan_overrides', overrides);
     toast.success('Planos salvos com sucesso');
