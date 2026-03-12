@@ -4,11 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Crown, Star } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
-import { useAuth } from '@/contexts/AuthContext';
 import type { Profile } from '@/types/database';
 
 export default function Ranking() {
-  const { isAdmin } = useAuth();
   const [barberRanking, setBarberRanking] = useState<Profile[]>([]);
   const [clientRanking, setClientRanking] = useState<ClientRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
