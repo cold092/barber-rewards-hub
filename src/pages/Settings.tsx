@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
-import { getRewardPlans, REWARD_PLANS, PLAN_OVERRIDES_STORAGE_KEY } from '@/config/plans';
+import { getRewardPlans, REWARD_PLANS, PLAN_OVERRIDES_STORAGE_KEY, setPlanOverridesCache } from '@/config/plans';
 import { DEFAULT_LEAD_MESSAGE, DEFAULT_CLIENT_MESSAGE } from '@/utils/whatsapp';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
