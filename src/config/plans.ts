@@ -26,7 +26,23 @@ export const BARBER_REFERRAL_CONVERSION_PERCENT = 30;
 
 export const PLAN_OVERRIDES_STORAGE_KEY = 'rewardPlanOverrides';
 
+// In-memory cache for overrides (populated from DB at startup)
+let _overridesCache: RewardPlanOverrides = {};
+let _overridesLoaded = false;
+
+/** Set overrides in memory (call after loading from DB) */
+export const setPlanOverridesCache = (overrides: RewardPlanOverrides) => {
+  _overridesCache = overrides;
+  _overridesLoaded = true;
+};
+
 const loadPlanOverrides = (): RewardPlanOverrides => {
+  // Prefer in-memory cache (loaded from DB)
+  if (_overridesLoaded) {
+    return _overridesCache;
+  }
+
+  // Fallback to localStorage for backwards compat
   if (typeof window === 'undefined') {
     return {};
   }
