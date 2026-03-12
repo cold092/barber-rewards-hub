@@ -29,7 +29,7 @@ export default function Ranking() {
     }
     
     loadRankings();
-  }, [isAdmin]);
+  }, []);
 
   const getRankIcon = (position: number) => {
     switch (position) {
