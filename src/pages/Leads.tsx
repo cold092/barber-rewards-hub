@@ -224,7 +224,7 @@ export default function Leads() {
   const handleColumnsChange = async (newColumns: ColumnConfig[]) => {
     setLeadColumns(newColumns);
 
-    if (!isAdmin || !user) {
+    if (!user) {
       return;
     }
 
