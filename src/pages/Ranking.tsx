@@ -20,7 +20,7 @@ export default function Ranking() {
       
       const [barbersResult, clientsResult] = await Promise.all([
         getRanking('barber'),
-        isAdmin ? getClientReferralRanking() : Promise.resolve({ data: [] })
+        getClientReferralRanking()
       ]);
       
       setBarberRanking(barbersResult.data);
