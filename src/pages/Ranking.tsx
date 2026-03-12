@@ -4,11 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Crown, Star } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
-import { useAuth } from '@/contexts/AuthContext';
 import type { Profile } from '@/types/database';
 
 export default function Ranking() {
-  const { isAdmin } = useAuth();
   const [barberRanking, setBarberRanking] = useState<Profile[]>([]);
   const [clientRanking, setClientRanking] = useState<ClientRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +18,7 @@ export default function Ranking() {
       
       const [barbersResult, clientsResult] = await Promise.all([
         getRanking('barber'),
-        isAdmin ? getClientReferralRanking() : Promise.resolve({ data: [] })
+        getClientReferralRanking()
       ]);
       
       setBarberRanking(barbersResult.data);
@@ -29,7 +27,7 @@ export default function Ranking() {
     }
     
     loadRankings();
-  }, [isAdmin]);
+  }, []);
 
   const getRankIcon = (position: number) => {
     switch (position) {
@@ -217,54 +215,40 @@ export default function Ranking() {
         )}
 
         {/* Full Rankings */}
-        {isAdmin ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="barbers">Colaboradores</TabsTrigger>
-              <TabsTrigger value="clients">Clientes</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="barbers">
-              <Card className="glass-card border-border/50 mt-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-display">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    Ranking de Colaboradores
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RankingList data={barberRanking} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="clients">
-              <Card className="glass-card border-border/50 mt-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-display">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    Ranking de Clientes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ClientRankingList data={clientRanking} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-display">
-                <Trophy className="h-5 w-5 text-primary" />
-                Ranking de Colaboradores
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RankingList data={barberRanking} />
-            </CardContent>
-          </Card>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="barbers">Colaboradores</TabsTrigger>
+            <TabsTrigger value="clients">Clientes</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="barbers">
+            <Card className="glass-card border-border/50 mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-display">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Ranking de Colaboradores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RankingList data={barberRanking} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="clients">
+            <Card className="glass-card border-border/50 mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-display">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Ranking de Indicações (Clientes)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ClientRankingList data={clientRanking} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
