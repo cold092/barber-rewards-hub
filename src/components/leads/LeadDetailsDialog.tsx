@@ -62,6 +62,7 @@ export function LeadDetailsDialog({
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [localTags, setLocalTags] = useState<string[]>(referral?.tags || []);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     setLocalTags(referral?.tags || []);
