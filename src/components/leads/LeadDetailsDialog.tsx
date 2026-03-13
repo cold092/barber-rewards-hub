@@ -291,5 +291,19 @@ export function LeadDetailsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      {referral && (
+        <EditLeadDialog
+          referral={referral}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onUpdate={() => {
+            onUpdate();
+            onOpenChange(false);
+          }}
+          contactTagOptions={contactTagOptions}
+        />
+      )}
+    </>
   );
 }
