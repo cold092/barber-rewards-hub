@@ -8,8 +8,10 @@ import {
   Trash2,
   Save,
   X,
-  User
+  User,
+  Pencil
 } from 'lucide-react';
+import { EditLeadDialog } from './EditLeadDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +62,7 @@ export function LeadDetailsDialog({
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [localTags, setLocalTags] = useState<string[]>(referral?.tags || []);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     setLocalTags(referral?.tags || []);
@@ -110,6 +113,7 @@ export function LeadDetailsDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0">
         {/* Header */}
@@ -127,6 +131,15 @@ export function LeadDetailsDialog({
                 <Phone className="h-3.5 w-3.5" />
                 {formatPhoneNumber(referral.lead_phone)}
               </DialogDescription>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0"
+                onClick={() => setEditDialogOpen(true)}
+                title="Editar lead"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </DialogHeader>
@@ -279,5 +292,19 @@ export function LeadDetailsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      {referral && (
+        <EditLeadDialog
+          referral={referral}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onUpdate={() => {
+            onUpdate();
+            onOpenChange(false);
+          }}
+          contactTagOptions={contactTagOptions}
+        />
+      )}
+    </>
   );
 }
