@@ -215,6 +215,40 @@ export async function undoContacted(
 }
 
 /**
+ * Update referral fields (name, phone, referrer, notes, status, etc.)
+ */
+export async function updateReferral(
+  referralId: string,
+  updates: {
+    lead_name?: string;
+    lead_phone?: string;
+    referrer_name?: string;
+    notes?: string;
+    status?: ReferralStatus;
+    is_client?: boolean;
+    converted_plan_id?: string | null;
+    tags?: string[];
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('referrals')
+      .update(updates)
+      .eq('id', referralId);
+
+    if (error) {
+      console.error('Error updating referral:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in updateReferral:', error);
+    return { success: false, error: 'Erro ao atualizar lead' };
+  }
+}
+
+/**
  * Update lead contact tag (SQL, MQL, Frio, Marcou)
  */
 export async function updateContactTag(
