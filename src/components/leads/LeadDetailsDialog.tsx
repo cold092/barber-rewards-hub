@@ -130,6 +130,15 @@ export function LeadDetailsDialog({
                 <Phone className="h-3.5 w-3.5" />
                 {formatPhoneNumber(referral.lead_phone)}
               </DialogDescription>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0"
+                onClick={() => setEditDialogOpen(true)}
+                title="Editar lead"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </DialogHeader>
