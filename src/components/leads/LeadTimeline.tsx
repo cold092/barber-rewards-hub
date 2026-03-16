@@ -190,21 +190,24 @@ export function LeadTimeline({ referralId }: LeadTimelineProps) {
       <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
       <div className="space-y-4">
         {history.map((event) => {
+          const isEdit = event.event_type === 'note_added' && event.event_data?.action === 'lead_edited';
           const config = eventConfig[event.event_type];
-          const Icon = config.icon;
+          const Icon = isEdit ? Pencil : config.icon;
+          const iconColor = isEdit ? 'text-info bg-info/20' : config.color;
+          const label = isEdit ? 'Edição' : config.label;
           
           return (
             <div key={event.id} className="relative flex gap-4 pl-0">
               <div className={cn(
                 "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
-                config.color
+                iconColor
               )}>
                 <Icon className="h-4 w-4" />
               </div>
               
               <div className="flex-1 pt-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-sm">{config.label}</span>
+                  <span className="font-medium text-sm">{label}</span>
                   {event.created_by_name && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <User className="h-3 w-3" />
@@ -212,9 +215,13 @@ export function LeadTimeline({ referralId }: LeadTimelineProps) {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {config.getDescription(event.event_data)}
-                </p>
+                {isEdit ? (
+                  <EditDetails data={event.event_data} />
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {config.getDescription(event.event_data)}
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground/70 mt-1 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {new Date(event.created_at).toLocaleString('pt-BR')}
