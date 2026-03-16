@@ -447,23 +447,98 @@ export async function confirmConversion(
 }
 
 /**
- * Revert a conversion (keeps lead as contacted and clears plan)
+ * Revert a conversion — deducts the plan points that were credited
  */
 export async function undoConversion(
   referralId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Fetch referral to know which plan was used and who the referrer is
+    const { data: referral, error: fetchErr } = await supabase
+      .from('referrals')
+      .select('referrer_id, converted_plan_id, referred_by_lead_id, lead_points')
+      .eq('id', referralId)
+      .single();
+
+    if (fetchErr || !referral) {
+      console.error('Error fetching referral for undo:', fetchErr);
+      return { success: false, error: 'Indicação não encontrada' };
+    }
+
+    const planId = referral.converted_plan_id;
+
+    // Revert referral status
     const { error } = await supabase
       .from('referrals')
       .update({
         status: 'contacted' as ReferralStatus,
-        converted_plan_id: null
+        converted_plan_id: null,
+        is_client: false,
+        client_since: null
       })
       .eq('id', referralId);
 
     if (error) {
       console.error('Error reverting conversion:', error);
       return { success: false, error: error.message };
+    }
+
+    // Deduct points if a plan was set
+    if (planId) {
+      const planPoints = getPlanPoints(planId);
+      const barberShare = getBarberReferralSharePoints(planId);
+
+      if (referral.referred_by_lead_id) {
+        // Deduct lead_points from the referring lead
+        const { data: refLead } = await supabase
+          .from('referrals')
+          .select('lead_points')
+          .eq('id', referral.referred_by_lead_id)
+          .single();
+
+        if (refLead) {
+          await supabase
+            .from('referrals')
+            .update({ lead_points: Math.max(0, (refLead.lead_points || 0) - planPoints) })
+            .eq('id', referral.referred_by_lead_id);
+        }
+
+        // Deduct barber share from profile
+        if (barberShare > 0) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('wallet_balance, lifetime_points')
+            .eq('id', referral.referrer_id)
+            .single();
+
+          if (profile) {
+            await supabase
+              .from('profiles')
+              .update({
+                wallet_balance: Math.max(0, (profile.wallet_balance || 0) - barberShare),
+                lifetime_points: Math.max(0, (profile.lifetime_points || 0) - barberShare)
+              })
+              .eq('id', referral.referrer_id);
+          }
+        }
+      } else {
+        // Deduct full plan points from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('wallet_balance, lifetime_points')
+          .eq('id', referral.referrer_id)
+          .single();
+
+        if (profile) {
+          await supabase
+            .from('profiles')
+            .update({
+              wallet_balance: Math.max(0, (profile.wallet_balance || 0) - planPoints),
+              lifetime_points: Math.max(0, (profile.lifetime_points || 0) - planPoints)
+            })
+            .eq('id', referral.referrer_id);
+        }
+      }
     }
 
     return { success: true };
