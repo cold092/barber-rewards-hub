@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { addHistoryEvent } from "@/services/leadHistoryService";
 import {
   REWARD_PLANS,
   REFERRAL_BONUS_POINTS,
