@@ -18,6 +18,8 @@ interface EditLeadDialogProps {
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
   contactTagOptions: Array<{ value: string; label: string; className: string }>;
+  userId?: string;
+  userName?: string;
 }
 
 const STATUS_OPTIONS: { value: ReferralStatus; label: string }[] = [
