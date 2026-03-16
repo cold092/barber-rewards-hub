@@ -7,7 +7,8 @@ import {
   Tag, 
   User,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Pencil
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLeadHistory } from '@/services/leadHistoryService';
