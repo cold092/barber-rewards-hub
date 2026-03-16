@@ -303,6 +303,8 @@ export function LeadDetailsDialog({
             onOpenChange(false);
           }}
           contactTagOptions={contactTagOptions}
+          userId={userId}
+          userName={userName}
         />
       )}
     </>
