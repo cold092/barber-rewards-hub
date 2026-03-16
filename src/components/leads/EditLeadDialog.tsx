@@ -34,7 +34,9 @@ export function EditLeadDialog({
   open,
   onOpenChange,
   onUpdate,
-  contactTagOptions
+  contactTagOptions,
+  userId,
+  userName
 }: EditLeadDialogProps) {
   const [saving, setSaving] = useState(false);
   const [leadName, setLeadName] = useState(referral.lead_name);
