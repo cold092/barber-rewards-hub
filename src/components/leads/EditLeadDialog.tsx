@@ -56,7 +56,7 @@ export function EditLeadDialog({
     }
 
     setSaving(true);
-    const result = await updateReferral(referral.id, {
+    const updates = {
       lead_name: leadName.trim(),
       lead_phone: leadPhone.trim(),
       referrer_name: referrerName.trim(),
@@ -65,7 +65,17 @@ export function EditLeadDialog({
       is_client: status === 'client' || status === 'converted',
       converted_plan_id: status === 'converted' ? (convertedPlanId || null) : null,
       tags: localTags,
-    });
+    };
+    const previousData = {
+      lead_name: referral.lead_name,
+      lead_phone: referral.lead_phone,
+      referrer_name: referral.referrer_name,
+      notes: referral.notes,
+      status: referral.status,
+      tags: referral.tags,
+      converted_plan_id: referral.converted_plan_id,
+    };
+    const result = await updateReferral(referral.id, updates, { userId, userName, previousData });
     setSaving(false);
 
     if (result.success) {
