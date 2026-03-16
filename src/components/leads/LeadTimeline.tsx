@@ -77,6 +77,9 @@ const eventConfig: Record<LeadEventType, {
     color: 'text-muted-foreground bg-muted',
     label: 'Observação',
     getDescription: (data) => {
+      if (data.action === 'lead_edited') {
+        return 'Lead editado';
+      }
       const notes = (data.notes as string) || '';
       return notes.length > 100 ? `${notes.substring(0, 100)}...` : notes || 'Observação adicionada';
     }
