@@ -101,6 +101,60 @@ const eventConfig: Record<LeadEventType, {
   }
 };
 
+const FIELD_LABELS: Record<string, string> = {
+  lead_name: 'Nome',
+  lead_phone: 'Telefone',
+  referrer_name: 'Indicado por',
+  notes: 'Observações',
+  status: 'Status',
+  tags: 'Tags',
+  converted_plan_id: 'Plano convertido',
+  is_client: 'É cliente',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  new: 'Novo',
+  contacted: 'Contatado',
+  converted: 'Convertido',
+  client: 'Cliente',
+  cliente: 'Cliente',
+};
+
+function formatFieldValue(field: string, value: unknown): string {
+  if (value === null || value === undefined || value === '') return '(vazio)';
+  if (field === 'status') return STATUS_LABELS[value as string] || String(value);
+  if (field === 'is_client') return value ? 'Sim' : 'Não';
+  if (field === 'tags' && Array.isArray(value)) return value.length ? value.join(', ') : '(nenhuma)';
+  return String(value);
+}
+
+function EditDetails({ data }: { data: Record<string, unknown> }) {
+  const updates = (data.updates || {}) as Record<string, unknown>;
+  const previous = (data.previous || {}) as Record<string, unknown>;
+  const changedFields = (data.changed_fields || []) as string[];
+
+  const diffs = changedFields.filter(f => {
+    const prev = JSON.stringify(previous[f] ?? '');
+    const next = JSON.stringify(updates[f] ?? '');
+    return prev !== next;
+  });
+
+  if (diffs.length === 0) return <span className="text-sm text-muted-foreground">Lead editado (sem alterações)</span>;
+
+  return (
+    <div className="mt-1.5 space-y-1">
+      {diffs.map(field => (
+        <div key={field} className="flex items-start gap-1.5 text-xs">
+          <span className="font-medium text-foreground/80 shrink-0">{FIELD_LABELS[field] || field}:</span>
+          <span className="text-destructive/70 line-through">{formatFieldValue(field, previous[field])}</span>
+          <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+          <span className="text-success font-medium">{formatFieldValue(field, updates[field])}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function LeadTimeline({ referralId }: LeadTimelineProps) {
   const [history, setHistory] = useState<LeadHistory[]>([]);
   const [loading, setLoading] = useState(true);
