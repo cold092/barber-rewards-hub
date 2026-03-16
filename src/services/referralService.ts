@@ -229,7 +229,8 @@ export async function updateReferral(
     is_client?: boolean;
     converted_plan_id?: string | null;
     tags?: string[];
-  }
+  },
+  options?: { userId?: string; userName?: string; previousData?: Record<string, unknown> }
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase
@@ -241,6 +242,21 @@ export async function updateReferral(
       console.error('Error updating referral:', error);
       return { success: false, error: error.message };
     }
+
+    // Log edit event to history
+    const changedFields = Object.keys(updates);
+    await addHistoryEvent({
+      referralId,
+      eventType: 'note_added',
+      eventData: {
+        action: 'lead_edited',
+        changed_fields: changedFields,
+        updates,
+        previous: options?.previousData || {},
+      },
+      createdById: options?.userId,
+      createdByName: options?.userName,
+    });
 
     return { success: true };
   } catch (error) {
