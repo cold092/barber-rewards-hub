@@ -20,7 +20,7 @@ import {
 import { toast } from 'sonner';
 import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
 import { addHistoryEvent, logWhatsAppContact } from '@/services/leadHistoryService';
-import { getPlanById, getRewardPlans } from '@/config/plans';
+import { getPlanById, getRewardPlans, getBarberReferralSharePoints } from '@/config/plans';
 import { generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
 import { KanbanBoard } from '@/components/leads/KanbanBoard';
