@@ -568,7 +568,6 @@ export default function Clients() {
                 </div>
               );
             })()}
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConvertDialogOpen(false)}>Cancelar</Button>
