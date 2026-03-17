@@ -387,7 +387,8 @@ export async function confirmConversion(
       }
     }
 
-    return { success: true, pointsAwarded: planPoints };
+    const actualReferrerPoints = referral.referred_by_lead_id ? barberSharePoints : planPoints;
+    return { success: true, pointsAwarded: actualReferrerPoints };
   } catch (error) {
     console.error('Error in confirmConversion:', error);
     return { success: false, error: 'Erro ao confirmar conversão' };
