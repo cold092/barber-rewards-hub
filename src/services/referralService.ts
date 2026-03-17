@@ -86,26 +86,12 @@ export async function registerLead(
       return { success: false, error: referralError.message };
     }
 
-    // Get current profile balance
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('wallet_balance, lifetime_points')
-      .eq('id', referrerId)
-      .single();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return { success: false, error: profileError.message };
-    }
-
     // Update wallet with bonus points for registering a lead
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        wallet_balance: (profile.wallet_balance || 0) + REFERRAL_BONUS_POINTS,
-        lifetime_points: (profile.lifetime_points || 0) + REFERRAL_BONUS_POINTS
-      })
-      .eq('id', referrerId);
+    const { error: updateError } = await supabase.rpc('update_profile_points', {
+      _profile_id: referrerId,
+      _wallet_delta: REFERRAL_BONUS_POINTS,
+      _lifetime_delta: REFERRAL_BONUS_POINTS
+    });
 
     if (updateError) {
       console.error('Error updating wallet:', updateError);
