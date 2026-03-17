@@ -392,6 +392,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_profile_points: {
+        Args: {
+          _lifetime_delta: number
+          _profile_id: string
+          _wallet_delta: number
+        }
+        Returns: undefined
+      }
+      update_referral_lead_points: {
+        Args: { _points_delta: number; _referral_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "owner" | "admin" | "barber" | "client"
