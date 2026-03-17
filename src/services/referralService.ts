@@ -438,54 +438,26 @@ export async function undoConversion(
 
       if (referral.referred_by_lead_id) {
         // Deduct lead_points from the referring lead
-        const { data: refLead } = await supabase
-          .from('referrals')
-          .select('lead_points')
-          .eq('id', referral.referred_by_lead_id)
-          .single();
-
-        if (refLead) {
-          await supabase
-            .from('referrals')
-            .update({ lead_points: Math.max(0, (refLead.lead_points || 0) - planPoints) })
-            .eq('id', referral.referred_by_lead_id);
-        }
+        await supabase.rpc('update_referral_lead_points', {
+          _referral_id: referral.referred_by_lead_id,
+          _points_delta: -planPoints
+        });
 
         // Deduct barber share from profile
         if (barberShare > 0) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('wallet_balance, lifetime_points')
-            .eq('id', referral.referrer_id)
-            .single();
-
-          if (profile) {
-            await supabase
-              .from('profiles')
-              .update({
-                wallet_balance: Math.max(0, (profile.wallet_balance || 0) - barberShare),
-                lifetime_points: Math.max(0, (profile.lifetime_points || 0) - barberShare)
-              })
-              .eq('id', referral.referrer_id);
-          }
+          await supabase.rpc('update_profile_points', {
+            _profile_id: referral.referrer_id,
+            _wallet_delta: -barberShare,
+            _lifetime_delta: -barberShare
+          });
         }
       } else {
         // Deduct full plan points from profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('wallet_balance, lifetime_points')
-          .eq('id', referral.referrer_id)
-          .single();
-
-        if (profile) {
-          await supabase
-            .from('profiles')
-            .update({
-              wallet_balance: Math.max(0, (profile.wallet_balance || 0) - planPoints),
-              lifetime_points: Math.max(0, (profile.lifetime_points || 0) - planPoints)
-            })
-            .eq('id', referral.referrer_id);
-        }
+        await supabase.rpc('update_profile_points', {
+          _profile_id: referral.referrer_id,
+          _wallet_delta: -planPoints,
+          _lifetime_delta: -planPoints
+        });
       }
     }
 
