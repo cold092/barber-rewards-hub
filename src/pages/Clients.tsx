@@ -20,7 +20,7 @@ import {
 import { toast } from 'sonner';
 import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
 import { addHistoryEvent, logWhatsAppContact } from '@/services/leadHistoryService';
-import { getPlanById, getRewardPlans } from '@/config/plans';
+import { getPlanById, getRewardPlans, getBarberReferralSharePoints } from '@/config/plans';
 import { generateWhatsAppLink, formatPhoneNumber } from '@/utils/whatsapp';
 import { downloadCsv } from '@/utils/export';
 import { KanbanBoard } from '@/components/leads/KanbanBoard';
@@ -551,12 +551,23 @@ export default function Clients() {
                 ))}
               </SelectContent>
             </Select>
-            {selectedPlan && (
-              <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                <p className="text-sm text-muted-foreground">{convertingReferral?.referrer_name} receberá:</p>
-                <p className="text-2xl font-bold text-primary">+{getPlanById(selectedPlan)?.points} pontos</p>
-              </div>
-            )}
+            {selectedPlan && (() => {
+              const isChain = !!convertingReferral?.referred_by_lead_id;
+              const displayPoints = isChain
+                ? getBarberReferralSharePoints(selectedPlan)
+                : (getPlanById(selectedPlan)?.points ?? 0);
+              return (
+                <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-sm text-muted-foreground">{convertingReferral?.referrer_name} receberá:</p>
+                  <p className="text-2xl font-bold text-primary">+{displayPoints} pontos</p>
+                  {isChain && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      (30% de {getPlanById(selectedPlan)?.points} pts — lead indicador recebe o total)
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConvertDialogOpen(false)}>Cancelar</Button>

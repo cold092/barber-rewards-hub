@@ -86,26 +86,12 @@ export async function registerLead(
       return { success: false, error: referralError.message };
     }
 
-    // Get current profile balance
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('wallet_balance, lifetime_points')
-      .eq('id', referrerId)
-      .single();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return { success: false, error: profileError.message };
-    }
-
     // Update wallet with bonus points for registering a lead
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        wallet_balance: (profile.wallet_balance || 0) + REFERRAL_BONUS_POINTS,
-        lifetime_points: (profile.lifetime_points || 0) + REFERRAL_BONUS_POINTS
-      })
-      .eq('id', referrerId);
+    const { error: updateError } = await supabase.rpc('update_profile_points', {
+      _profile_id: referrerId,
+      _wallet_delta: REFERRAL_BONUS_POINTS,
+      _lifetime_delta: REFERRAL_BONUS_POINTS
+    });
 
     if (updateError) {
       console.error('Error updating wallet:', updateError);
@@ -363,48 +349,24 @@ export async function confirmConversion(
     }
 
     if (referral.referred_by_lead_id) {
-      const { data: referringLead, error: leadError } = await supabase
-        .from('referrals')
-        .select('lead_points')
-        .eq('id', referral.referred_by_lead_id)
-        .single();
-
-      if (leadError || !referringLead) {
-        console.error('Error fetching referring lead:', leadError);
-        return { success: false, error: 'Lead indicador não encontrado' };
-      }
-
-      const { error: updateLeadError } = await supabase
-        .from('referrals')
-        .update({
-          lead_points: (referringLead.lead_points || 0) + planPoints
-        })
-        .eq('id', referral.referred_by_lead_id);
+      // Add plan points to the referring lead's lead_points
+      const { error: updateLeadError } = await supabase.rpc('update_referral_lead_points', {
+        _referral_id: referral.referred_by_lead_id,
+        _points_delta: planPoints
+      });
 
       if (updateLeadError) {
         console.error('Error updating lead points:', updateLeadError);
         return { success: false, error: updateLeadError.message };
       }
 
+      // Give barber share to the profile owner
       if (barberSharePoints > 0) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('wallet_balance, lifetime_points')
-          .eq('id', referral.referrer_id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          return { success: false, error: profileError.message };
-        }
-
-        const { error: updateWalletError } = await supabase
-          .from('profiles')
-          .update({
-            wallet_balance: (profile.wallet_balance || 0) + barberSharePoints,
-            lifetime_points: (profile.lifetime_points || 0) + barberSharePoints
-          })
-          .eq('id', referral.referrer_id);
+        const { error: updateWalletError } = await supabase.rpc('update_profile_points', {
+          _profile_id: referral.referrer_id,
+          _wallet_delta: barberSharePoints,
+          _lifetime_delta: barberSharePoints
+        });
 
         if (updateWalletError) {
           console.error('Error updating wallet:', updateWalletError);
@@ -412,26 +374,12 @@ export async function confirmConversion(
         }
       }
     } else {
-      // Get current profile balance
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('wallet_balance, lifetime_points')
-        .eq('id', referral.referrer_id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        return { success: false, error: profileError.message };
-      }
-
-      // Update wallet with plan points
-      const { error: updateWalletError } = await supabase
-        .from('profiles')
-        .update({
-          wallet_balance: (profile.wallet_balance || 0) + planPoints,
-          lifetime_points: (profile.lifetime_points || 0) + planPoints
-        })
-        .eq('id', referral.referrer_id);
+      // Direct referral: give full plan points to the profile owner
+      const { error: updateWalletError } = await supabase.rpc('update_profile_points', {
+        _profile_id: referral.referrer_id,
+        _wallet_delta: planPoints,
+        _lifetime_delta: planPoints
+      });
 
       if (updateWalletError) {
         console.error('Error updating wallet:', updateWalletError);
@@ -439,7 +387,8 @@ export async function confirmConversion(
       }
     }
 
-    return { success: true, pointsAwarded: planPoints };
+    const actualReferrerPoints = referral.referred_by_lead_id ? barberSharePoints : planPoints;
+    return { success: true, pointsAwarded: actualReferrerPoints };
   } catch (error) {
     console.error('Error in confirmConversion:', error);
     return { success: false, error: 'Erro ao confirmar conversão' };
@@ -490,54 +439,26 @@ export async function undoConversion(
 
       if (referral.referred_by_lead_id) {
         // Deduct lead_points from the referring lead
-        const { data: refLead } = await supabase
-          .from('referrals')
-          .select('lead_points')
-          .eq('id', referral.referred_by_lead_id)
-          .single();
-
-        if (refLead) {
-          await supabase
-            .from('referrals')
-            .update({ lead_points: Math.max(0, (refLead.lead_points || 0) - planPoints) })
-            .eq('id', referral.referred_by_lead_id);
-        }
+        await supabase.rpc('update_referral_lead_points', {
+          _referral_id: referral.referred_by_lead_id,
+          _points_delta: -planPoints
+        });
 
         // Deduct barber share from profile
         if (barberShare > 0) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('wallet_balance, lifetime_points')
-            .eq('id', referral.referrer_id)
-            .single();
-
-          if (profile) {
-            await supabase
-              .from('profiles')
-              .update({
-                wallet_balance: Math.max(0, (profile.wallet_balance || 0) - barberShare),
-                lifetime_points: Math.max(0, (profile.lifetime_points || 0) - barberShare)
-              })
-              .eq('id', referral.referrer_id);
-          }
+          await supabase.rpc('update_profile_points', {
+            _profile_id: referral.referrer_id,
+            _wallet_delta: -barberShare,
+            _lifetime_delta: -barberShare
+          });
         }
       } else {
         // Deduct full plan points from profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('wallet_balance, lifetime_points')
-          .eq('id', referral.referrer_id)
-          .single();
-
-        if (profile) {
-          await supabase
-            .from('profiles')
-            .update({
-              wallet_balance: Math.max(0, (profile.wallet_balance || 0) - planPoints),
-              lifetime_points: Math.max(0, (profile.lifetime_points || 0) - planPoints)
-            })
-            .eq('id', referral.referrer_id);
-        }
+        await supabase.rpc('update_profile_points', {
+          _profile_id: referral.referrer_id,
+          _wallet_delta: -planPoints,
+          _lifetime_delta: -planPoints
+        });
       }
     }
 
