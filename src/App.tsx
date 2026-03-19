@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ViewAsProvider } from "@/contexts/ViewAsContext";
 import { TagFilterProvider } from "@/contexts/TagFilterContext";
 import { LeadTagConfigProvider, ClientTagConfigProvider } from "@/contexts/TagConfigContext";
 import Dashboard from "./pages/Dashboard";
