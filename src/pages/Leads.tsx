@@ -131,15 +131,17 @@ export default function Leads() {
 
   useEffect(() => {
     loadReferrals();
-  }, [isBarber, profile]);
+  }, [isBarber, profile, isViewingAs, effectiveProfile]);
 
+  // Load kanban columns - use effective user when viewing as someone
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      if (!user) return;
+      const targetUserId = isViewingAs ? effectiveUserId : user?.id;
+      if (!targetUserId) return;
       const { getSetting } = await import('@/services/settingsService');
-      const dbLeadColumns = await getSetting<ColumnConfig[]>(user.id, 'lead_columns');
+      const dbLeadColumns = await getSetting<ColumnConfig[]>(targetUserId, 'lead_columns');
       if (cancelled || !Array.isArray(dbLeadColumns)) {
         return;
       }
@@ -149,7 +151,7 @@ export default function Leads() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, isViewingAs, effectiveUserId]);
 
   useEffect(() => {
     const storedLeadMessage = localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY);
