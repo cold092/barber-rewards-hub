@@ -216,6 +216,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </TooltipProvider>
           </div>
 
+          {/* View As Selector (admin only) */}
+          {isAdmin && (
+            <div className="px-3 pb-2">
+              <ViewAsSelector collapsed={collapsed} />
+            </div>
+          )}
+
           {/* User Info & Logout */}
           <div className="p-3">
             <div className="mx-1 mb-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
