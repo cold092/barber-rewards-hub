@@ -323,6 +323,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           collapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"
         )}
       >
+        {isViewingAs && (
+          <div className="sticky top-0 lg:top-0 z-20 bg-amber-500/15 border-b border-amber-500/25 px-4 py-2 flex items-center justify-between backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-sm">
+              <Eye className="h-4 w-4 text-amber-500" />
+              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                Visualizando como <strong>{viewAsProfile?.name}</strong>
+              </span>
+            </div>
+            <button
+              onClick={clearViewAs}
+              className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              Voltar à minha visão
+            </button>
+          </div>
+        )}
         <div className="p-4 lg:p-8 max-w-[1600px]">
           {children}
         </div>
