@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useTheme } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/button';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
