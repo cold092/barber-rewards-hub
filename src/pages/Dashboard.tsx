@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -18,7 +19,15 @@ import PlanDistributionChart from '@/components/dashboard/PlanDistributionChart'
 import type { Referral, Profile } from '@/types/database';
 
 export default function Dashboard() {
-  const { profile, isAdmin, isBarber } = useAuth();
+  const { profile: realProfile, isAdmin: realIsAdmin, isBarber: realIsBarber } = useAuth();
+  const { effectiveProfile, effectiveRole, isViewingAs } = useViewAs();
+  
+  // When viewing as someone, use their perspective
+  const profile = isViewingAs ? effectiveProfile : realProfile;
+  const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
+  const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
+  const isViewingAsBarber = isViewingAs && effectiveRole === 'barber';
+
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [myReferrals, setMyReferrals] = useState<Referral[]>([]);
   const [topBarbers, setTopBarbers] = useState<Profile[]>([]);
@@ -36,8 +45,8 @@ export default function Dashboard() {
       const allReferrals = referralsResult.data;
       setReferrals(allReferrals);
       
-      // Filter referrals by current user if barber
-      if (profile && isBarber) {
+      // Filter referrals by viewed user if barber or viewing as barber
+      if (profile && (isBarber || isViewingAsBarber)) {
         setMyReferrals(allReferrals.filter(r => r.referrer_id === profile.id));
       }
       
@@ -46,10 +55,10 @@ export default function Dashboard() {
     }
     
     loadData();
-  }, [profile, isBarber]);
+  }, [profile, isBarber, isViewingAs, effectiveProfile]);
 
-  // Stats for current view (admin sees all, barber sees own)
-  const displayReferrals = isAdmin ? referrals : myReferrals;
+  // When viewing as a barber, show their referrals; otherwise admin sees all
+  const displayReferrals = (isBarber || isViewingAsBarber) ? myReferrals : referrals;
   const stats = {
     totalLeads: displayReferrals.length,
     converted: displayReferrals.filter(r => r.status === 'converted').length,

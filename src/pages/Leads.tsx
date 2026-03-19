@@ -48,6 +48,7 @@ import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
@@ -82,7 +83,13 @@ const parseLeadColumns = (savedColumns: string | null): ColumnConfig[] => {
 };
 
 export default function Leads() {
-  const { isAdmin, isBarber, profile, user } = useAuth();
+  const { isAdmin: realIsAdmin, isBarber: realIsBarber, profile: realProfile, user } = useAuth();
+  const { effectiveProfile, effectiveRole, effectiveUserId, isViewingAs } = useViewAs();
+  
+  // When viewing as someone, use their perspective
+  const profile = isViewingAs ? effectiveProfile : realProfile;
+  const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
+  const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
   const { activeTags } = useTagFilter();
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -124,15 +131,17 @@ export default function Leads() {
 
   useEffect(() => {
     loadReferrals();
-  }, [isBarber, profile]);
+  }, [isBarber, profile, isViewingAs, effectiveProfile]);
 
+  // Load kanban columns - use effective user when viewing as someone
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      if (!user) return;
+      const targetUserId = isViewingAs ? effectiveUserId : user?.id;
+      if (!targetUserId) return;
       const { getSetting } = await import('@/services/settingsService');
-      const dbLeadColumns = await getSetting<ColumnConfig[]>(user.id, 'lead_columns');
+      const dbLeadColumns = await getSetting<ColumnConfig[]>(targetUserId, 'lead_columns');
       if (cancelled || !Array.isArray(dbLeadColumns)) {
         return;
       }
@@ -142,7 +151,7 @@ export default function Leads() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, isViewingAs, effectiveUserId]);
 
   useEffect(() => {
     const storedLeadMessage = localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY);

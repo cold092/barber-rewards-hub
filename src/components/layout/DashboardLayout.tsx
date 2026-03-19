@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useTheme } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/button';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -25,7 +26,9 @@ import {
   Crown,
   Shield,
   Briefcase,
+  Eye,
 } from 'lucide-react';
+import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -54,6 +57,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
+  const { isViewingAs, viewAsProfile, clearViewAs } = useViewAs();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -212,6 +216,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </TooltipProvider>
           </div>
 
+          {/* View As Selector (admin only) */}
+          {isAdmin && (
+            <div className="px-3 pb-2">
+              <ViewAsSelector collapsed={collapsed} />
+            </div>
+          )}
+
           {/* User Info & Logout */}
           <div className="p-3">
             <div className="mx-1 mb-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
@@ -312,6 +323,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           collapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"
         )}
       >
+        {isViewingAs && (
+          <div className="sticky top-0 lg:top-0 z-20 bg-amber-500/15 border-b border-amber-500/25 px-4 py-2 flex items-center justify-between backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-sm">
+              <Eye className="h-4 w-4 text-amber-500" />
+              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                Visualizando como <strong>{viewAsProfile?.name}</strong>
+              </span>
+            </div>
+            <button
+              onClick={clearViewAs}
+              className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              Voltar à minha visão
+            </button>
+          </div>
+        )}
         <div className="p-4 lg:p-8 max-w-[1600px]">
           {children}
         </div>
