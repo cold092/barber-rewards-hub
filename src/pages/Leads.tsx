@@ -83,7 +83,13 @@ const parseLeadColumns = (savedColumns: string | null): ColumnConfig[] => {
 };
 
 export default function Leads() {
-  const { isAdmin, isBarber, profile, user } = useAuth();
+  const { isAdmin: realIsAdmin, isBarber: realIsBarber, profile: realProfile, user } = useAuth();
+  const { effectiveProfile, effectiveRole, effectiveUserId, isViewingAs } = useViewAs();
+  
+  // When viewing as someone, use their perspective
+  const profile = isViewingAs ? effectiveProfile : realProfile;
+  const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
+  const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
   const { activeTags } = useTagFilter();
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
