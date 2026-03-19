@@ -26,7 +26,9 @@ import {
   Crown,
   Shield,
   Briefcase,
+  Eye,
 } from 'lucide-react';
+import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
