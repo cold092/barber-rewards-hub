@@ -57,6 +57,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
+  const { isViewingAs, viewAsProfile, clearViewAs } = useViewAs();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { theme, toggleTheme } = useTheme();
