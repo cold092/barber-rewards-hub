@@ -48,6 +48,7 @@ import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
