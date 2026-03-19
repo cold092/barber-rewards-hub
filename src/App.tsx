@@ -192,7 +192,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
-              <AppRoutes />
+              <ViewAsProvider>
+                <AppRoutes />
+              </ViewAsProvider>
             </AuthProvider>
           </BrowserRouter>
         </TagFilterProvider>
