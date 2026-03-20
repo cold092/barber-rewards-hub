@@ -33,6 +33,7 @@ import { useTagConfig } from '@/contexts/TagConfigContext';
 import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getSetting, upsertSetting } from '@/services/settingsService';
