@@ -118,20 +118,22 @@ export default function Clients() {
 
   useEffect(() => { loadReferrals(); }, [isBarber, isViewingAsBarber, profile, isViewingAs, effectiveProfile]);
 
+  const targetUserId = isViewingAs ? effectiveUserId : user?.id;
+
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       const localColumns = ensureClientColumn(parseClientColumns(localStorage.getItem(CLIENT_COLUMNS_KEY)));
 
-      if (!user) {
+      if (!targetUserId) {
         if (!cancelled) {
           setColumns(localColumns);
         }
         return;
       }
 
-      const userColumns = await getSetting<ColumnConfig[]>(user.id, 'client_columns');
+      const userColumns = await getSetting<ColumnConfig[]>(targetUserId, 'client_columns');
       if (cancelled) {
         return;
       }
@@ -144,7 +146,9 @@ export default function Clients() {
       }
 
       setColumns(localColumns);
-      await upsertSetting(user.id, 'client_columns', localColumns);
+      if (!isViewingAs) {
+        await upsertSetting(targetUserId, 'client_columns', localColumns);
+      }
     })();
 
     return () => {
