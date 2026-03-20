@@ -315,39 +315,79 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="font-display">Planos de Recompensa</CardTitle>
                 <CardDescription>
-                  Configure pontos e valores monetários para cada plano de conversão.
+                  Configure pontos e valores para cada plano. Alterações são aplicadas globalmente para toda a equipe.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(rewardPlans).map(([planId, plan]) => (
-                  <div key={planId} className="flex flex-col gap-3 rounded-lg border border-border/50 p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-medium">{plan.label}</p>
-                      <p className="text-xs text-muted-foreground uppercase">{plan.tier} • {plan.type}</p>
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Pontos</span>
-                        <Input
-                          type="number"
-                          value={planDraft[planId]?.points ?? String(plan.points)}
-                          onChange={(e) => handlePlanChange(planId, 'points', e.target.value)}
-                          className="h-9 w-24"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">R$</span>
-                        <Input
-                          type="number"
-                          value={planDraft[planId]?.price ?? String(plan.price)}
-                          onChange={(e) => handlePlanChange(planId, 'price', e.target.value)}
-                          className="h-9 w-28"
-                        />
-                      </div>
-                    </div>
+              <CardContent className="space-y-6">
+                {/* Info banner */}
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+                  <CreditCard className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div className="space-y-1 text-muted-foreground">
+                    <p>
+                      <strong className="text-foreground">Bônus por indicação:</strong> {REFERRAL_BONUS_POINTS} pts (automático ao registrar lead)
+                    </p>
+                    <p>
+                      <strong className="text-foreground">Comissão do colaborador:</strong> {BARBER_REFERRAL_CONVERSION_PERCENT}% dos pontos do plano em indicações em cadeia
+                    </p>
                   </div>
-                ))}
-                <div className="flex justify-end pt-2">
+                </div>
+
+                {/* Plans grouped by tier */}
+                {(['prata', 'gold', 'vip'] as const).map((tier) => {
+                  const tierPlans = Object.entries(REWARD_PLANS).filter(([, p]) => p.tier === tier);
+                  const tierLabels = { prata: 'Prata', gold: 'Gold', vip: 'VIP' };
+                  return (
+                    <div key={tier} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={cn('text-xs font-semibold', getTierBadgeClass(tier))}>
+                          {tierLabels[tier]}
+                        </Badge>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {tierPlans.map(([planId, plan]) => {
+                          const draft = planDraft[planId];
+                          const currentPoints = draft?.points ? Number(draft.points) : plan.points;
+                          const barberShare = Math.round((currentPoints * BARBER_REFERRAL_CONVERSION_PERCENT) / 100);
+                          return (
+                            <div key={planId} className="rounded-lg border border-border/50 p-3 bg-secondary/20 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium text-sm">{plan.type === 'corte' ? 'Corte' : 'Completo'}</p>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                  Comissão: {barberShare} pts
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 space-y-1">
+                                  <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Pontos</label>
+                                  <Input
+                                    type="number"
+                                    value={draft?.points ?? String(plan.points)}
+                                    onChange={(e) => handlePlanChange(planId, 'points', e.target.value)}
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                  <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Valor R$</label>
+                                  <Input
+                                    type="number"
+                                    value={draft?.price ?? String(plan.price)}
+                                    onChange={(e) => handlePlanChange(planId, 'price', e.target.value)}
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <p className="text-xs text-muted-foreground">
+                    Salvo globalmente para toda a organização
+                  </p>
                   <Button className="gap-1.5" onClick={handleSavePlans}>
                     <Save className="h-4 w-4" />
                     Salvar planos
