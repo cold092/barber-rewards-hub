@@ -76,7 +76,15 @@ const ensureClientColumn = (columns: ColumnConfig[]): ColumnConfig[] => {
 type ClientViewMode = 'kanban' | 'list';
 
 export default function Clients() {
-  const { isAdmin, isBarber, profile, user } = useAuth();
+  const { isAdmin: realIsAdmin, isBarber: realIsBarber, profile: realProfile, user } = useAuth();
+  const { effectiveProfile, effectiveRole, isViewingAs, effectiveUserId } = useViewAs();
+  
+  // When viewing as someone, use their perspective
+  const profile = isViewingAs ? effectiveProfile : realProfile;
+  const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
+  const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
+  const isViewingAsBarber = isViewingAs && effectiveRole === 'barber';
+
   const { activeTags } = useTagFilter();
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -101,14 +109,14 @@ export default function Clients() {
     setLoading(true);
     const result = await getAllReferrals();
     const data = result.data;
-    const filtered = isBarber && profile ? data.filter(item => item.referrer_id === profile.id) : data;
+    const filtered = (isBarber || isViewingAsBarber) && profile ? data.filter(item => item.referrer_id === profile.id) : data;
     // Only clients
     const clients = filtered.filter(r => r.is_client || r.status === 'converted');
     setReferrals(clients);
     setLoading(false);
   };
 
-  useEffect(() => { loadReferrals(); }, [isBarber, profile]);
+  useEffect(() => { loadReferrals(); }, [isBarber, isViewingAsBarber, profile, isViewingAs, effectiveProfile]);
 
   useEffect(() => {
     let cancelled = false;
