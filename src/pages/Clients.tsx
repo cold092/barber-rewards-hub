@@ -33,6 +33,7 @@ import { useTagConfig } from '@/contexts/TagConfigContext';
 import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getSetting, upsertSetting } from '@/services/settingsService';
@@ -75,7 +76,15 @@ const ensureClientColumn = (columns: ColumnConfig[]): ColumnConfig[] => {
 type ClientViewMode = 'kanban' | 'list';
 
 export default function Clients() {
-  const { isAdmin, isBarber, profile, user } = useAuth();
+  const { isAdmin: realIsAdmin, isBarber: realIsBarber, profile: realProfile, user } = useAuth();
+  const { effectiveProfile, effectiveRole, isViewingAs, effectiveUserId } = useViewAs();
+  
+  // When viewing as someone, use their perspective
+  const profile = isViewingAs ? effectiveProfile : realProfile;
+  const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
+  const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
+  const isViewingAsBarber = isViewingAs && effectiveRole === 'barber';
+
   const { activeTags } = useTagFilter();
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -100,14 +109,16 @@ export default function Clients() {
     setLoading(true);
     const result = await getAllReferrals();
     const data = result.data;
-    const filtered = isBarber && profile ? data.filter(item => item.referrer_id === profile.id) : data;
+    const filtered = (isBarber || isViewingAsBarber) && profile ? data.filter(item => item.referrer_id === profile.id) : data;
     // Only clients
     const clients = filtered.filter(r => r.is_client || r.status === 'converted');
     setReferrals(clients);
     setLoading(false);
   };
 
-  useEffect(() => { loadReferrals(); }, [isBarber, profile]);
+  useEffect(() => { loadReferrals(); }, [isBarber, isViewingAsBarber, profile, isViewingAs, effectiveProfile]);
+
+  const targetUserId = isViewingAs ? effectiveUserId : user?.id;
 
   useEffect(() => {
     let cancelled = false;
@@ -115,14 +126,14 @@ export default function Clients() {
     (async () => {
       const localColumns = ensureClientColumn(parseClientColumns(localStorage.getItem(CLIENT_COLUMNS_KEY)));
 
-      if (!user) {
+      if (!targetUserId) {
         if (!cancelled) {
           setColumns(localColumns);
         }
         return;
       }
 
-      const userColumns = await getSetting<ColumnConfig[]>(user.id, 'client_columns');
+      const userColumns = await getSetting<ColumnConfig[]>(targetUserId, 'client_columns');
       if (cancelled) {
         return;
       }
@@ -135,7 +146,9 @@ export default function Clients() {
       }
 
       setColumns(localColumns);
-      await upsertSetting(user.id, 'client_columns', localColumns);
+      if (!isViewingAs) {
+        await upsertSetting(targetUserId, 'client_columns', localColumns);
+      }
     })();
 
     return () => {

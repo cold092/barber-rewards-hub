@@ -4,9 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Crown, Star } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
+import { useViewAs } from '@/contexts/ViewAsContext';
+import { cn } from '@/lib/utils';
 import type { Profile } from '@/types/database';
 
 export default function Ranking() {
+  const { effectiveProfile, isViewingAs } = useViewAs();
   const [barberRanking, setBarberRanking] = useState<Profile[]>([]);
   const [clientRanking, setClientRanking] = useState<ClientRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +68,9 @@ export default function Ranking() {
     );
   }
 
+  const isHighlighted = (profileId: string) =>
+    isViewingAs && effectiveProfile?.id === profileId;
+
   const RankingList = ({ data }: { data: Profile[] }) => (
     <div className="space-y-3">
       {data.length === 0 ? (
@@ -75,11 +81,14 @@ export default function Ranking() {
         data.map((profile, index) => (
           <div 
             key={profile.id}
-            className={`
-              flex items-center justify-between p-4 rounded-lg
-              ${index === 0 ? 'bg-primary/10 border border-primary/30' : 'bg-secondary/50'}
-              transition-all hover:scale-[1.01]
-            `}
+            className={cn(
+              'flex items-center justify-between p-4 rounded-lg transition-all hover:scale-[1.01]',
+              isHighlighted(profile.id)
+                ? 'bg-amber-500/15 border-2 border-amber-500/40 ring-1 ring-amber-500/20'
+                : index === 0
+                  ? 'bg-primary/10 border border-primary/30'
+                  : 'bg-secondary/50'
+            )}
           >
             <div className="flex items-center gap-4">
               <div className={`
@@ -89,8 +98,11 @@ export default function Ranking() {
                 {index < 3 ? getRankIcon(index) : index + 1}
               </div>
               <div>
-                <p className={`font-semibold ${index === 0 ? 'text-primary' : ''}`}>
+                <p className={cn('font-semibold', index === 0 && 'text-primary', isHighlighted(profile.id) && 'text-amber-400')}>
                   {profile.name}
+                  {isHighlighted(profile.id) && (
+                    <span className="ml-2 text-[10px] font-medium text-amber-400/80 uppercase tracking-wider">← visualizando</span>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Saldo atual: {profile.wallet_balance} pts
