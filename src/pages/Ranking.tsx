@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import type { Profile } from '@/types/database';
 
 export default function Ranking() {
+  const { effectiveProfile, isViewingAs } = useViewAs();
   const [barberRanking, setBarberRanking] = useState<Profile[]>([]);
   const [clientRanking, setClientRanking] = useState<ClientRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
