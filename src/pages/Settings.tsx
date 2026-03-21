@@ -480,10 +480,8 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
-
-          {/* ===== COLUNAS ===== */}
           <TabsContent value="columns" className="mt-6">
             <div className="space-y-6">
               {/* Lead Columns */}
