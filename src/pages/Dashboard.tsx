@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   Users, 
   Trophy, 
@@ -10,19 +11,58 @@ import {
   Wallet,
   UserPlus,
   CheckCircle,
-  DollarSign
+  DollarSign,
+  LayoutDashboard,
+  Crown,
+  ArrowUpRight,
 } from 'lucide-react';
 import { getAllReferrals, getRanking } from '@/services/referralService';
 import { getPlanById } from '@/config/plans';
 import { formatCurrencyBRL } from '@/utils/currency';
 import PlanDistributionChart from '@/components/dashboard/PlanDistributionChart';
 import type { Referral, Profile } from '@/types/database';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4, ease: "easeOut" as const } }),
+};
+
+function StatCard({ icon: Icon, label, value, sub, color, index }: { icon: typeof Users; label: string; value: string | number; sub: string; color: string; index: number }) {
+  const colorMap: Record<string, string> = {
+    primary: 'text-primary bg-primary/10 border-primary/20',
+    success: 'text-success bg-success/10 border-success/20',
+    info: 'text-info bg-info/10 border-info/20',
+    warning: 'text-warning bg-warning/10 border-warning/20',
+  };
+  const c = colorMap[color] || colorMap.primary;
+  const textColor = c.split(' ')[0];
+
+  return (
+    <motion.div custom={index} variants={fadeUp} initial="hidden" animate="show">
+      <Card className="glass-card hover-lift group overflow-hidden relative">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+              <p className={cn("text-3xl font-bold tracking-tight", textColor)}>{value}</p>
+              <p className="text-[11px] text-muted-foreground">{sub}</p>
+            </div>
+            <div className={cn("p-2.5 rounded-xl border transition-colors", c, "group-hover:scale-110 transition-transform duration-300")}>
+              <Icon className="h-5 w-5" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
 
 export default function Dashboard() {
   const { profile: realProfile, isAdmin: realIsAdmin, isBarber: realIsBarber } = useAuth();
   const { effectiveProfile, effectiveRole, isViewingAs } = useViewAs();
   
-  // When viewing as someone, use their perspective
   const profile = isViewingAs ? effectiveProfile : realProfile;
   const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
   const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
@@ -45,7 +85,6 @@ export default function Dashboard() {
       const allReferrals = referralsResult.data;
       setReferrals(allReferrals);
       
-      // Filter referrals by viewed user if barber or viewing as barber
       if (profile && (isBarber || isViewingAsBarber)) {
         setMyReferrals(allReferrals.filter(r => r.referrer_id === profile.id));
       }
@@ -57,7 +96,6 @@ export default function Dashboard() {
     loadData();
   }, [profile, isBarber, isViewingAs, effectiveProfile]);
 
-  // When viewing as a barber, show their referrals; otherwise admin sees all
   const displayReferrals = (isBarber || isViewingAsBarber) ? myReferrals : referrals;
   const stats = {
     totalLeads: displayReferrals.length,
@@ -87,201 +125,169 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-display font-bold">
-            Olá, <span className="gold-text">{profile?.name?.split(' ')[0]}</span>
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {isAdmin 
-              ? 'Gerencie leads e acompanhe a performance da equipe'
-              : 'Cadastre indicações e acompanhe seus pontos'}
-          </p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center gap-4"
+        >
+          <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+            <LayoutDashboard className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
+              Olá, <span className="lavender-text">{profile?.name?.split(' ')[0]}</span>
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {isAdmin 
+                ? 'Gerencie leads e acompanhe a performance da equipe'
+                : 'Cadastre indicações e acompanhe seus pontos'}
+            </p>
+          </div>
+        </motion.div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="glass-card border-border/50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Meu Saldo
-              </CardTitle>
-              <Wallet className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {profile?.wallet_balance || 0} pts
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Lifetime: {profile?.lifetime_points || 0} pts
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-border/50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {isAdmin ? 'Total de Leads' : 'Minhas Indicações'}
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalLeads}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {isAdmin ? 'Indicações da equipe' : 'Leads que você indicou'}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-border/50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Convertidos
-              </CardTitle>
-              <CheckCircle className="h-4 w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">{stats.converted}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Vendas fechadas
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-border/50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taxa de Conversão
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.conversionRate}%</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.pending} pendentes
-              </p>
-            </CardContent>
-          </Card>
+          <StatCard icon={Wallet} label="Meu Saldo" value={`${profile?.wallet_balance || 0} pts`} sub={`Lifetime: ${profile?.lifetime_points || 0} pts`} color="primary" index={0} />
+          <StatCard icon={Users} label={isAdmin ? 'Total de Leads' : 'Minhas Indicações'} value={stats.totalLeads} sub={isAdmin ? 'Indicações da equipe' : 'Leads indicados'} color="info" index={1} />
+          <StatCard icon={CheckCircle} label="Convertidos" value={stats.converted} sub="Vendas fechadas" color="success" index={2} />
+          <StatCard icon={TrendingUp} label="Taxa de Conversão" value={`${stats.conversionRate}%`} sub={`${stats.pending} pendentes`} color="warning" index={3} />
         </div>
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Recent Leads */}
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-display">
-                <UserPlus className="h-5 w-5 text-primary" />
-                Leads Recentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {displayReferrals.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  {isAdmin 
-                    ? 'Nenhuma indicação registrada ainda' 
-                    : 'Você ainda não indicou ninguém. Comece agora!'}
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {displayReferrals.slice(0, 5).map((referral) => (
-                    <div 
-                      key={referral.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
-                    >
-                      <div>
-                        <p className="font-medium">{referral.lead_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {isAdmin ? `por ${referral.referrer_name}` : referral.lead_phone}
-                        </p>
+          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="show">
+            <Card className="glass-card rounded-2xl overflow-hidden h-full">
+              <CardHeader className="pb-3 border-b border-border/20">
+                <CardTitle className="flex items-center gap-2.5 font-display text-base">
+                  <div className="p-1.5 rounded-lg bg-primary/10">
+                    <UserPlus className="h-4 w-4 text-primary" />
+                  </div>
+                  Leads Recentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {displayReferrals.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8 text-sm">
+                    {isAdmin 
+                      ? 'Nenhuma indicação registrada ainda' 
+                      : 'Você ainda não indicou ninguém. Comece agora!'}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {displayReferrals.slice(0, 5).map((referral) => (
+                      <div 
+                        key={referral.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/20 hover:border-border/40 transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{referral.lead_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {isAdmin ? `por ${referral.referrer_name}` : referral.lead_phone}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {referral.status === 'new' && (
+                            <Badge variant="outline" className="bg-info/15 text-info border-info/25 text-[10px]">Novo</Badge>
+                          )}
+                          {referral.status === 'contacted' && (
+                            <Badge variant="outline" className="bg-warning/15 text-warning border-warning/25 text-[10px]">Contatado</Badge>
+                          )}
+                          {referral.status === 'converted' && (
+                            <Badge variant="outline" className="bg-success/15 text-success border-success/25 text-[10px]">Convertido</Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {referral.status === 'new' && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400">
-                            Novo
-                          </span>
-                        )}
-                        {referral.status === 'contacted' && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-warning/20 text-warning">
-                            Contatado
-                          </span>
-                        )}
-                        {referral.status === 'converted' && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-success/20 text-success">
-                            Convertido
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
           {/* Financial Card */}
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-display">
-                <DollarSign className="h-5 w-5 text-primary" />
-                Receita Total
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">
-                  {formatCurrencyBRL(financialTotal)}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {stats.converted} vendas convertidas
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div custom={5} variants={fadeUp} initial="hidden" animate="show">
+            <Card className="glass-card rounded-2xl overflow-hidden h-full">
+              <CardHeader className="pb-3 border-b border-border/20">
+                <CardTitle className="flex items-center gap-2.5 font-display text-base">
+                  <div className="p-1.5 rounded-lg bg-success/10">
+                    <DollarSign className="h-4 w-4 text-success" />
+                  </div>
+                  Receita Total
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="text-center space-y-2">
+                  <p className="text-4xl font-bold lavender-text tracking-tight">
+                    {formatCurrencyBRL(financialTotal)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.converted} vendas convertidas
+                  </p>
+                  {financialTotal > 0 && (
+                    <div className="flex items-center justify-center gap-1 text-success text-xs font-medium mt-2">
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                      Acumulado
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Plan Distribution Chart */}
-          <PlanDistributionChart referrals={displayReferrals} />
+          <motion.div custom={6} variants={fadeUp} initial="hidden" animate="show">
+            <PlanDistributionChart referrals={displayReferrals} />
+          </motion.div>
 
           {/* Top Barbers */}
-          <Card className="glass-card border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-display">
-                <Trophy className="h-5 w-5 text-primary" />
-                Top Barbeiros
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {topBarbers.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Nenhum barbeiro no ranking ainda
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {topBarbers.map((barber, index) => (
-                    <div 
-                      key={barber.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`
-                          w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm
-                          ${index === 0 ? 'gold-gradient text-primary-foreground' : 
-                            index === 1 ? 'bg-slate-400 text-slate-900' :
-                            index === 2 ? 'bg-amber-700 text-amber-100' :
-                            'bg-muted text-muted-foreground'}
-                        `}>
-                          {index + 1}
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="show">
+            <Card className="glass-card rounded-2xl overflow-hidden h-full">
+              <CardHeader className="pb-3 border-b border-border/20">
+                <CardTitle className="flex items-center gap-2.5 font-display text-base">
+                  <div className="p-1.5 rounded-lg bg-warning/10">
+                    <Trophy className="h-4 w-4 text-warning" />
+                  </div>
+                  Top Colaboradores
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {topBarbers.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8 text-sm">
+                    Nenhum colaborador no ranking ainda
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {topBarbers.map((barber, index) => (
+                      <div 
+                        key={barber.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/20 hover:border-border/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm",
+                            index === 0 ? "lavender-gradient text-primary-foreground shadow-sm" : 
+                            index === 1 ? "bg-muted-foreground/20 text-muted-foreground" :
+                            index === 2 ? "bg-warning/15 text-warning" :
+                            "bg-secondary text-muted-foreground"
+                          )}>
+                            {index === 0 ? <Crown className="h-4 w-4" /> : index + 1}
+                          </div>
+                          <p className="font-medium text-sm">{barber.name}</p>
+                        </div>
+                        <span className="font-semibold text-sm text-primary">
+                          {barber.lifetime_points} pts
                         </span>
-                        <p className="font-medium">{barber.name}</p>
                       </div>
-                      <span className="font-semibold text-primary">
-                        {barber.lifetime_points} pts
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </DashboardLayout>

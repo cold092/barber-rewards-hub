@@ -625,22 +625,20 @@ export default function Leads() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl lavender-gradient lavender-glow">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-display font-bold">
-                  <span className="gold-text">Mini-CRM</span>
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Gerencie leads, follow-ups e conversões
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+              <Sparkles className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
+                <span className="lavender-text">Mini-CRM</span>
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Gerencie leads, follow-ups e conversões
+              </p>
             </div>
           </div>
           
@@ -834,10 +832,10 @@ export default function Leads() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <Card className="glass-card border-info/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-info/10 group-hover:bg-info/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-info/10 border border-info/20 group-hover:scale-110 transition-transform duration-300">
                   <Users className="h-4 w-4 text-info" />
                 </div>
                 <div>
@@ -849,10 +847,10 @@ export default function Leads() {
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-warning/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-warning/10 group-hover:bg-warning/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-warning/10 border border-warning/20 group-hover:scale-110 transition-transform duration-300">
                   <MessageCircle className="h-4 w-4 text-warning" />
                 </div>
                 <div>
@@ -864,10 +862,10 @@ export default function Leads() {
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-success/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-success/10 group-hover:bg-success/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-success/10 border border-success/20 group-hover:scale-110 transition-transform duration-300">
                   <CheckCircle className="h-4 w-4 text-success" />
                 </div>
                 <div>
@@ -879,10 +877,10 @@ export default function Leads() {
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-primary/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="h-4 w-4 text-primary" />
                 </div>
                 <div>
@@ -895,14 +893,14 @@ export default function Leads() {
             </CardContent>
           </Card>
           <Card className={cn(
-            "glass-card hover-lift group",
-            overdueFollowUps > 0 ? "border-destructive/30" : "border-accent/20"
+            "glass-card rounded-2xl hover-lift group",
+            overdueFollowUps > 0 ? "border-destructive/30" : ""
           )}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "p-2 rounded-lg transition-colors",
-                  overdueFollowUps > 0 ? "bg-destructive/10 group-hover:bg-destructive/20" : "bg-accent/10 group-hover:bg-accent/20"
+                  "p-2.5 rounded-xl border group-hover:scale-110 transition-transform duration-300",
+                  overdueFollowUps > 0 ? "bg-destructive/10 border-destructive/20" : "bg-accent/10 border-accent/20"
                 )}>
                   <Bell className={cn("h-4 w-4", overdueFollowUps > 0 ? "text-destructive" : "text-accent")} />
                 </div>
@@ -936,10 +934,12 @@ export default function Leads() {
 
         {/* List View */}
         {viewMode === 'list' && (
-          <Card className="glass-card border-border/50">
-            <CardHeader className="space-y-4">
-              <CardTitle className="flex items-center gap-2 font-display">
-                <Users className="h-5 w-5 text-primary" />
+          <Card className="glass-card rounded-2xl overflow-hidden">
+            <CardHeader className="space-y-4 border-b border-border/20 pb-4">
+              <CardTitle className="flex items-center gap-2.5 font-display text-base">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
                 Leads ({filteredReferrals.filter(r => !isClientReferral(r)).length})
               </CardTitle>
             </CardHeader>
@@ -953,7 +953,7 @@ export default function Leads() {
                   {filteredReferrals.map((referral) => (
                     <div 
                       key={referral.id}
-                      className="p-4 rounded-lg bg-secondary/50 space-y-3 cursor-pointer hover:bg-secondary/70 transition-colors"
+                      className="p-4 rounded-xl bg-secondary/30 border border-border/20 space-y-3 cursor-pointer hover:border-border/50 transition-colors"
                       onClick={() => openDetailsDialog(referral)}
                     >
                       <div className="flex items-start justify-between gap-4">

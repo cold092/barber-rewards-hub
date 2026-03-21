@@ -221,7 +221,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="tags" className="space-y-6">
+        <Tabs defaultValue="tags" className="space-y-6" onValueChange={() => {}}>
           <TabsList className="glass-card p-1 h-auto gap-1">
             <TabsTrigger value="tags" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
               <Tag className="h-4 w-4" />
@@ -244,7 +244,12 @@ export default function SettingsPage() {
 
           {/* ===== TAGS ===== */}
           <TabsContent value="tags" className="mt-6">
-            <div className="glass-card rounded-2xl overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="glass-card rounded-2xl overflow-hidden"
+            >
               <div className="px-6 pt-6 pb-4">
                 <SectionHeader icon={Tag} title="Etiquetas (Tags)" description="Tags usadas para classificar Leads e conversas do WhatsApp." />
               </div>
@@ -336,12 +341,12 @@ export default function SettingsPage() {
                   Restaurar padrão
                 </Button>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
 
           {/* ===== PLANOS ===== */}
           <TabsContent value="plans" className="mt-6">
-            <div className="glass-card rounded-2xl overflow-hidden">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="glass-card rounded-2xl overflow-hidden">
               <div className="px-6 pt-6 pb-4">
                 <SectionHeader icon={CreditCard} title="Planos de Recompensa" description="Configure pontos e valores. Alterações são aplicadas globalmente para toda a equipe." />
               </div>
@@ -428,12 +433,10 @@ export default function SettingsPage() {
                   Salvar planos
                 </Button>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
-
-          {/* ===== MENSAGENS ===== */}
           <TabsContent value="messages" className="mt-6">
-            <div className="glass-card rounded-2xl overflow-hidden">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="glass-card rounded-2xl overflow-hidden">
               <div className="px-6 pt-6 pb-4">
                 <SectionHeader icon={MessageSquare} title="Templates de Mensagem" description="Personalize com {leadName} e {barberName}." />
               </div>
@@ -477,12 +480,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
-
-          {/* ===== COLUNAS ===== */}
           <TabsContent value="columns" className="mt-6">
-            <div className="space-y-6">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="space-y-6">
               {/* Lead Columns */}
               <div className="glass-card rounded-2xl overflow-hidden">
                 <div className="px-6 pt-6 pb-4">
@@ -570,7 +571,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
         </Tabs>
       </div>
