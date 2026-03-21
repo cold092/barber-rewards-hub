@@ -341,7 +341,7 @@ export default function SettingsPage() {
                   Restaurar padrão
                 </Button>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
 
           {/* ===== PLANOS ===== */}
