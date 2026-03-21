@@ -953,7 +953,7 @@ export default function Leads() {
                   {filteredReferrals.map((referral) => (
                     <div 
                       key={referral.id}
-                      className="p-4 rounded-lg bg-secondary/50 space-y-3 cursor-pointer hover:bg-secondary/70 transition-colors"
+                      className="p-4 rounded-xl bg-secondary/30 border border-border/20 space-y-3 cursor-pointer hover:border-border/50 transition-colors"
                       onClick={() => openDetailsDialog(referral)}
                     >
                       <div className="flex items-start justify-between gap-4">
