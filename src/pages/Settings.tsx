@@ -433,10 +433,8 @@ export default function SettingsPage() {
                   Salvar planos
                 </Button>
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
-
-          {/* ===== MENSAGENS ===== */}
           <TabsContent value="messages" className="mt-6">
             <div className="glass-card rounded-2xl overflow-hidden">
               <div className="px-6 pt-6 pb-4">
