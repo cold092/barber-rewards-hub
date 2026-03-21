@@ -436,7 +436,7 @@ export default function SettingsPage() {
             </motion.div>
           </TabsContent>
           <TabsContent value="messages" className="mt-6">
-            <div className="glass-card rounded-2xl overflow-hidden">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="glass-card rounded-2xl overflow-hidden">
               <div className="px-6 pt-6 pb-4">
                 <SectionHeader icon={MessageSquare} title="Templates de Mensagem" description="Personalize com {leadName} e {barberName}." />
               </div>
