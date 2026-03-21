@@ -934,10 +934,12 @@ export default function Leads() {
 
         {/* List View */}
         {viewMode === 'list' && (
-          <Card className="glass-card border-border/50">
-            <CardHeader className="space-y-4">
-              <CardTitle className="flex items-center gap-2 font-display">
-                <Users className="h-5 w-5 text-primary" />
+          <Card className="glass-card rounded-2xl overflow-hidden">
+            <CardHeader className="space-y-4 border-b border-border/20 pb-4">
+              <CardTitle className="flex items-center gap-2.5 font-display text-base">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
                 Leads ({filteredReferrals.filter(r => !isClientReferral(r)).length})
               </CardTitle>
             </CardHeader>
