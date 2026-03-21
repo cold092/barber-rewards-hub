@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +16,12 @@ import {
   Trash2,
   RotateCcw,
   Save,
+  Sparkles,
+  Zap,
+  Crown,
+  Star,
+  GripVertical,
+  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
@@ -26,6 +31,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { upsertSetting, getGlobalSetting } from '@/services/settingsService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
@@ -46,24 +52,34 @@ const DEFAULT_CLIENT_COLUMNS: ColumnConfig[] = [
   { id: 'inactive', title: 'Inativos', color: 'bg-muted', isDefault: true },
 ];
 
+const tierIcons = { prata: Star, gold: Crown, vip: Zap } as const;
+const tierLabels = { prata: 'Prata', gold: 'Gold', vip: 'VIP' } as const;
+
+function SectionHeader({ icon: Icon, title, description }: { icon: typeof Tag; title: string; description: string }) {
+  return (
+    <div className="flex items-start gap-3 pb-1">
+      <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <div className="min-w-0">
+        <h3 className="font-display font-semibold text-base text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { isAdmin, user } = useAuth();
   const { tags, presetColors, addTag, updateTag, removeTag, resetToDefaults } = useTagConfig();
 
-  // Plans
   const [planDraft, setPlanDraft] = useState<PlanDraft>({});
-
-  // Messages
   const [leadMessageDraft, setLeadMessageDraft] = useState('');
   const [clientMessageDraft, setClientMessageDraft] = useState('');
-
-  // Columns
   const [leadColumns, setLeadColumns] = useState<ColumnConfig[]>([]);
   const [clientColumns, setClientColumns] = useState<ColumnConfig[]>([]);
   const [newLeadColTitle, setNewLeadColTitle] = useState('');
   const [newClientColTitle, setNewClientColTitle] = useState('');
-
-  // New tag
   const [newTagLabel, setNewTagLabel] = useState('');
   const [newTagColor, setNewTagColor] = useState(presetColors[0].className);
 
@@ -72,7 +88,6 @@ export default function SettingsPage() {
     let cancelled = false;
 
     (async () => {
-      // Load plans from DB, fallback to localStorage
       const dbPlans = await getGlobalSetting<Record<string, { points: number; price: number }>>('plan_overrides');
       const plans = dbPlans || getRewardPlans();
       const entries = dbPlans
@@ -80,14 +95,12 @@ export default function SettingsPage() {
         : Object.entries(plans).map(([id, p]) => [id, { points: String(p.points), price: String(p.price) }]);
       if (!cancelled) setPlanDraft(Object.fromEntries(entries));
 
-      // Load messages from DB
       const dbLeadMsg = await getGlobalSetting<string>('lead_message');
       if (!cancelled) setLeadMessageDraft(dbLeadMsg || localStorage.getItem(LEAD_MESSAGE_STORAGE_KEY) || DEFAULT_LEAD_MESSAGE);
 
       const dbClientMsg = await getGlobalSetting<string>('client_message');
       if (!cancelled) setClientMessageDraft(dbClientMsg || localStorage.getItem(CLIENT_MESSAGE_STORAGE_KEY) || DEFAULT_CLIENT_MESSAGE);
 
-      // Load columns from DB
       const dbLeadCols = await getGlobalSetting<ColumnConfig[]>('lead_columns');
       if (!cancelled) setLeadColumns(dbLeadCols || JSON.parse(localStorage.getItem(LEADS_COLUMNS_KEY) || 'null') || DEFAULT_LEAD_COLUMNS);
 
@@ -112,7 +125,6 @@ export default function SettingsPage() {
         return [id, { points: Number.isFinite(points) ? points : base.points, price: Number.isFinite(price) ? price : base.price }];
       })
     );
-    // Update in-memory cache so all components see changes immediately
     setPlanOverridesCache(overrides);
     localStorage.setItem(PLAN_OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
     if (user) await upsertSetting(user.id, 'plan_overrides', overrides);
@@ -181,8 +193,6 @@ export default function SettingsPage() {
     toast.success('Coluna adicionada');
   };
 
-  const rewardPlans = getRewardPlans();
-
   if (!isAdmin) {
     return (
       <DashboardLayout>
@@ -195,93 +205,108 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 animate-fade-in max-w-4xl">
+      <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/20">
-            <SettingsIcon className="h-5 w-5 text-primary" />
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+            <SettingsIcon className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
               <span className="lavender-text">Configurações</span>
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Gerencie tags, planos, mensagens e colunas do CRM
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Tags, planos, mensagens e colunas do CRM
             </p>
           </div>
         </div>
 
         <Tabs defaultValue="tags" className="space-y-6">
-          <TabsList className="bg-secondary/50 border border-border/50">
-            <TabsTrigger value="tags" className="gap-1.5 text-xs sm:text-sm">
-              <Tag className="h-3.5 w-3.5" />
-              Tags
+          <TabsList className="glass-card p-1 h-auto gap-1">
+            <TabsTrigger value="tags" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <Tag className="h-4 w-4" />
+              <span className="hidden sm:inline">Etiquetas</span>
+              <span className="sm:hidden">Tags</span>
             </TabsTrigger>
-            <TabsTrigger value="plans" className="gap-1.5 text-xs sm:text-sm">
-              <CreditCard className="h-3.5 w-3.5" />
+            <TabsTrigger value="plans" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <CreditCard className="h-4 w-4" />
               Planos
             </TabsTrigger>
-            <TabsTrigger value="messages" className="gap-1.5 text-xs sm:text-sm">
-              <MessageSquare className="h-3.5 w-3.5" />
+            <TabsTrigger value="messages" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <MessageSquare className="h-4 w-4" />
               Mensagens
             </TabsTrigger>
-            <TabsTrigger value="columns" className="gap-1.5 text-xs sm:text-sm">
-              <Columns3 className="h-3.5 w-3.5" />
+            <TabsTrigger value="columns" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <Columns3 className="h-4 w-4" />
               Colunas
             </TabsTrigger>
           </TabsList>
 
           {/* ===== TAGS ===== */}
-          <TabsContent value="tags">
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="font-display">Etiquetas (Tags)</CardTitle>
-                <CardDescription>
-                  Tags usadas para Leads e WhatsApp.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {tags.map((tag) => (
-                  <div key={tag.value} className="flex items-center gap-2 p-2.5 rounded-lg border border-border/50 bg-secondary/20">
-                    <Badge variant="outline" className={cn("text-xs shrink-0", tag.className)}>
-                      {tag.label}
-                    </Badge>
-                    <Input
-                      value={tag.label}
-                      onChange={(e) => updateTag(tag.value, { label: e.target.value })}
-                      className="h-8 flex-1 text-sm"
-                    />
-                    <Select value={tag.className} onValueChange={(val) => updateTag(tag.value, { className: val })}>
-                      <SelectTrigger className="h-8 w-28">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {presetColors.map((c) => (
-                          <SelectItem key={c.className} value={c.className}>
-                            <Badge variant="outline" className={cn("text-[10px]", c.className)}>
-                              {c.label}
-                            </Badge>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { removeTag(tag.value); toast.success('Tag removida'); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
+          <TabsContent value="tags" className="mt-6">
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <div className="px-6 pt-6 pb-4">
+                <SectionHeader icon={Tag} title="Etiquetas (Tags)" description="Tags usadas para classificar Leads e conversas do WhatsApp." />
+              </div>
+
+              <div className="px-6 pb-6 space-y-2">
+                <AnimatePresence mode="popLayout">
+                  {tags.map((tag, i) => (
+                    <motion.div
+                      key={tag.value}
+                      layout
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.2, delay: i * 0.02 }}
+                      className="group flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 hover:border-border/60 transition-all duration-200"
+                    >
+                      <Badge variant="outline" className={cn("text-xs font-medium shrink-0 min-w-[56px] justify-center", tag.className)}>
+                        {tag.label}
+                      </Badge>
+                      <Input
+                        value={tag.label}
+                        onChange={(e) => updateTag(tag.value, { label: e.target.value })}
+                        className="h-9 flex-1 text-sm bg-background/40 border-border/30 focus:border-primary/40"
+                      />
+                      <Select value={tag.className} onValueChange={(val) => updateTag(tag.value, { className: val })}>
+                        <SelectTrigger className="h-9 w-[120px] bg-background/40 border-border/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {presetColors.map((c) => (
+                            <SelectItem key={c.className} value={c.className}>
+                              <Badge variant="outline" className={cn("text-[10px]", c.className)}>
+                                {c.label}
+                              </Badge>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all rounded-lg"
+                        onClick={() => { removeTag(tag.value); toast.success('Tag removida'); }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
 
                 {/* Add new */}
-                <div className="flex items-center gap-2 p-3 rounded-lg border border-dashed border-border/50 bg-secondary/10">
+                <motion.div layout className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/20 bg-primary/[0.03] mt-3">
+                  <Sparkles className="h-4 w-4 text-primary/40 shrink-0" />
                   <Input
                     value={newTagLabel}
                     onChange={(e) => setNewTagLabel(e.target.value)}
                     placeholder="Nova tag..."
-                    className="h-8 flex-1 text-sm"
+                    className="h-9 flex-1 text-sm bg-background/40 border-border/30 focus:border-primary/40"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
                   />
                   <Select value={newTagColor} onValueChange={setNewTagColor}>
-                    <SelectTrigger className="h-8 w-28">
+                    <SelectTrigger className="h-9 w-[120px] bg-background/40 border-border/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,40 +319,43 @@ export default function SettingsPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleAddTag}>
-                    <Plus className="h-3.5 w-3.5" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-colors rounded-lg"
+                    onClick={handleAddTag}
+                  >
+                    <Plus className="h-4 w-4" />
                   </Button>
-                </div>
+                </motion.div>
+              </div>
 
-                <div className="flex justify-end">
-                  <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" onClick={() => { resetToDefaults(); toast.success('Tags restauradas'); }}>
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Restaurar padrão
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="px-6 py-3.5 border-t border-border/20 bg-secondary/10 flex justify-end">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground" onClick={() => { resetToDefaults(); toast.success('Tags restauradas'); }}>
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Restaurar padrão
+                </Button>
+              </div>
+            </div>
           </TabsContent>
 
           {/* ===== PLANOS ===== */}
-          <TabsContent value="plans">
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="font-display">Planos de Recompensa</CardTitle>
-                <CardDescription>
-                  Configure pontos e valores para cada plano. Alterações são aplicadas globalmente para toda a equipe.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+          <TabsContent value="plans" className="mt-6">
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <div className="px-6 pt-6 pb-4">
+                <SectionHeader icon={CreditCard} title="Planos de Recompensa" description="Configure pontos e valores. Alterações são aplicadas globalmente para toda a equipe." />
+              </div>
+
+              <div className="px-6 pb-6 space-y-6">
                 {/* Info banner */}
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
-                  <CreditCard className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <div className="space-y-1 text-muted-foreground">
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/15">
+                  <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div className="space-y-1.5 text-xs text-muted-foreground">
                     <p>
-                      <strong className="text-foreground">Bônus por indicação:</strong> {REFERRAL_BONUS_POINTS} pts (automático ao registrar lead)
+                      <span className="font-semibold text-foreground">Bônus por indicação:</span> {REFERRAL_BONUS_POINTS} pts (automático ao registrar lead)
                     </p>
                     <p>
-                      <strong className="text-foreground">Comissão do colaborador:</strong> {BARBER_REFERRAL_CONVERSION_PERCENT}% dos pontos do plano em indicações em cadeia
+                      <span className="font-semibold text-foreground">Comissão do colaborador:</span> {BARBER_REFERRAL_CONVERSION_PERCENT}% dos pontos do plano em indicações em cadeia
                     </p>
                   </div>
                 </div>
@@ -335,44 +363,50 @@ export default function SettingsPage() {
                 {/* Plans grouped by tier */}
                 {(['prata', 'gold', 'vip'] as const).map((tier) => {
                   const tierPlans = Object.entries(REWARD_PLANS).filter(([, p]) => p.tier === tier);
-                  const tierLabels = { prata: 'Prata', gold: 'Gold', vip: 'VIP' };
+                  const TierIcon = tierIcons[tier];
                   return (
-                    <div key={tier} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={cn('text-xs font-semibold', getTierBadgeClass(tier))}>
+                    <div key={tier} className="space-y-3">
+                      <div className="flex items-center gap-2.5">
+                        <TierIcon className={cn(
+                          "h-4 w-4",
+                          tier === 'prata' ? 'text-muted-foreground' : tier === 'gold' ? 'text-amber-400' : 'text-primary'
+                        )} />
+                        <Badge variant="outline" className={cn('text-xs font-semibold px-3 py-0.5', getTierBadgeClass(tier))}>
                           {tierLabels[tier]}
                         </Badge>
+                        <div className="flex-1 h-px bg-gradient-to-r from-border/40 to-transparent" />
                       </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
+
+                      <div className="grid gap-3 sm:grid-cols-2">
                         {tierPlans.map(([planId, plan]) => {
                           const draft = planDraft[planId];
                           const currentPoints = draft?.points ? Number(draft.points) : plan.points;
                           const barberShare = Math.round((currentPoints * BARBER_REFERRAL_CONVERSION_PERCENT) / 100);
                           return (
-                            <div key={planId} className="rounded-lg border border-border/50 p-3 bg-secondary/20 space-y-2">
+                            <div key={planId} className="rounded-xl border border-border/30 bg-secondary/20 p-4 space-y-3 hover:border-border/50 transition-colors">
                               <div className="flex items-center justify-between">
-                                <p className="font-medium text-sm">{plan.type === 'corte' ? 'Corte' : 'Completo'}</p>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                <p className="font-semibold text-sm">{plan.type === 'corte' ? '✂️ Corte' : '💇 Completo'}</p>
+                                <span className="text-[10px] font-medium text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">
                                   Comissão: {barberShare} pts
                                 </span>
                               </div>
                               <div className="flex items-center gap-3">
-                                <div className="flex-1 space-y-1">
+                                <div className="flex-1 space-y-1.5">
                                   <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Pontos</label>
                                   <Input
                                     type="number"
                                     value={draft?.points ?? String(plan.points)}
                                     onChange={(e) => handlePlanChange(planId, 'points', e.target.value)}
-                                    className="h-8 text-sm"
+                                    className="h-9 text-sm bg-background/40 border-border/30 focus:border-primary/40"
                                   />
                                 </div>
-                                <div className="flex-1 space-y-1">
+                                <div className="flex-1 space-y-1.5">
                                   <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Valor R$</label>
                                   <Input
                                     type="number"
                                     value={draft?.price ?? String(plan.price)}
                                     onChange={(e) => handlePlanChange(planId, 'price', e.target.value)}
-                                    className="h-8 text-sm"
+                                    className="h-9 text-sm bg-background/40 border-border/30 focus:border-primary/40"
                                   />
                                 </div>
                               </div>
@@ -383,77 +417,81 @@ export default function SettingsPage() {
                     </div>
                   );
                 })}
+              </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                  <p className="text-xs text-muted-foreground">
-                    Salvo globalmente para toda a organização
-                  </p>
-                  <Button className="gap-1.5" onClick={handleSavePlans}>
-                    <Save className="h-4 w-4" />
-                    Salvar planos
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="px-6 py-4 border-t border-border/20 bg-secondary/10 flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground/60">
+                  Salvo globalmente para toda a organização
+                </p>
+                <Button className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90 transition-opacity" onClick={handleSavePlans}>
+                  <Save className="h-4 w-4" />
+                  Salvar planos
+                </Button>
+              </div>
+            </div>
           </TabsContent>
 
           {/* ===== MENSAGENS ===== */}
-          <TabsContent value="messages">
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="font-display">Templates de Mensagem</CardTitle>
-                <CardDescription>
-                  Use <span className="font-semibold text-foreground">{'{leadName}'}</span> e{' '}
-                  <span className="font-semibold text-foreground">{'{barberName}'}</span> para personalizar.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+          <TabsContent value="messages" className="mt-6">
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <div className="px-6 pt-6 pb-4">
+                <SectionHeader icon={MessageSquare} title="Templates de Mensagem" description="Personalize com {leadName} e {barberName}." />
+              </div>
+
+              <div className="px-6 pb-6 space-y-6">
                 <div className="space-y-3">
-                  <p className="text-sm font-medium">Mensagem para Leads</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-info" />
+                    <p className="text-sm font-semibold text-foreground">Mensagem para Leads</p>
+                  </div>
                   <Textarea
                     value={leadMessageDraft}
                     onChange={(e) => setLeadMessageDraft(e.target.value)}
-                    className="min-h-[120px]"
+                    className="min-h-[130px] bg-background/40 border-border/30 focus:border-primary/40 rounded-xl resize-none"
                   />
                   <div className="flex justify-end">
-                    <Button variant="outline" className="gap-1.5" onClick={handleSaveLeadMessage}>
+                    <Button variant="outline" className="gap-2 text-sm border-border/40 hover:border-primary/40 hover:bg-primary/5" onClick={handleSaveLeadMessage}>
                       <Save className="h-3.5 w-3.5" />
                       Salvar
                     </Button>
                   </div>
                 </div>
 
+                <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+
                 <div className="space-y-3">
-                  <p className="text-sm font-medium">Mensagem para Clientes</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-success" />
+                    <p className="text-sm font-semibold text-foreground">Mensagem para Clientes</p>
+                  </div>
                   <Textarea
                     value={clientMessageDraft}
                     onChange={(e) => setClientMessageDraft(e.target.value)}
-                    className="min-h-[120px]"
+                    className="min-h-[130px] bg-background/40 border-border/30 focus:border-primary/40 rounded-xl resize-none"
                   />
                   <div className="flex justify-end">
-                    <Button variant="outline" className="gap-1.5" onClick={handleSaveClientMessage}>
+                    <Button variant="outline" className="gap-2 text-sm border-border/40 hover:border-primary/40 hover:bg-primary/5" onClick={handleSaveClientMessage}>
                       <Save className="h-3.5 w-3.5" />
                       Salvar
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
 
           {/* ===== COLUNAS ===== */}
-          <TabsContent value="columns">
+          <TabsContent value="columns" className="mt-6">
             <div className="space-y-6">
               {/* Lead Columns */}
-              <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle className="font-display text-base">Colunas do Kanban — Leads</CardTitle>
-                  <CardDescription>Gerencie os estágios do funil de leads.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="px-6 pt-6 pb-4">
+                  <SectionHeader icon={Columns3} title="Colunas — Leads" description="Gerencie os estágios do funil de leads." />
+                </div>
+                <div className="px-6 pb-6 space-y-2">
                   {leadColumns.map((col, i) => (
-                    <div key={col.id} className="flex items-center gap-2 p-2 rounded-lg border border-border/50">
-                      <div className={cn("w-3 h-3 rounded-full shrink-0", col.color)} />
+                    <div key={col.id} className="group flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 hover:border-border/60 transition-colors">
+                      <div className={cn("w-3 h-3 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-background", col.color, "ring-border/20")} />
                       <Input
                         value={col.title}
                         onChange={(e) => {
@@ -461,44 +499,43 @@ export default function SettingsPage() {
                           updated[i] = { ...updated[i], title: e.target.value };
                           saveLeadColumns(updated);
                         }}
-                        className="h-8 flex-1 text-sm"
+                        className="h-9 flex-1 text-sm bg-background/40 border-border/30"
                       />
-                      {col.isDefault && (
-                        <Badge variant="outline" className="text-[10px] shrink-0">Padrão</Badge>
-                      )}
-                      {!col.isDefault && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => saveLeadColumns(leadColumns.filter((_, j) => j !== i))}>
+                      {col.isDefault ? (
+                        <Badge variant="outline" className="text-[10px] shrink-0 border-border/30 text-muted-foreground/60">Padrão</Badge>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all rounded-lg" onClick={() => saveLeadColumns(leadColumns.filter((_, j) => j !== i))}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
                   ))}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/20 bg-primary/[0.03] mt-2">
+                    <Plus className="h-4 w-4 text-primary/40 shrink-0" />
                     <Input
                       value={newLeadColTitle}
                       onChange={(e) => setNewLeadColTitle(e.target.value)}
                       placeholder="Nova coluna..."
-                      className="h-8 text-sm"
+                      className="h-9 text-sm bg-background/40 border-border/30"
                       onKeyDown={(e) => e.key === 'Enter' && addLeadColumn()}
                     />
-                    <Button variant="outline" size="sm" className="gap-1 shrink-0" onClick={addLeadColumn}>
+                    <Button variant="outline" size="sm" className="gap-1.5 shrink-0 border-primary/30 hover:bg-primary/10 hover:border-primary/50" onClick={addLeadColumn}>
                       <Plus className="h-3.5 w-3.5" />
                       Adicionar
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Client Columns */}
-              <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle className="font-display text-base">Colunas do Kanban — Clientes</CardTitle>
-                  <CardDescription>Gerencie os estágios de pós-venda.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="px-6 pt-6 pb-4">
+                  <SectionHeader icon={Columns3} title="Colunas — Clientes" description="Gerencie os estágios de pós-venda." />
+                </div>
+                <div className="px-6 pb-6 space-y-2">
                   {clientColumns.map((col, i) => (
-                    <div key={col.id} className="flex items-center gap-2 p-2 rounded-lg border border-border/50">
-                      <div className={cn("w-3 h-3 rounded-full shrink-0", col.color)} />
+                    <div key={col.id} className="group flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 hover:border-border/60 transition-colors">
+                      <div className={cn("w-3 h-3 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-background", col.color, "ring-border/20")} />
                       <Input
                         value={col.title}
                         onChange={(e) => {
@@ -506,33 +543,33 @@ export default function SettingsPage() {
                           updated[i] = { ...updated[i], title: e.target.value };
                           saveClientColumns(updated);
                         }}
-                        className="h-8 flex-1 text-sm"
+                        className="h-9 flex-1 text-sm bg-background/40 border-border/30"
                       />
-                      {col.isDefault && (
-                        <Badge variant="outline" className="text-[10px] shrink-0">Padrão</Badge>
-                      )}
-                      {!col.isDefault && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => saveClientColumns(clientColumns.filter((_, j) => j !== i))}>
+                      {col.isDefault ? (
+                        <Badge variant="outline" className="text-[10px] shrink-0 border-border/30 text-muted-foreground/60">Padrão</Badge>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all rounded-lg" onClick={() => saveClientColumns(clientColumns.filter((_, j) => j !== i))}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
                   ))}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/20 bg-primary/[0.03] mt-2">
+                    <Plus className="h-4 w-4 text-primary/40 shrink-0" />
                     <Input
                       value={newClientColTitle}
                       onChange={(e) => setNewClientColTitle(e.target.value)}
                       placeholder="Nova coluna..."
-                      className="h-8 text-sm"
+                      className="h-9 text-sm bg-background/40 border-border/30"
                       onKeyDown={(e) => e.key === 'Enter' && addClientColumn()}
                     />
-                    <Button variant="outline" size="sm" className="gap-1 shrink-0" onClick={addClientColumn}>
+                    <Button variant="outline" size="sm" className="gap-1.5 shrink-0 border-primary/30 hover:bg-primary/10 hover:border-primary/50" onClick={addClientColumn}>
                       <Plus className="h-3.5 w-3.5" />
                       Adicionar
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
