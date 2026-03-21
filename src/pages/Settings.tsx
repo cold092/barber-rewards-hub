@@ -221,7 +221,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="tags" className="space-y-6">
+        <Tabs defaultValue="tags" className="space-y-6" onValueChange={() => {}}>
           <TabsList className="glass-card p-1 h-auto gap-1">
             <TabsTrigger value="tags" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
               <Tag className="h-4 w-4" />
