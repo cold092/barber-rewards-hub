@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4, ease: [0.4, 0, 0.2, 1] } }),
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4, ease: "easeOut" as const } }),
 };
 
 function StatCard({ icon: Icon, label, value, sub, color, index }: { icon: typeof Users; label: string; value: string | number; sub: string; color: string; index: number }) {
