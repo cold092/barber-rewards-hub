@@ -483,7 +483,7 @@ export default function SettingsPage() {
             </motion.div>
           </TabsContent>
           <TabsContent value="columns" className="mt-6">
-            <div className="space-y-6">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="space-y-6">
               {/* Lead Columns */}
               <div className="glass-card rounded-2xl overflow-hidden">
                 <div className="px-6 pt-6 pb-4">
