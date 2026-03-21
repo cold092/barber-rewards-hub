@@ -243,7 +243,12 @@ export default function SettingsPage() {
           </TabsList>
 
           {/* ===== TAGS ===== */}
-          <TabsContent value="tags" className="mt-6">
+          <TabsContent value="tags" className="mt-6" forceMount>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
             <div className="glass-card rounded-2xl overflow-hidden">
               <div className="px-6 pt-6 pb-4">
                 <SectionHeader icon={Tag} title="Etiquetas (Tags)" description="Tags usadas para classificar Leads e conversas do WhatsApp." />
