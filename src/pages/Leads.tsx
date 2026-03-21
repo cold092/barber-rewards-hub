@@ -832,10 +832,10 @@ export default function Leads() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <Card className="glass-card border-info/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-info/10 group-hover:bg-info/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-info/10 border border-info/20 group-hover:scale-110 transition-transform duration-300">
                   <Users className="h-4 w-4 text-info" />
                 </div>
                 <div>
@@ -847,10 +847,10 @@ export default function Leads() {
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-warning/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-warning/10 group-hover:bg-warning/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-warning/10 border border-warning/20 group-hover:scale-110 transition-transform duration-300">
                   <MessageCircle className="h-4 w-4 text-warning" />
                 </div>
                 <div>
@@ -862,10 +862,10 @@ export default function Leads() {
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-success/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-success/10 group-hover:bg-success/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-success/10 border border-success/20 group-hover:scale-110 transition-transform duration-300">
                   <CheckCircle className="h-4 w-4 text-success" />
                 </div>
                 <div>
@@ -877,10 +877,10 @@ export default function Leads() {
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card border-primary/20 hover-lift group">
+          <Card className="glass-card rounded-2xl hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="h-4 w-4 text-primary" />
                 </div>
                 <div>
@@ -893,14 +893,14 @@ export default function Leads() {
             </CardContent>
           </Card>
           <Card className={cn(
-            "glass-card hover-lift group",
-            overdueFollowUps > 0 ? "border-destructive/30" : "border-accent/20"
+            "glass-card rounded-2xl hover-lift group",
+            overdueFollowUps > 0 ? "border-destructive/30" : ""
           )}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "p-2 rounded-lg transition-colors",
-                  overdueFollowUps > 0 ? "bg-destructive/10 group-hover:bg-destructive/20" : "bg-accent/10 group-hover:bg-accent/20"
+                  "p-2.5 rounded-xl border group-hover:scale-110 transition-transform duration-300",
+                  overdueFollowUps > 0 ? "bg-destructive/10 border-destructive/20" : "bg-accent/10 border-accent/20"
                 )}>
                   <Bell className={cn("h-4 w-4", overdueFollowUps > 0 ? "text-destructive" : "text-accent")} />
                 </div>
