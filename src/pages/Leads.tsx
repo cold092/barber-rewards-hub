@@ -625,22 +625,20 @@ export default function Leads() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl lavender-gradient lavender-glow">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-display font-bold">
-                  <span className="gold-text">Mini-CRM</span>
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Gerencie leads, follow-ups e conversões
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+              <Sparkles className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
+                <span className="lavender-text">Mini-CRM</span>
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Gerencie leads, follow-ups e conversões
+              </p>
             </div>
           </div>
           
