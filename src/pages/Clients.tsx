@@ -422,7 +422,7 @@ export default function Clients() {
         <GlobalTagFilter tagOptions={contactTagOptions} />
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-3">
           <Card className="glass-card border-success/20 hover-lift group">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
