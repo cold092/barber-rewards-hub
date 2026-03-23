@@ -416,7 +416,7 @@ export default function Clients() {
                 </DropdownMenu>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Global Tag Filter */}
         <GlobalTagFilter tagOptions={contactTagOptions} />
