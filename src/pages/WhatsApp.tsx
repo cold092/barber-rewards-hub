@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ConversationList } from '@/components/whatsapp/ConversationList';
 import { ChatArea } from '@/components/whatsapp/ChatArea';
