@@ -532,7 +532,7 @@ export default function Clients() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </motion.div>
 
       {/* Dialogs */}
       <LeadDetailsDialog
