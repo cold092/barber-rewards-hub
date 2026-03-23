@@ -337,7 +337,12 @@ export default function Clients() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 animate-fade-in">
+      <motion.div
+        className="space-y-6"
+        initial="hidden"
+        animate="show"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+      >
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="space-y-1">
