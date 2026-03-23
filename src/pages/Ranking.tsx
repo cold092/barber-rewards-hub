@@ -6,7 +6,13 @@ import { Trophy, Medal, Crown, Star } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import type { Profile } from '@/types/database';
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4, ease: "easeOut" as const } }),
+};
 
 export default function Ranking() {
   const { effectiveProfile, isViewingAs } = useViewAs();
@@ -18,43 +24,32 @@ export default function Ranking() {
   useEffect(() => {
     async function loadRankings() {
       setLoading(true);
-      
       const [barbersResult, clientsResult] = await Promise.all([
         getRanking('barber'),
         getClientReferralRanking()
       ]);
-      
       setBarberRanking(barbersResult.data);
       setClientRanking(clientsResult.data);
       setLoading(false);
     }
-    
     loadRankings();
   }, []);
 
   const getRankIcon = (position: number) => {
     switch (position) {
-      case 0:
-        return <Crown className="h-5 w-5 text-primary" />;
-      case 1:
-        return <Medal className="h-5 w-5 text-slate-400" />;
-      case 2:
-        return <Medal className="h-5 w-5 text-amber-700" />;
-      default:
-        return <Star className="h-4 w-4 text-muted-foreground" />;
+      case 0: return <Crown className="h-5 w-5 text-primary-foreground" />;
+      case 1: return <Medal className="h-5 w-5 text-slate-900" />;
+      case 2: return <Medal className="h-5 w-5 text-amber-100" />;
+      default: return <span className="text-sm font-bold">{position + 1}</span>;
     }
   };
 
-  const getRankStyle = (position: number) => {
+  const getRankBg = (position: number) => {
     switch (position) {
-      case 0:
-        return 'gold-gradient text-primary-foreground';
-      case 1:
-        return 'bg-slate-400 text-slate-900';
-      case 2:
-        return 'bg-amber-700 text-amber-100';
-      default:
-        return 'bg-muted text-muted-foreground';
+      case 0: return 'gold-gradient';
+      case 1: return 'bg-slate-400';
+      case 2: return 'bg-amber-700';
+      default: return 'bg-muted';
     }
   };
 
@@ -72,94 +67,97 @@ export default function Ranking() {
     isViewingAs && effectiveProfile?.id === profileId;
 
   const RankingList = ({ data }: { data: Profile[] }) => (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {data.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">
-          Nenhum participante no ranking ainda
-        </p>
+        <p className="text-muted-foreground text-center py-8">Nenhum participante no ranking ainda</p>
       ) : (
         data.map((profile, index) => (
-          <div 
+          <motion.div
             key={profile.id}
+            custom={index}
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
             className={cn(
-              'flex items-center justify-between p-4 rounded-lg transition-all hover:scale-[1.01]',
+              'flex items-center justify-between p-4 rounded-xl transition-all hover:border-primary/30',
               isHighlighted(profile.id)
-                ? 'bg-amber-500/15 border-2 border-amber-500/40 ring-1 ring-amber-500/20'
+                ? 'bg-warning/10 border-2 border-warning/40 ring-1 ring-warning/20'
                 : index === 0
-                  ? 'bg-primary/10 border border-primary/30'
-                  : 'bg-secondary/50'
+                  ? 'bg-primary/8 border border-primary/20'
+                  : 'bg-secondary/30 border border-border/30'
             )}
           >
             <div className="flex items-center gap-4">
-              <div className={`
-                w-10 h-10 rounded-full flex items-center justify-center font-bold
-                ${getRankStyle(index)}
-              `}>
-                {index < 3 ? getRankIcon(index) : index + 1}
+              <div className={cn(
+                'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm',
+                getRankBg(index),
+                index < 3 ? '' : 'text-muted-foreground'
+              )}>
+                {getRankIcon(index)}
               </div>
               <div>
-                <p className={cn('font-semibold', index === 0 && 'text-primary', isHighlighted(profile.id) && 'text-amber-400')}>
+                <p className={cn('font-semibold text-sm', index === 0 && 'text-primary', isHighlighted(profile.id) && 'text-warning')}>
                   {profile.name}
                   {isHighlighted(profile.id) && (
-                    <span className="ml-2 text-[10px] font-medium text-amber-400/80 uppercase tracking-wider">← visualizando</span>
+                    <span className="ml-2 text-[10px] font-medium text-warning/80 uppercase tracking-wider">← visualizando</span>
                   )}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Saldo atual: {profile.wallet_balance} pts
-                </p>
+                <p className="text-xs text-muted-foreground">Saldo: {profile.wallet_balance} pts</p>
               </div>
             </div>
             <div className="text-right">
-              <p className={`text-xl font-bold ${index === 0 ? 'gold-text' : 'text-foreground'}`}>
+              <p className={cn('text-xl font-bold', index === 0 ? 'gold-text' : 'text-foreground')}>
                 {profile.lifetime_points}
               </p>
-              <p className="text-xs text-muted-foreground">pontos</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
             </div>
-          </div>
+          </motion.div>
         ))
       )}
     </div>
   );
 
   const ClientRankingList = ({ data }: { data: ClientRankingEntry[] }) => (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {data.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">
-          Nenhum cliente no ranking ainda
-        </p>
+        <p className="text-muted-foreground text-center py-8">Nenhum cliente no ranking ainda</p>
       ) : (
         data.map((entry, index) => (
-          <div 
+          <motion.div
             key={entry.clientId}
-            className={`
-              flex items-center justify-between p-4 rounded-lg
-              ${index === 0 ? 'bg-primary/10 border border-primary/30' : 'bg-secondary/50'}
-              transition-all hover:scale-[1.01]
-            `}
+            custom={index}
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            className={cn(
+              'flex items-center justify-between p-4 rounded-xl transition-all hover:border-primary/30',
+              index === 0
+                ? 'bg-primary/8 border border-primary/20'
+                : 'bg-secondary/30 border border-border/30'
+            )}
           >
             <div className="flex items-center gap-4">
-              <div className={`
-                w-10 h-10 rounded-full flex items-center justify-center font-bold
-                ${getRankStyle(index)}
-              `}>
-                {index < 3 ? getRankIcon(index) : index + 1}
+              <div className={cn(
+                'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm',
+                getRankBg(index),
+                index < 3 ? '' : 'text-muted-foreground'
+              )}>
+                {getRankIcon(index)}
               </div>
               <div>
-                <p className={`font-semibold ${index === 0 ? 'text-primary' : ''}`}>
+                <p className={cn('font-semibold text-sm', index === 0 && 'text-primary')}>
                   {entry.clientName}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {entry.referralCount} indicações feitas
-                </p>
+                <p className="text-xs text-muted-foreground">{entry.referralCount} indicações</p>
               </div>
             </div>
             <div className="text-right">
-              <p className={`text-xl font-bold ${index === 0 ? 'gold-text' : 'text-foreground'}`}>
+              <p className={cn('text-xl font-bold', index === 0 ? 'gold-text' : 'text-foreground')}>
                 {entry.points}
               </p>
-              <p className="text-xs text-muted-foreground">pontos</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
             </div>
-          </div>
+          </motion.div>
         ))
       )}
     </div>
@@ -167,100 +165,124 @@ export default function Ranking() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-            <Trophy className="h-8 w-8 text-primary" />
-            <span className="gold-text">Ranking</span>
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Classificação baseada em pontos históricos (lifetime)
-          </p>
-        </div>
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <div className="flex items-center gap-4">
+            <div className="lavender-glow p-3 rounded-2xl">
+              <Trophy className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-display font-bold">
+                <span className="lavender-gradient bg-clip-text text-transparent">Ranking</span>
+              </h1>
+              <p className="text-muted-foreground text-sm mt-0.5">
+                Classificação baseada em pontos históricos (lifetime)
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
-        {/* Top 3 Podium - Barbers */}
+        {/* Podium */}
         {barberRanking.length >= 3 && (
-          <div className="grid grid-cols-3 gap-4">
-            {/* 2nd Place */}
-            <Card className="glass-card border-slate-400/30 mt-8">
+          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="show" className="grid grid-cols-3 gap-3">
+            {/* 2nd */}
+            <Card className="glass-card border-border/30 mt-8 hover-lift">
               <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 mx-auto rounded-full bg-slate-400 flex items-center justify-center mb-2">
+                <div className="w-12 h-12 mx-auto rounded-xl bg-slate-400 flex items-center justify-center mb-3">
                   <Medal className="h-6 w-6 text-slate-900" />
                 </div>
-                <p className="font-semibold truncate">{barberRanking[1]?.name}</p>
-                <p className="text-2xl font-bold text-slate-400">
-                  {barberRanking[1]?.lifetime_points}
-                </p>
-                <p className="text-xs text-muted-foreground">pontos</p>
+                <p className="font-semibold text-sm truncate">{barberRanking[1]?.name}</p>
+                <p className="text-2xl font-bold text-slate-400 mt-1">{barberRanking[1]?.lifetime_points}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
               </CardContent>
             </Card>
 
-            {/* 1st Place */}
-            <Card className="glass-card border-primary/30 animate-pulse-gold">
+            {/* 1st */}
+            <Card className="glass-card border-primary/30 animate-pulse-gold hover-lift">
               <CardContent className="p-4 text-center">
-                <div className="w-14 h-14 mx-auto rounded-full gold-gradient flex items-center justify-center mb-2">
+                <div className="w-14 h-14 mx-auto rounded-xl gold-gradient flex items-center justify-center mb-3">
                   <Crown className="h-7 w-7 text-primary-foreground" />
                 </div>
-                <p className="font-semibold text-primary truncate">{barberRanking[0]?.name}</p>
-                <p className="text-3xl font-bold gold-text">
-                  {barberRanking[0]?.lifetime_points}
-                </p>
-                <p className="text-xs text-muted-foreground">pontos</p>
+                <p className="font-semibold text-primary text-sm truncate">{barberRanking[0]?.name}</p>
+                <p className="text-3xl font-bold gold-text mt-1">{barberRanking[0]?.lifetime_points}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
               </CardContent>
             </Card>
 
-            {/* 3rd Place */}
-            <Card className="glass-card border-amber-700/30 mt-12">
+            {/* 3rd */}
+            <Card className="glass-card border-border/30 mt-12 hover-lift">
               <CardContent className="p-4 text-center">
-                <div className="w-11 h-11 mx-auto rounded-full bg-amber-700 flex items-center justify-center mb-2">
+                <div className="w-11 h-11 mx-auto rounded-xl bg-amber-700 flex items-center justify-center mb-3">
                   <Medal className="h-5 w-5 text-amber-100" />
                 </div>
-                <p className="font-semibold truncate">{barberRanking[2]?.name}</p>
-                <p className="text-xl font-bold text-amber-700">
-                  {barberRanking[2]?.lifetime_points}
-                </p>
-                <p className="text-xs text-muted-foreground">pontos</p>
+                <p className="font-semibold text-sm truncate">{barberRanking[2]?.name}</p>
+                <p className="text-xl font-bold text-amber-700 mt-1">{barberRanking[2]?.lifetime_points}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         )}
 
-        {/* Full Rankings */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="barbers">Colaboradores</TabsTrigger>
-            <TabsTrigger value="clients">Clientes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="barbers">
-            <Card className="glass-card border-border/50 mt-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-display">
-                  <Trophy className="h-5 w-5 text-primary" />
-                  Ranking de Colaboradores
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RankingList data={barberRanking} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="clients">
-            <Card className="glass-card border-border/50 mt-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-display">
-                  <Trophy className="h-5 w-5 text-primary" />
-                  Ranking de Indicações (Clientes)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ClientRankingList data={clientRanking} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Tabs */}
+        <motion.div custom={2} variants={fadeUp} initial="hidden" animate="show">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="glass-card p-1 h-auto gap-1 max-w-md w-full grid grid-cols-2">
+              <TabsTrigger
+                value="barbers"
+                className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg text-sm"
+              >
+                Colaboradores
+              </TabsTrigger>
+              <TabsTrigger
+                value="clients"
+                className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg text-sm"
+              >
+                Clientes
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="barbers">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="glass-card border-border/50 mt-4 overflow-hidden">
+                  <CardHeader className="border-b border-border/30 bg-secondary/20">
+                    <CardTitle className="flex items-center gap-2 font-display text-base">
+                      <Trophy className="h-5 w-5 text-primary" />
+                      Ranking de Colaboradores
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <RankingList data={barberRanking} />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="clients">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="glass-card border-border/50 mt-4 overflow-hidden">
+                  <CardHeader className="border-b border-border/30 bg-secondary/20">
+                    <CardTitle className="flex items-center gap-2 font-display text-base">
+                      <Trophy className="h-5 w-5 text-primary" />
+                      Ranking de Indicações (Clientes)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <ClientRankingList data={clientRanking} />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
       </div>
     </DashboardLayout>
   );
