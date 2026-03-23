@@ -344,7 +344,7 @@ export default function Clients() {
         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
       >
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-success/20">
