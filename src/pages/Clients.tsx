@@ -462,7 +462,7 @@ export default function Clients() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {viewMode === 'kanban' && (
           <KanbanBoard
