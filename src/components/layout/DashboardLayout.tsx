@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PageTransition } from './PageTransition';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useTheme } from '@/hooks/use-theme';
@@ -340,7 +341,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         )}
         <div className="p-4 lg:p-8 max-w-[1600px]">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </div>
       </main>
     </div>
