@@ -341,7 +341,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         )}
         <div className="p-4 lg:p-8 max-w-[1600px]">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </div>
       </main>
     </div>
