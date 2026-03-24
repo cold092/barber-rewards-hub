@@ -1,4 +1,4 @@
-const CACHE_NAME = "barbercrm-static-v9";
+const CACHE_NAME = "barbercrm-static-v10";
 const STATIC_ASSETS = ["/", "/index.html"];
 
 const isApiRequest = (requestUrl) => {
@@ -9,9 +9,21 @@ const isApiRequest = (requestUrl) => {
     requestUrl.host.includes("supabase.co")
   );
 };
+
 const isMetadataRequest = (requestUrl) => {
   return requestUrl.pathname === "/manifest.json" || requestUrl.pathname === "/favicon.ico" || requestUrl.pathname === "/icon.svg";
 };
+
+const isAppShellAsset = (request, requestUrl) => {
+  return (
+    request.destination === "script" ||
+    request.destination === "style" ||
+    requestUrl.pathname.startsWith("/assets/") ||
+    requestUrl.pathname.includes("/node_modules/.vite/")
+  );
+};
+
+const shouldCacheResponse = (response) => response && response.ok && response.type !== "opaque";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -40,25 +52,20 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
-  // Never cache API/database/auth requests. Always fetch fresh data.
-  if (isApiRequest(url)) {
+  if (isApiRequest(url) || isMetadataRequest(url)) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  if (isMetadataRequest(url)) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // Network-first for HTML/navigation to avoid stale app shell in production.
   const isNavigation = event.request.mode === "navigate" || event.request.headers.get("accept")?.includes("text/html");
   if (isNavigation) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (shouldCacheResponse(response)) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
           return response;
         })
         .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/index.html")))
@@ -66,13 +73,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: stale-while-revalidate
+  if (isAppShellAsset(event.request, url)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (shouldCacheResponse(response)) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (shouldCacheResponse(response)) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
           return response;
         })
         .catch(() => cached);
