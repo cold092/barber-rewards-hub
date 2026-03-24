@@ -2,17 +2,26 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Crown, Star } from 'lucide-react';
+import { Trophy, Medal, Crown, ChevronDown, UserPlus, ArrowRightLeft, Star } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
-import type { Profile } from '@/types/database';
+import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { getPlanById } from '@/config/plans';
+import type { Profile, Referral } from '@/types/database';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.4, ease: "easeOut" as const } }),
 };
+
+interface PointBreakdownItem {
+  label: string;
+  points: number;
+  type: 'referral' | 'conversion' | 'chain';
+  date: string;
+}
 
 export default function Ranking() {
   const { effectiveProfile, isViewingAs } = useViewAs();
@@ -20,6 +29,14 @@ export default function Ranking() {
   const [clientRanking, setClientRanking] = useState<ClientRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('barbers');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [breakdowns, setBreakdowns] = useState<Record<string, PointBreakdownItem[]>>({});
+  const [loadingBreakdown, setLoadingBreakdown] = useState<string | null>(null);
+
+  // Client ranking expanded state
+  const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
+  const [clientBreakdowns, setClientBreakdowns] = useState<Record<string, PointBreakdownItem[]>>({});
+  const [loadingClientBreakdown, setLoadingClientBreakdown] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadRankings() {
@@ -34,6 +51,105 @@ export default function Ranking() {
     }
     loadRankings();
   }, []);
+
+  const toggleBreakdown = async (profileId: string) => {
+    if (expandedId === profileId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(profileId);
+
+    if (breakdowns[profileId]) return;
+
+    setLoadingBreakdown(profileId);
+    try {
+      const { data: referrals } = await supabase
+        .from('referrals')
+        .select('id, lead_name, status, is_client, converted_plan_id, created_at, referred_by_lead_id')
+        .eq('referrer_id', profileId)
+        .order('created_at', { ascending: false });
+
+      const items: PointBreakdownItem[] = [];
+
+      (referrals || []).forEach((ref) => {
+        // +10 pts for each referral registration
+        items.push({
+          label: `Indicação: ${ref.lead_name}`,
+          points: 10,
+          type: 'referral',
+          date: ref.created_at,
+        });
+
+        // Conversion points
+        if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
+          const plan = getPlanById(ref.converted_plan_id);
+          if (plan) {
+            const isChain = !!ref.referred_by_lead_id;
+            const pts = isChain ? Math.round(plan.points * 0.3) : plan.points;
+            items.push({
+              label: `Conversão: ${ref.lead_name} (${plan.label})`,
+              points: pts,
+              type: isChain ? 'chain' : 'conversion',
+              date: ref.created_at,
+            });
+          }
+        }
+      });
+
+      setBreakdowns(prev => ({ ...prev, [profileId]: items }));
+    } catch (err) {
+      console.error('Error loading breakdown:', err);
+    }
+    setLoadingBreakdown(null);
+  };
+
+  const toggleClientBreakdown = async (clientId: string) => {
+    if (expandedClientId === clientId) {
+      setExpandedClientId(null);
+      return;
+    }
+    setExpandedClientId(clientId);
+
+    if (clientBreakdowns[clientId]) return;
+
+    setLoadingClientBreakdown(clientId);
+    try {
+      // Get referrals made BY this client (referred_by_lead_id pointing to this client's referral)
+      const { data: referrals } = await supabase
+        .from('referrals')
+        .select('id, lead_name, lead_points, status, is_client, converted_plan_id, created_at')
+        .eq('referred_by_lead_id', clientId)
+        .order('created_at', { ascending: false });
+
+      const items: PointBreakdownItem[] = [];
+
+      (referrals || []).forEach((ref) => {
+        items.push({
+          label: `Indicação: ${ref.lead_name}`,
+          points: 10,
+          type: 'referral',
+          date: ref.created_at,
+        });
+
+        if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
+          const plan = getPlanById(ref.converted_plan_id);
+          if (plan) {
+            items.push({
+              label: `Conversão: ${ref.lead_name} (${plan.label})`,
+              points: plan.points,
+              type: 'conversion',
+              date: ref.created_at,
+            });
+          }
+        }
+      });
+
+      setClientBreakdowns(prev => ({ ...prev, [clientId]: items }));
+    } catch (err) {
+      console.error('Error loading client breakdown:', err);
+    }
+    setLoadingClientBreakdown(null);
+  };
 
   const getRankIcon = (position: number) => {
     switch (position) {
@@ -66,6 +182,54 @@ export default function Ranking() {
   const isHighlighted = (profileId: string) =>
     isViewingAs && effectiveProfile?.id === profileId;
 
+  const BreakdownList = ({ items, isLoading }: { items?: PointBreakdownItem[]; isLoading: boolean }) => (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+      className="overflow-hidden"
+    >
+      <div className="pt-3 mt-3 border-t border-border/30 space-y-1.5">
+        {isLoading ? (
+          <div className="text-xs text-muted-foreground animate-pulse py-2 text-center">Carregando detalhes...</div>
+        ) : !items || items.length === 0 ? (
+          <div className="text-xs text-muted-foreground py-2 text-center">Nenhuma movimentação encontrada</div>
+        ) : (
+          items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors">
+              <div className={cn(
+                'w-6 h-6 rounded-md flex items-center justify-center shrink-0',
+                item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : 'bg-success/15'
+              )}>
+                {item.type === 'referral' ? (
+                  <UserPlus className="h-3 w-3 text-info" />
+                ) : item.type === 'chain' ? (
+                  <ArrowRightLeft className="h-3 w-3 text-warning" />
+                ) : (
+                  <Star className="h-3 w-3 text-success" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{item.label}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {new Date(item.date).toLocaleDateString('pt-BR')}
+                  {item.type === 'chain' && ' • 30% comissão'}
+                </p>
+              </div>
+              <span className={cn(
+                'text-xs font-bold shrink-0',
+                item.type === 'referral' ? 'text-info' : item.type === 'chain' ? 'text-warning' : 'text-success'
+              )}>
+                +{item.points}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </motion.div>
+  );
+
   const RankingList = ({ data }: { data: Profile[] }) => (
     <div className="space-y-2">
       {data.length === 0 ? (
@@ -79,38 +243,57 @@ export default function Ranking() {
             initial="hidden"
             animate="show"
             className={cn(
-              'flex items-center justify-between p-4 rounded-xl transition-all hover:border-primary/30',
+              'p-4 rounded-xl transition-all cursor-pointer',
               isHighlighted(profile.id)
                 ? 'bg-warning/10 border-2 border-warning/40 ring-1 ring-warning/20'
                 : index === 0
                   ? 'bg-primary/8 border border-primary/20'
-                  : 'bg-secondary/30 border border-border/30'
+                  : 'bg-secondary/30 border border-border/30',
+              expandedId === profile.id && 'border-primary/30'
             )}
+            onClick={() => toggleBreakdown(profile.id)}
           >
-            <div className="flex items-center gap-4">
-              <div className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm',
-                getRankBg(index),
-                index < 3 ? '' : 'text-muted-foreground'
-              )}>
-                {getRankIcon(index)}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm',
+                  getRankBg(index),
+                  index < 3 ? '' : 'text-muted-foreground'
+                )}>
+                  {getRankIcon(index)}
+                </div>
+                <div>
+                  <p className={cn('font-semibold text-sm', index === 0 && 'text-primary', isHighlighted(profile.id) && 'text-warning')}>
+                    {profile.name}
+                    {isHighlighted(profile.id) && (
+                      <span className="ml-2 text-[10px] font-medium text-warning/80 uppercase tracking-wider">← visualizando</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Saldo: {profile.wallet_balance} pts</p>
+                </div>
               </div>
-              <div>
-                <p className={cn('font-semibold text-sm', index === 0 && 'text-primary', isHighlighted(profile.id) && 'text-warning')}>
-                  {profile.name}
-                  {isHighlighted(profile.id) && (
-                    <span className="ml-2 text-[10px] font-medium text-warning/80 uppercase tracking-wider">← visualizando</span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">Saldo: {profile.wallet_balance} pts</p>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className={cn('text-xl font-bold', index === 0 ? 'gold-text' : 'text-foreground')}>
+                    {profile.lifetime_points}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
+                </div>
+                <ChevronDown className={cn(
+                  'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                  expandedId === profile.id && 'rotate-180'
+                )} />
               </div>
             </div>
-            <div className="text-right">
-              <p className={cn('text-xl font-bold', index === 0 ? 'gold-text' : 'text-foreground')}>
-                {profile.lifetime_points}
-              </p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
-            </div>
+
+            <AnimatePresence>
+              {expandedId === profile.id && (
+                <BreakdownList
+                  items={breakdowns[profile.id]}
+                  isLoading={loadingBreakdown === profile.id}
+                />
+              )}
+            </AnimatePresence>
           </motion.div>
         ))
       )}
@@ -130,33 +313,52 @@ export default function Ranking() {
             initial="hidden"
             animate="show"
             className={cn(
-              'flex items-center justify-between p-4 rounded-xl transition-all hover:border-primary/30',
+              'p-4 rounded-xl transition-all cursor-pointer',
               index === 0
                 ? 'bg-primary/8 border border-primary/20'
-                : 'bg-secondary/30 border border-border/30'
+                : 'bg-secondary/30 border border-border/30',
+              expandedClientId === entry.clientId && 'border-primary/30'
             )}
+            onClick={() => toggleClientBreakdown(entry.clientId)}
           >
-            <div className="flex items-center gap-4">
-              <div className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm',
-                getRankBg(index),
-                index < 3 ? '' : 'text-muted-foreground'
-              )}>
-                {getRankIcon(index)}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm',
+                  getRankBg(index),
+                  index < 3 ? '' : 'text-muted-foreground'
+                )}>
+                  {getRankIcon(index)}
+                </div>
+                <div>
+                  <p className={cn('font-semibold text-sm', index === 0 && 'text-primary')}>
+                    {entry.clientName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{entry.referralCount} indicações</p>
+                </div>
               </div>
-              <div>
-                <p className={cn('font-semibold text-sm', index === 0 && 'text-primary')}>
-                  {entry.clientName}
-                </p>
-                <p className="text-xs text-muted-foreground">{entry.referralCount} indicações</p>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className={cn('text-xl font-bold', index === 0 ? 'gold-text' : 'text-foreground')}>
+                    {entry.points}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
+                </div>
+                <ChevronDown className={cn(
+                  'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                  expandedClientId === entry.clientId && 'rotate-180'
+                )} />
               </div>
             </div>
-            <div className="text-right">
-              <p className={cn('text-xl font-bold', index === 0 ? 'gold-text' : 'text-foreground')}>
-                {entry.points}
-              </p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">pontos</p>
-            </div>
+
+            <AnimatePresence>
+              {expandedClientId === entry.clientId && (
+                <BreakdownList
+                  items={clientBreakdowns[entry.clientId]}
+                  isLoading={loadingClientBreakdown === entry.clientId}
+                />
+              )}
+            </AnimatePresence>
           </motion.div>
         ))
       )}
