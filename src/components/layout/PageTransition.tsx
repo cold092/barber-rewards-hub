@@ -23,7 +23,7 @@ const pageVariants = {
     filter: 'blur(4px)',
     transition: {
       duration: 0.2,
-      ease: [0.55, 0, 1, 0.45],
+      ease: [0.55, 0, 1, 0.45] as const,
     },
   },
 };
