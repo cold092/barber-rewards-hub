@@ -255,9 +255,10 @@ export default function Ranking() {
                 </div>
                 <span className={cn(
                   'text-xs font-bold shrink-0',
+                  item.points === 0 ? 'text-muted-foreground' :
                   item.type === 'referral' ? 'text-info' : item.type === 'chain' ? 'text-warning' : 'text-success'
                 )}>
-                  +{item.points}
+                  {item.points === 0 ? '—' : `+${item.points}`}
                 </span>
               </div>
             ))}
