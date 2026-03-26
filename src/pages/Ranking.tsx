@@ -63,6 +63,10 @@ export default function Ranking() {
 
     setLoadingBreakdown(profileId);
     try {
+      // Find the profile to get actual lifetime_points
+      const profile = barberRanking.find(p => p.id === profileId);
+      const actualLifetime = profile?.lifetime_points || 0;
+
       const { data: referrals } = await supabase
         .from('referrals')
         .select('id, lead_name, status, is_client, converted_plan_id, created_at, referred_by_lead_id')
@@ -70,22 +74,16 @@ export default function Ranking() {
         .order('created_at', { ascending: false });
 
       const items: PointBreakdownItem[] = [];
+      let conversionPointsTotal = 0;
 
+      // Only show conversion events (verifiable from plan data)
       (referrals || []).forEach((ref) => {
-        // +10 pts for each referral registration
-        items.push({
-          label: `Indicação: ${ref.lead_name}`,
-          points: 10,
-          type: 'referral',
-          date: ref.created_at,
-        });
-
-        // Conversion points
         if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
           const plan = getPlanById(ref.converted_plan_id);
           if (plan) {
             const isChain = !!ref.referred_by_lead_id;
             const pts = isChain ? Math.round(plan.points * 0.3) : plan.points;
+            conversionPointsTotal += pts;
             items.push({
               label: `Conversão: ${ref.lead_name} (${plan.label})`,
               points: pts,
@@ -95,6 +93,18 @@ export default function Ranking() {
           }
         }
       });
+
+      // Registration bonus = actual lifetime minus conversion points
+      const registrationBonus = actualLifetime - conversionPointsTotal;
+      if (registrationBonus > 0) {
+        const totalReferrals = (referrals || []).length;
+        items.push({
+          label: `Bônus de indicações (${totalReferrals} leads cadastrados)`,
+          points: registrationBonus,
+          type: 'referral',
+          date: referrals?.[referrals.length - 1]?.created_at || new Date().toISOString(),
+        });
+      }
 
       setBreakdowns(prev => ({ ...prev, [profileId]: items }));
     } catch (err) {
