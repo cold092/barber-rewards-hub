@@ -124,7 +124,16 @@ export default function Ranking() {
 
     setLoadingClientBreakdown(clientId);
     try {
-      // Get referrals made BY this client (referred_by_lead_id pointing to this client's referral)
+      // Get the client's own referral to know their total lead_points
+      const { data: clientReferral } = await supabase
+        .from('referrals')
+        .select('lead_points')
+        .eq('id', clientId)
+        .single();
+
+      const actualPoints = clientReferral?.lead_points || 0;
+
+      // Get referrals made BY this client
       const { data: referrals } = await supabase
         .from('referrals')
         .select('id, lead_name, lead_points, status, is_client, converted_plan_id, created_at')
@@ -132,18 +141,13 @@ export default function Ranking() {
         .order('created_at', { ascending: false });
 
       const items: PointBreakdownItem[] = [];
+      let conversionPointsTotal = 0;
 
       (referrals || []).forEach((ref) => {
-        items.push({
-          label: `Indicação: ${ref.lead_name}`,
-          points: 10,
-          type: 'referral',
-          date: ref.created_at,
-        });
-
         if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
           const plan = getPlanById(ref.converted_plan_id);
           if (plan) {
+            conversionPointsTotal += plan.points;
             items.push({
               label: `Conversão: ${ref.lead_name} (${plan.label})`,
               points: plan.points,
@@ -153,6 +157,18 @@ export default function Ranking() {
           }
         }
       });
+
+      // Registration bonus = actual lead_points minus conversion points
+      const registrationBonus = actualPoints - conversionPointsTotal;
+      if (registrationBonus > 0) {
+        const totalReferrals = (referrals || []).length;
+        items.push({
+          label: `Bônus de indicações (${totalReferrals} leads indicados)`,
+          points: registrationBonus,
+          type: 'referral',
+          date: referrals?.[referrals.length - 1]?.created_at || new Date().toISOString(),
+        });
+      }
 
       setClientBreakdowns(prev => ({ ...prev, [clientId]: items }));
     } catch (err) {
