@@ -63,6 +63,10 @@ export default function Ranking() {
 
     setLoadingBreakdown(profileId);
     try {
+      // Find the profile to get actual lifetime_points
+      const profile = barberRanking.find(p => p.id === profileId);
+      const actualLifetime = profile?.lifetime_points || 0;
+
       const { data: referrals } = await supabase
         .from('referrals')
         .select('id, lead_name, status, is_client, converted_plan_id, created_at, referred_by_lead_id')
@@ -70,22 +74,16 @@ export default function Ranking() {
         .order('created_at', { ascending: false });
 
       const items: PointBreakdownItem[] = [];
+      let conversionPointsTotal = 0;
 
+      // Only show conversion events (verifiable from plan data)
       (referrals || []).forEach((ref) => {
-        // +10 pts for each referral registration
-        items.push({
-          label: `Indicação: ${ref.lead_name}`,
-          points: 10,
-          type: 'referral',
-          date: ref.created_at,
-        });
-
-        // Conversion points
         if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
           const plan = getPlanById(ref.converted_plan_id);
           if (plan) {
             const isChain = !!ref.referred_by_lead_id;
             const pts = isChain ? Math.round(plan.points * 0.3) : plan.points;
+            conversionPointsTotal += pts;
             items.push({
               label: `Conversão: ${ref.lead_name} (${plan.label})`,
               points: pts,
@@ -95,6 +93,18 @@ export default function Ranking() {
           }
         }
       });
+
+      // Registration bonus = actual lifetime minus conversion points
+      const registrationBonus = actualLifetime - conversionPointsTotal;
+      if (registrationBonus > 0) {
+        const totalReferrals = (referrals || []).length;
+        items.push({
+          label: `Bônus de indicações (${totalReferrals} leads cadastrados)`,
+          points: registrationBonus,
+          type: 'referral',
+          date: referrals?.[referrals.length - 1]?.created_at || new Date().toISOString(),
+        });
+      }
 
       setBreakdowns(prev => ({ ...prev, [profileId]: items }));
     } catch (err) {
@@ -114,7 +124,16 @@ export default function Ranking() {
 
     setLoadingClientBreakdown(clientId);
     try {
-      // Get referrals made BY this client (referred_by_lead_id pointing to this client's referral)
+      // Get the client's own referral to know their total lead_points
+      const { data: clientReferral } = await supabase
+        .from('referrals')
+        .select('lead_points')
+        .eq('id', clientId)
+        .single();
+
+      const actualPoints = clientReferral?.lead_points || 0;
+
+      // Get referrals made BY this client
       const { data: referrals } = await supabase
         .from('referrals')
         .select('id, lead_name, lead_points, status, is_client, converted_plan_id, created_at')
@@ -122,18 +141,13 @@ export default function Ranking() {
         .order('created_at', { ascending: false });
 
       const items: PointBreakdownItem[] = [];
+      let conversionPointsTotal = 0;
 
       (referrals || []).forEach((ref) => {
-        items.push({
-          label: `Indicação: ${ref.lead_name}`,
-          points: 10,
-          type: 'referral',
-          date: ref.created_at,
-        });
-
         if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
           const plan = getPlanById(ref.converted_plan_id);
           if (plan) {
+            conversionPointsTotal += plan.points;
             items.push({
               label: `Conversão: ${ref.lead_name} (${plan.label})`,
               points: plan.points,
@@ -143,6 +157,18 @@ export default function Ranking() {
           }
         }
       });
+
+      // Registration bonus = actual lead_points minus conversion points
+      const registrationBonus = actualPoints - conversionPointsTotal;
+      if (registrationBonus > 0) {
+        const totalReferrals = (referrals || []).length;
+        items.push({
+          label: `Bônus de indicações (${totalReferrals} leads indicados)`,
+          points: registrationBonus,
+          type: 'referral',
+          date: referrals?.[referrals.length - 1]?.created_at || new Date().toISOString(),
+        });
+      }
 
       setClientBreakdowns(prev => ({ ...prev, [clientId]: items }));
     } catch (err) {
@@ -196,35 +222,43 @@ export default function Ranking() {
         ) : !items || items.length === 0 ? (
           <div className="text-xs text-muted-foreground py-2 text-center">Nenhuma movimentação encontrada</div>
         ) : (
-          items.map((item, i) => (
-            <div key={i} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors">
-              <div className={cn(
-                'w-6 h-6 rounded-md flex items-center justify-center shrink-0',
-                item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : 'bg-success/15'
-              )}>
-                {item.type === 'referral' ? (
-                  <UserPlus className="h-3 w-3 text-info" />
-                ) : item.type === 'chain' ? (
-                  <ArrowRightLeft className="h-3 w-3 text-warning" />
-                ) : (
-                  <Star className="h-3 w-3 text-success" />
-                )}
+          <>
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors">
+                <div className={cn(
+                  'w-6 h-6 rounded-md flex items-center justify-center shrink-0',
+                  item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : 'bg-success/15'
+                )}>
+                  {item.type === 'referral' ? (
+                    <UserPlus className="h-3 w-3 text-info" />
+                  ) : item.type === 'chain' ? (
+                    <ArrowRightLeft className="h-3 w-3 text-warning" />
+                  ) : (
+                    <Star className="h-3 w-3 text-success" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {new Date(item.date).toLocaleDateString('pt-BR')}
+                    {item.type === 'chain' && ' • 30% comissão'}
+                  </p>
+                </div>
+                <span className={cn(
+                  'text-xs font-bold shrink-0',
+                  item.type === 'referral' ? 'text-info' : item.type === 'chain' ? 'text-warning' : 'text-success'
+                )}>
+                  +{item.points}
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{item.label}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {new Date(item.date).toLocaleDateString('pt-BR')}
-                  {item.type === 'chain' && ' • 30% comissão'}
-                </p>
-              </div>
-              <span className={cn(
-                'text-xs font-bold shrink-0',
-                item.type === 'referral' ? 'text-info' : item.type === 'chain' ? 'text-warning' : 'text-success'
-              )}>
-                +{item.points}
+            ))}
+            <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/20 px-2">
+              <p className="text-xs font-semibold text-muted-foreground">Total</p>
+              <span className="text-xs font-bold text-primary">
+                {items.reduce((sum, i) => sum + i.points, 0)} pts
               </span>
             </div>
-          ))
+          </>
         )}
       </div>
     </motion.div>
