@@ -74,18 +74,29 @@ export default function Ranking() {
         .order('created_at', { ascending: false });
 
       const items: PointBreakdownItem[] = [];
-      let conversionPointsTotal = 0;
 
-      // Only show conversion events (verifiable from plan data)
+      const directReferrals = (referrals || []).filter(r => !r.referred_by_lead_id);
+      const chainReferrals = (referrals || []).filter(r => !!r.referred_by_lead_id);
+
+      // +10 pts for each DIRECT referral (chain referrals don't give +10 to barber)
+      directReferrals.forEach((ref) => {
+        items.push({
+          label: `Indicação direta: ${ref.lead_name}`,
+          points: 10,
+          type: 'referral',
+          date: ref.created_at,
+        });
+      });
+
+      // Conversion points for all referrals
       (referrals || []).forEach((ref) => {
         if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
           const plan = getPlanById(ref.converted_plan_id);
           if (plan) {
             const isChain = !!ref.referred_by_lead_id;
             const pts = isChain ? Math.round(plan.points * 0.3) : plan.points;
-            conversionPointsTotal += pts;
             items.push({
-              label: `Conversão: ${ref.lead_name} (${plan.label})`,
+              label: `Conversão: ${ref.lead_name} (${plan.label})${isChain ? ' • 30%' : ''}`,
               points: pts,
               type: isChain ? 'chain' : 'conversion',
               date: ref.created_at,
@@ -94,15 +105,13 @@ export default function Ranking() {
         }
       });
 
-      // Registration bonus = actual lifetime minus conversion points
-      const registrationBonus = actualLifetime - conversionPointsTotal;
-      if (registrationBonus > 0) {
-        const totalReferrals = (referrals || []).length;
+      // Show chain referrals as info (0 pts to barber for registration)
+      if (chainReferrals.length > 0) {
         items.push({
-          label: `Bônus de indicações (${totalReferrals} leads cadastrados)`,
-          points: registrationBonus,
-          type: 'referral',
-          date: referrals?.[referrals.length - 1]?.created_at || new Date().toISOString(),
+          label: `Indicações via cliente (${chainReferrals.length} leads) — sem bônus`,
+          points: 0,
+          type: 'chain',
+          date: chainReferrals[0]?.created_at || new Date().toISOString(),
         });
       }
 
