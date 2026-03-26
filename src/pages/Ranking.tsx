@@ -222,35 +222,43 @@ export default function Ranking() {
         ) : !items || items.length === 0 ? (
           <div className="text-xs text-muted-foreground py-2 text-center">Nenhuma movimentação encontrada</div>
         ) : (
-          items.map((item, i) => (
-            <div key={i} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors">
-              <div className={cn(
-                'w-6 h-6 rounded-md flex items-center justify-center shrink-0',
-                item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : 'bg-success/15'
-              )}>
-                {item.type === 'referral' ? (
-                  <UserPlus className="h-3 w-3 text-info" />
-                ) : item.type === 'chain' ? (
-                  <ArrowRightLeft className="h-3 w-3 text-warning" />
-                ) : (
-                  <Star className="h-3 w-3 text-success" />
-                )}
+          <>
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors">
+                <div className={cn(
+                  'w-6 h-6 rounded-md flex items-center justify-center shrink-0',
+                  item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : 'bg-success/15'
+                )}>
+                  {item.type === 'referral' ? (
+                    <UserPlus className="h-3 w-3 text-info" />
+                  ) : item.type === 'chain' ? (
+                    <ArrowRightLeft className="h-3 w-3 text-warning" />
+                  ) : (
+                    <Star className="h-3 w-3 text-success" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {new Date(item.date).toLocaleDateString('pt-BR')}
+                    {item.type === 'chain' && ' • 30% comissão'}
+                  </p>
+                </div>
+                <span className={cn(
+                  'text-xs font-bold shrink-0',
+                  item.type === 'referral' ? 'text-info' : item.type === 'chain' ? 'text-warning' : 'text-success'
+                )}>
+                  +{item.points}
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{item.label}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {new Date(item.date).toLocaleDateString('pt-BR')}
-                  {item.type === 'chain' && ' • 30% comissão'}
-                </p>
-              </div>
-              <span className={cn(
-                'text-xs font-bold shrink-0',
-                item.type === 'referral' ? 'text-info' : item.type === 'chain' ? 'text-warning' : 'text-success'
-              )}>
-                +{item.points}
+            ))}
+            <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/20 px-2">
+              <p className="text-xs font-semibold text-muted-foreground">Total</p>
+              <span className="text-xs font-bold text-primary">
+                {items.reduce((sum, i) => sum + i.points, 0)} pts
               </span>
             </div>
-          ))
+          </>
         )}
       </div>
     </motion.div>
