@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { UserPlus, User, Phone, Mail } from 'lucide-react';
+import { UserPlus, User, Phone, Mail, FileText, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -93,47 +94,93 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40">
+      <DialogContent className="sm:max-w-md p-0 gap-0">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/20 bg-gradient-to-b from-success/[0.04] to-transparent">
           <DialogTitle className="flex items-center gap-2.5 font-display text-lg">
-            <div className="p-1.5 rounded-lg bg-success/15">
+            <div className="p-2 rounded-xl bg-success/15 shadow-md shadow-success/10">
               <UserPlus className="h-4 w-4 text-success" />
             </div>
-            Cadastrar Cliente no Programa
+            Cadastrar Cliente
           </DialogTitle>
-          <DialogDescription className="text-sm">
-            Insira o cliente diretamente no programa de recompensas, sem passar pelo funil de leads.
+          <DialogDescription className="text-xs text-muted-foreground">
+            Insira o cliente diretamente no programa de recompensas
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client-name" className="text-xs uppercase tracking-wide text-muted-foreground">Nome</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
-              <Input id="client-name" placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 bg-background/50" required />
+
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            className="px-6 py-5 space-y-5"
+          >
+            {/* Name & Phone */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                  <User className="h-3 w-3" /> Nome
+                </Label>
+                <Input
+                  placeholder="Nome completo"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="bg-secondary/10 border-border/20 rounded-xl focus:border-primary/40 h-9 text-sm"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                  <Phone className="h-3 w-3" /> Telefone
+                </Label>
+                <Input
+                  placeholder="(11) 99999-9999"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-secondary/10 border-border/20 rounded-xl focus:border-primary/40 h-9 text-sm"
+                  required
+                />
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="client-phone" className="text-xs uppercase tracking-wide text-muted-foreground">Telefone</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
-              <Input id="client-phone" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 bg-background/50" required />
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <Mail className="h-3 w-3" /> Email <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span>
+              </Label>
+              <Input
+                type="email"
+                placeholder="email@exemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-secondary/10 border-border/20 rounded-xl focus:border-primary/40 h-9 text-sm"
+              />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="client-email" className="text-xs uppercase tracking-wide text-muted-foreground">Email (opcional)</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
-              <Input id="client-email" type="email" placeholder="email@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 bg-background/50" />
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <FileText className="h-3 w-3" /> Observações <span className="normal-case tracking-normal font-normal text-muted-foreground/50">(opcional)</span>
+              </Label>
+              <Textarea
+                placeholder="Alguma observação sobre o cliente..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                className="bg-secondary/10 border-border/20 resize-none text-sm rounded-xl focus:border-primary/40"
+              />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="client-notes" className="text-xs uppercase tracking-wide text-muted-foreground">Observações (opcional)</Label>
-            <Textarea id="client-notes" placeholder="Alguma observação sobre o cliente..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="bg-background/50 resize-none" />
-          </div>
-          <DialogFooter className="pt-2 border-t border-border/30">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" className="lavender-gradient text-primary-foreground font-medium" disabled={loading}>
+          </motion.div>
+
+          {/* Footer */}
+          <DialogFooter className="px-6 py-4 border-t border-border/15 gap-2 bg-card/50">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg border-border/30 text-xs h-9 px-4">
+              <X className="h-3.5 w-3.5 mr-1.5" />
+              Cancelar
+            </Button>
+            <Button type="submit" className="rounded-lg lavender-gradient text-primary-foreground font-medium text-xs h-9 px-5 shadow-md shadow-primary/20" disabled={loading}>
+              <UserPlus className="h-3.5 w-3.5 mr-1.5" />
               {loading ? 'Cadastrando...' : 'Cadastrar Cliente'}
             </Button>
           </DialogFooter>
