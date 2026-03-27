@@ -31,10 +31,9 @@ import {
   List,
   Bell,
   TrendingUp,
-  Columns3,
-  Search,
-  Plus,
-  Tag
+  Filter,
+  Tag,
+  MoreVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
@@ -98,6 +97,7 @@ export default function Leads() {
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTagFilter, setShowTagFilter] = useState(false);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'client'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -739,6 +739,32 @@ export default function Leads() {
 
               <div className="flex-1" />
 
+              {/* Filter Toggle */}
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={showTagFilter || activeTags.length > 0 ? 'default' : 'outline'}
+                      size="sm"
+                      className={cn(
+                        "h-7 gap-1.5 text-xs px-2.5",
+                        (showTagFilter || activeTags.length > 0) && "lavender-gradient text-primary-foreground shadow-sm"
+                      )}
+                      onClick={() => setShowTagFilter(!showTagFilter)}
+                    >
+                      <Filter className="h-3.5 w-3.5" />
+                      Filtros
+                      {activeTags.length > 0 && (
+                        <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-foreground/20 text-[10px] font-bold">
+                          {activeTags.length}
+                        </span>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Filtrar por tags</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -764,7 +790,7 @@ export default function Leads() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-7 w-7 p-0">
-                        <Settings2 className="h-3.5 w-3.5" />
+                        <MoreVertical className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
@@ -910,7 +936,16 @@ export default function Leads() {
         </motion.div>
 
         {/* Global Tag Filter */}
-        <GlobalTagFilter tagOptions={contactTagOptions} />
+        {(showTagFilter || activeTags.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <GlobalTagFilter tagOptions={contactTagOptions} />
+          </motion.div>
+        )}
 
         {/* Kanban View */}
         {viewMode === 'kanban' && (

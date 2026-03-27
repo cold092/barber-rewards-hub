@@ -19,6 +19,8 @@ import {
   Phone,
   UserPlus,
   Tag,
+  Filter,
+  MoreVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
@@ -100,6 +102,7 @@ export default function Clients() {
   const [converting, setConverting] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
   const [registerClientOpen, setRegisterClientOpen] = useState(false);
+  const [showTagFilter, setShowTagFilter] = useState(false);
   const [viewMode, setViewMode] = useState<ClientViewMode>(() => {
     const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
     return saved === 'list' ? 'list' : 'kanban';
@@ -414,6 +417,32 @@ export default function Clients() {
 
               <div className="flex-1" />
 
+              {/* Filter Toggle */}
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={showTagFilter || activeTags.length > 0 ? 'default' : 'outline'}
+                      size="sm"
+                      className={cn(
+                        "h-7 gap-1.5 text-xs px-2.5",
+                        (showTagFilter || activeTags.length > 0) && "lavender-gradient text-primary-foreground shadow-sm"
+                      )}
+                      onClick={() => setShowTagFilter(!showTagFilter)}
+                    >
+                      <Filter className="h-3.5 w-3.5" />
+                      Filtros
+                      {activeTags.length > 0 && (
+                        <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-foreground/20 text-[10px] font-bold">
+                          {activeTags.length}
+                        </span>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Filtrar por tags</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -438,7 +467,7 @@ export default function Clients() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="h-7 w-7 p-0">
-                      <Settings2 className="h-3.5 w-3.5" />
+                      <MoreVertical className="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
@@ -472,50 +501,17 @@ export default function Clients() {
         </motion.div>
 
         {/* Global Tag Filter */}
-        <GlobalTagFilter tagOptions={contactTagOptions} />
+        {(showTagFilter || activeTags.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <GlobalTagFilter tagOptions={contactTagOptions} />
+          </motion.div>
+        )}
 
-        {/* Stats */}
-        <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-3">
-          <Card className="glass-card border-success/20 hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-success/10 group-hover:bg-success/20 transition-colors">
-                  <UserCheck className="h-4 w-4 text-success" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-success">{totalClients}</p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card border-primary/20 hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <Star className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-primary">{vipCount}</p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">SQL/VIP</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card border-accent/20 hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors">
-                  <TrendingUp className="h-4 w-4 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-accent">{avgPoints}</p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Média pts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
         {viewMode === 'kanban' && (
           <KanbanBoard
