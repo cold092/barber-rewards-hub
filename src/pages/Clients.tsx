@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
