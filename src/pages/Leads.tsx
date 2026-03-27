@@ -33,7 +33,8 @@ import {
   TrendingUp,
   Filter,
   Tag,
-  MoreVertical
+  MoreVertical,
+  Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
@@ -98,6 +99,7 @@ export default function Leads() {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'client'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -230,8 +232,15 @@ export default function Leads() {
   const tagFilteredReferrals = activeTags.length > 0
     ? baseReferrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
     : baseReferrals;
+
+  const searchFilteredReferrals = searchQuery.trim()
+    ? tagFilteredReferrals.filter(r => {
+        const q = searchQuery.toLowerCase();
+        return r.lead_name.toLowerCase().includes(q) || r.lead_phone.includes(q);
+      })
+    : tagFilteredReferrals;
   
-  const filteredReferrals = tagFilteredReferrals.filter((referral) => {
+  const filteredReferrals = searchFilteredReferrals.filter((referral) => {
     if (filter === 'all') return true;
     return referral.status === filter;
   });
@@ -737,7 +746,16 @@ export default function Leads() {
                 </Select>
               )}
 
-              <div className="flex-1" />
+              {/* Search */}
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar nome ou telefone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-7 pl-8 text-xs bg-secondary/30 border-border/40"
+                />
+              </div>
 
               {/* Filter Toggle */}
               <TooltipProvider delayDuration={200}>
@@ -950,7 +968,7 @@ export default function Leads() {
         {/* Kanban View */}
         {viewMode === 'kanban' && (
           <KanbanBoard
-            referrals={tagFilteredReferrals.filter(r => !isClientReferral(r))}
+            referrals={searchFilteredReferrals.filter(r => !isClientReferral(r))}
             onStatusChange={handleStatusChange}
             onColumnChange={handleColumnChange}
             onOpenDetails={openDetailsDialog}

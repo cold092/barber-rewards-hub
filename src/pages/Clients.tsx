@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,7 @@ import {
   Tag,
   Filter,
   MoreVertical,
+  Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
@@ -103,6 +105,7 @@ export default function Clients() {
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
   const [registerClientOpen, setRegisterClientOpen] = useState(false);
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ClientViewMode>(() => {
     const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
     return saved === 'list' ? 'list' : 'kanban';
@@ -163,9 +166,16 @@ export default function Clients() {
   }, [user]);
 
   // Filter by active tags
-  const filteredReferrals = activeTags.length > 0
+  const tagFiltered = activeTags.length > 0
     ? referrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
     : referrals;
+
+  const filteredReferrals = searchQuery.trim()
+    ? tagFiltered.filter(r => {
+        const q = searchQuery.toLowerCase();
+        return r.lead_name.toLowerCase().includes(q) || r.lead_phone.includes(q);
+      })
+    : tagFiltered;
 
   const handleViewModeChange = (mode: ClientViewMode) => {
     setViewMode(mode);
@@ -415,7 +425,16 @@ export default function Clients() {
                 </Button>
               </div>
 
-              <div className="flex-1" />
+              {/* Search */}
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar nome ou telefone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-7 pl-8 text-xs bg-secondary/30 border-border/40"
+                />
+              </div>
 
               {/* Filter Toggle */}
               <TooltipProvider delayDuration={200}>
