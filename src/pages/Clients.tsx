@@ -165,9 +165,16 @@ export default function Clients() {
   }, [user]);
 
   // Filter by active tags
-  const filteredReferrals = activeTags.length > 0
+  const tagFiltered = activeTags.length > 0
     ? referrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
     : referrals;
+
+  const filteredReferrals = searchQuery.trim()
+    ? tagFiltered.filter(r => {
+        const q = searchQuery.toLowerCase();
+        return r.lead_name.toLowerCase().includes(q) || r.lead_phone.includes(q);
+      })
+    : tagFiltered;
 
   const handleViewModeChange = (mode: ClientViewMode) => {
     setViewMode(mode);
