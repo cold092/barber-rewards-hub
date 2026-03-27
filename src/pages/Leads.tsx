@@ -1111,7 +1111,7 @@ export default function Leads() {
               </CardContent>
             </Card>
           )}
-      </div>
+      </motion.div>
 
       {/* Lead Details Dialog */}
       <LeadDetailsDialog
