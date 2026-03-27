@@ -512,48 +512,6 @@ export default function Clients() {
           </motion.div>
         )}
 
-        {/* Stats */}
-        <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-3">
-          <Card className="glass-card border-success/20 hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-success/10 group-hover:bg-success/20 transition-colors">
-                  <UserCheck className="h-4 w-4 text-success" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-success">{totalClients}</p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card border-primary/20 hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <Star className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-primary">{vipCount}</p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">SQL/VIP</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card border-accent/20 hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors">
-                  <TrendingUp className="h-4 w-4 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-accent">{avgPoints}</p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Média pts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
         {viewMode === 'kanban' && (
           <KanbanBoard
