@@ -164,15 +164,17 @@ export function LeadDetailsDialog({
                 </span>
               </DialogDescription>
             </div>
+          </div>
 
+          <div className="flex items-center gap-2 mt-2">
             <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 shrink-0"
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1.5 text-xs rounded-lg hover:bg-primary/10 hover:text-primary hover:border-primary/30"
               onClick={() => setEditDialogOpen(true)}
-              title="Editar lead"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-3 w-3" />
+              Editar
             </Button>
           </div>
         </DialogHeader>
