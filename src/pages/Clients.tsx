@@ -501,7 +501,16 @@ export default function Clients() {
         </motion.div>
 
         {/* Global Tag Filter */}
-        <GlobalTagFilter tagOptions={contactTagOptions} />
+        {(showTagFilter || activeTags.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <GlobalTagFilter tagOptions={contactTagOptions} />
+          </motion.div>
+        )}
 
         {/* Stats */}
         <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-3">
