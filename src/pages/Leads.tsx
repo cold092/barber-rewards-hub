@@ -99,6 +99,7 @@ export default function Leads() {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'client'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
