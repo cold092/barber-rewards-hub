@@ -31,10 +31,9 @@ import {
   List,
   Bell,
   TrendingUp,
-  Columns3,
-  Search,
-  Plus,
-  Tag
+  Filter,
+  Tag,
+  MoreVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
