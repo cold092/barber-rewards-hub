@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   UserCheck,
   TrendingUp,
@@ -14,9 +15,10 @@ import {
   Download,
   LayoutGrid,
   List,
-  Menu,
+  Settings2,
   Phone,
   UserPlus,
+  Tag,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, confirmConversion, updateContactTag, deleteReferral } from '@/services/referralService';
@@ -338,83 +340,134 @@ export default function Clients() {
   return (
     <DashboardLayout>
       <motion.div
-        className="space-y-6"
+        className="space-y-5"
         initial="hidden"
         animate="show"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
       >
         {/* Header */}
-        <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-success/20">
-                <UserCheck className="h-5 w-5 text-success" />
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}>
+          <div className="flex flex-col gap-4">
+            {/* Title Row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-success/20">
+                  <UserCheck className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight">Clientes</h1>
+                  <p className="text-xs text-muted-foreground">Base de clientes convertidos</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-display font-bold">
-                  <span className="lavender-text">Clientes</span>
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Gerencie sua base de clientes convertidos
-                </p>
+
+              {/* Compact Stats Strip */}
+              <div className="hidden md:flex items-center gap-1 bg-secondary/40 rounded-xl border border-border/30 px-1 py-1">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-bold text-success">{totalClients}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase">Total</span>
+                </div>
+                <div className="w-px h-4 bg-border/40" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-bold text-primary">{vipCount}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase">SQL/VIP</span>
+                </div>
+                <div className="w-px h-4 bg-border/40" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-bold text-accent">{avgPoints}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase">Média pts</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              className="gap-2 text-xs gold-gradient gold-glow text-primary-foreground"
-              onClick={() => setRegisterClientOpen(true)}
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-              Cadastrar Cliente
-            </Button>
-            <div className="flex items-center rounded-lg border border-border/50 bg-secondary/50 p-0.5">
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 flex-wrap">
               <Button
-                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
                 size="sm"
-                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'kanban' && "lavender-gradient text-primary-foreground shadow-sm")}
-                onClick={() => handleViewModeChange('kanban')}
+                className="gap-1.5 text-xs h-7 gold-gradient gold-glow text-primary-foreground"
+                onClick={() => setRegisterClientOpen(true)}
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Kanban
+                <UserPlus className="h-3.5 w-3.5" />
+                Cadastrar
               </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'list' && "lavender-gradient text-primary-foreground shadow-sm")}
-                onClick={() => handleViewModeChange('list')}
-              >
-                <List className="h-3.5 w-3.5" />
-                Lista
-              </Button>
-            </div>
 
-            <ColumnManager columns={columns} onColumnsChange={handleColumnsChange} />
+              {/* View Toggle */}
+              <div className="flex items-center rounded-lg border border-border/40 bg-secondary/30 p-0.5">
+                <Button
+                  variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                  size="sm"
+                  className={cn("h-7 px-2.5 gap-1 text-xs", viewMode === 'kanban' && "lavender-gradient text-primary-foreground shadow-sm")}
+                  onClick={() => handleViewModeChange('kanban')}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Kanban
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  className={cn("h-7 px-2.5 gap-1 text-xs", viewMode === 'list' && "lavender-gradient text-primary-foreground shadow-sm")}
+                  onClick={() => handleViewModeChange('list')}
+                >
+                  <List className="h-3.5 w-3.5" />
+                  Lista
+                </Button>
+              </div>
 
-            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleExport}>
-              <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Exportar</span>
-            </Button>
+              <div className="flex-1" />
 
-            {isAdmin && (
-              <DropdownMenu>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><ColumnManager columns={columns} onColumnsChange={handleColumnsChange} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent>Gerenciar colunas</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={handleExport}>
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Exportar CSV</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {isAdmin && (
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 text-xs">
-                      <Menu className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Config</span>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                      <Settings2 className="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Configurações</DropdownMenuLabel>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel className="text-xs">Configurações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setTagSettingsOpen(true)}>
+                    <DropdownMenuItem onClick={() => setTagSettingsOpen(true)} className="text-xs gap-2">
+                      <Tag className="h-3.5 w-3.5" />
                       Configurar Tags
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-            )}
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Mobile Stats */}
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-2 md:hidden">
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-success/[0.06] border border-success/15">
+            <span className="text-lg font-bold text-success">{totalClients}</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-medium">Total</span>
+          </div>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-primary/[0.06] border border-primary/15">
+            <span className="text-lg font-bold text-primary">{vipCount}</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-medium">SQL/VIP</span>
+          </div>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-accent/[0.06] border border-accent/15">
+            <span className="text-lg font-bold text-accent">{avgPoints}</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-medium">Média pts</span>
           </div>
         </motion.div>
 

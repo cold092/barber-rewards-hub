@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Users, 
   Phone,
@@ -25,12 +26,15 @@ import {
   ExternalLink,
   Download,
   Trash2,
-  Menu,
+  Settings2,
   LayoutGrid,
   List,
   Bell,
   TrendingUp,
-  Sparkles
+  Columns3,
+  Search,
+  Plus,
+  Tag
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
@@ -625,297 +629,288 @@ export default function Leads() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <motion.div
+        className="space-y-5"
+        initial="hidden"
+        animate="show"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+      >
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
-              <Sparkles className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
-                <span className="lavender-text">Mini-CRM</span>
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Gerencie leads, follow-ups e conversões
-              </p>
-            </div>
-          </div>
-          
-          {/* Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* View Mode Toggle */}
-            <div className="flex items-center rounded-lg border border-border/50 bg-secondary/50 p-0.5">
-              <Button
-                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
-                size="sm"
-                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'kanban' && "lavender-gradient text-primary-foreground shadow-sm")}
-                onClick={() => handleViewModeChange('kanban')}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Kanban
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                className={cn("h-8 px-3 gap-1.5 text-xs", viewMode === 'list' && "lavender-gradient text-primary-foreground shadow-sm")}
-                onClick={() => handleViewModeChange('list')}
-              >
-                <List className="h-3.5 w-3.5" />
-                Lista
-              </Button>
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}>
+          <div className="flex flex-col gap-4">
+            {/* Title Row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl lavender-gradient lavender-glow">
+                  <Users className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight">Leads</h1>
+                  <p className="text-xs text-muted-foreground">Funil de vendas e conversões</p>
+                </div>
+              </div>
+
+              {/* Compact Stats Strip */}
+              <div className="hidden md:flex items-center gap-1 bg-secondary/40 rounded-xl border border-border/30 px-1 py-1">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-bold text-info">{referrals.filter(r => r.status === 'new').length}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase">Novos</span>
+                </div>
+                <div className="w-px h-4 bg-border/40" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-bold text-warning">{referrals.filter(r => r.status === 'contacted').length}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase">Contatados</span>
+                </div>
+                <div className="w-px h-4 bg-border/40" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-bold text-success">{referrals.filter(r => r.status === 'converted').length}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase">Convertidos</span>
+                </div>
+                <div className="w-px h-4 bg-border/40" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-bold text-primary">{conversionRate}%</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase">Conv.</span>
+                </div>
+                {followUpCount > 0 && (
+                  <>
+                    <div className="w-px h-4 bg-border/40" />
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg",
+                      overdueFollowUps > 0 && "bg-destructive/10"
+                    )}>
+                      <Bell className={cn("h-3 w-3", overdueFollowUps > 0 ? "text-destructive" : "text-muted-foreground")} />
+                      <span className={cn("text-sm font-bold", overdueFollowUps > 0 ? "text-destructive" : "text-foreground")}>{followUpCount}</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">
+                        {overdueFollowUps > 0 ? `${overdueFollowUps} atr.` : 'Follow-ups'}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            <ColumnManager columns={leadColumns} onColumnsChange={handleColumnsChange} />
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* View Toggle */}
+              <div className="flex items-center rounded-lg border border-border/40 bg-secondary/30 p-0.5">
+                <Button
+                  variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                  size="sm"
+                  className={cn("h-7 px-2.5 gap-1 text-xs", viewMode === 'kanban' && "lavender-gradient text-primary-foreground shadow-sm")}
+                  onClick={() => handleViewModeChange('kanban')}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Kanban
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  className={cn("h-7 px-2.5 gap-1 text-xs", viewMode === 'list' && "lavender-gradient text-primary-foreground shadow-sm")}
+                  onClick={() => handleViewModeChange('list')}
+                >
+                  <List className="h-3.5 w-3.5" />
+                  Lista
+                </Button>
+              </div>
 
-            <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={handleExport}>
-              <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Exportar</span>
-            </Button>
-            {isAdmin && (
-              <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 text-xs">
-                      <Menu className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Config</span>
+              {viewMode === 'list' && (
+                <Select
+                  value={filter}
+                  onValueChange={(v: typeof filter) => {
+                    setFilter(v);
+                    updateSearchParams(
+                      listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
+                      v
+                    );
+                  }}
+                >
+                  <SelectTrigger className="w-36 h-7 text-xs">
+                    <SelectValue placeholder="Filtrar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="new">Novos</SelectItem>
+                    <SelectItem value="contacted">Contatados</SelectItem>
+                    <SelectItem value="converted">Convertidos</SelectItem>
+                    {listType === 'clients' && <SelectItem value="client">Clientes Diretos</SelectItem>}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <div className="flex-1" />
+
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span><ColumnManager columns={leadColumns} onColumnsChange={handleColumnsChange} /></span>
+                  </TooltipTrigger>
+                  <TooltipContent>Gerenciar colunas</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={handleExport}>
+                      <Download className="h-3.5 w-3.5" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Configurações</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setConfigDialogOpen(true)}>
-                      Planos e Mensagens
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTagSettingsOpen(true)}>
-                      Configurar Tags
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent>Exportar CSV</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-                <DialogContent className="glass-card w-[min(95vw,48rem)] max-w-3xl max-h-[85vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="font-display">Configurações</DialogTitle>
-                    <DialogDescription>
-                      Ajuste planos e mensagens para leads e clientes.
-                    </DialogDescription>
-                  </DialogHeader>
+              {isAdmin && (
+                <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                        <Settings2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel className="text-xs">Configurações</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setConfigDialogOpen(true)} className="text-xs gap-2">
+                        <Settings2 className="h-3.5 w-3.5" />
+                        Planos e Mensagens
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTagSettingsOpen(true)} className="text-xs gap-2">
+                        <Tag className="h-3.5 w-3.5" />
+                        Configurar Tags
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-                  <div className="space-y-8">
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">Planos (pontuação e valores)</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Altere os pontos e valores exibidos para conversões.
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        {Object.entries(rewardPlans).map(([planId, plan]) => (
-                          <div
-                            key={planId}
-                            className="flex flex-col gap-3 rounded-lg border border-border/50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                          >
-                            <div>
-                              <p className="font-medium">{plan.label}</p>
-                              <p className="text-xs text-muted-foreground uppercase">
-                                {plan.tier} • {plan.type}
-                              </p>
+                  <DialogContent className="glass-card w-[min(95vw,48rem)] max-w-3xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="font-display">Configurações</DialogTitle>
+                      <DialogDescription>
+                        Ajuste planos e mensagens para leads e clientes.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-lg font-semibold">Planos (pontuação e valores)</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Altere os pontos e valores exibidos para conversões.
+                          </p>
+                        </div>
+                        <div className="space-y-3">
+                          {Object.entries(rewardPlans).map(([planId, plan]) => (
+                            <div
+                              key={planId}
+                              className="flex flex-col gap-3 rounded-lg border border-border/50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <div>
+                                <p className="font-medium">{plan.label}</p>
+                                <p className="text-xs text-muted-foreground uppercase">
+                                  {plan.tier} • {plan.type}
+                                </p>
+                              </div>
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">Pontos</span>
+                                  <Input
+                                    type="number"
+                                    value={planDraft[planId]?.points ?? String(plan.points)}
+                                    onChange={(event) =>
+                                      handlePlanDraftChange(planId, 'points', event.target.value)
+                                    }
+                                    className="h-9 w-24"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">Valor</span>
+                                  <Input
+                                    type="number"
+                                    value={planDraft[planId]?.price ?? String(plan.price)}
+                                    onChange={(event) =>
+                                      handlePlanDraftChange(planId, 'price', event.target.value)
+                                    }
+                                    className="h-9 w-28"
+                                  />
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">Pontos</span>
-                                <Input
-                                  type="number"
-                                  value={planDraft[planId]?.points ?? String(plan.points)}
-                                  onChange={(event) =>
-                                    handlePlanDraftChange(planId, 'points', event.target.value)
-                                  }
-                                  className="h-9 w-24"
-                                />
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">Valor</span>
-                                <Input
-                                  type="number"
-                                  value={planDraft[planId]?.price ?? String(plan.price)}
-                                  onChange={(event) =>
-                                    handlePlanDraftChange(planId, 'price', event.target.value)
-                                  }
-                                  className="h-9 w-28"
-                                />
-                              </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-end">
+                          <Button onClick={handleSavePlans}>Salvar planos</Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-lg font-semibold">Mensagens</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Use <span className="font-semibold text-foreground">{'{leadName}'}</span> e{' '}
+                            <span className="font-semibold text-foreground">{'{barberName}'}</span> para personalizar.
+                          </p>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Mensagem para leads</p>
+                            <Textarea
+                              value={leadMessageDraft}
+                              onChange={(event) => setLeadMessageDraft(event.target.value)}
+                              className="min-h-[120px]"
+                            />
+                            <div className="flex justify-end">
+                              <Button variant="outline" onClick={handleSaveLeadMessage}>
+                                Salvar mensagem de leads
+                              </Button>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-end">
-                        <Button onClick={handleSavePlans}>Salvar planos</Button>
+
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Mensagem para clientes</p>
+                            <Textarea
+                              value={clientMessageDraft}
+                              onChange={(event) => setClientMessageDraft(event.target.value)}
+                              className="min-h-[120px]"
+                            />
+                            <div className="flex justify-end">
+                              <Button variant="outline" onClick={handleSaveClientMessage}>
+                                Salvar mensagem de clientes
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">Mensagens</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Use <span className="font-semibold text-foreground">{'{leadName}'}</span> e{' '}
-                          <span className="font-semibold text-foreground">{'{barberName}'}</span> para personalizar.
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Mensagem para leads</p>
-                          <Textarea
-                            value={leadMessageDraft}
-                            onChange={(event) => setLeadMessageDraft(event.target.value)}
-                            className="min-h-[120px]"
-                          />
-                          <div className="flex justify-end">
-                            <Button variant="outline" onClick={handleSaveLeadMessage}>
-                              Salvar mensagem de leads
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Mensagem para clientes</p>
-                          <Textarea
-                            value={clientMessageDraft}
-                            onChange={(event) => setClientMessageDraft(event.target.value)}
-                            className="min-h-[120px]"
-                          />
-                          <div className="flex justify-end">
-                            <Button variant="outline" onClick={handleSaveClientMessage}>
-                              Salvar mensagem de clientes
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
-                      Fechar
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-            {viewMode === 'list' && (
-              <Select
-                value={filter}
-                onValueChange={(v: typeof filter) => {
-                  setFilter(v);
-                  updateSearchParams(
-                    listType === 'clients' && v === 'converted' ? 'converted-clients' : listType,
-                    v
-                  );
-                }}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filtrar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="new">Novos</SelectItem>
-                  <SelectItem value="contacted">Contatados</SelectItem>
-                  <SelectItem value="converted">Convertidos</SelectItem>
-                  {listType === 'clients' && <SelectItem value="client">Clientes Diretos</SelectItem>}
-                </SelectContent>
-              </Select>
-            )}
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
+                        Fechar
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Mobile Stats */}
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-2 md:hidden">
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-info/[0.06] border border-info/15">
+            <span className="text-lg font-bold text-info">{referrals.filter(r => r.status === 'new').length}</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-medium">Novos</span>
+          </div>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-warning/[0.06] border border-warning/15">
+            <span className="text-lg font-bold text-warning">{referrals.filter(r => r.status === 'contacted').length}</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-medium">Contatados</span>
+          </div>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-success/[0.06] border border-success/15">
+            <span className="text-lg font-bold text-success">{referrals.filter(r => r.status === 'converted').length}</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-medium">Conv.</span>
+          </div>
+        </motion.div>
 
         {/* Global Tag Filter */}
         <GlobalTagFilter tagOptions={contactTagOptions} />
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <Card className="glass-card rounded-2xl hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-info/10 border border-info/20 group-hover:scale-110 transition-transform duration-300">
-                  <Users className="h-4 w-4 text-info" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-info">
-                    {referrals.filter(r => r.status === 'new').length}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Novos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card rounded-2xl hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-warning/10 border border-warning/20 group-hover:scale-110 transition-transform duration-300">
-                  <MessageCircle className="h-4 w-4 text-warning" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-warning">
-                    {referrals.filter(r => r.status === 'contacted').length}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Contatados</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card rounded-2xl hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-success/10 border border-success/20 group-hover:scale-110 transition-transform duration-300">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-success">
-                    {referrals.filter(r => r.status === 'converted').length}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Convertidos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card rounded-2xl hover-lift group">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 group-hover:scale-110 transition-transform duration-300">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-primary">
-                    {conversionRate}%
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Conversão</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className={cn(
-            "glass-card rounded-2xl hover-lift group",
-            overdueFollowUps > 0 ? "border-destructive/30" : ""
-          )}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "p-2.5 rounded-xl border group-hover:scale-110 transition-transform duration-300",
-                  overdueFollowUps > 0 ? "bg-destructive/10 border-destructive/20" : "bg-accent/10 border-accent/20"
-                )}>
-                  <Bell className={cn("h-4 w-4", overdueFollowUps > 0 ? "text-destructive" : "text-accent")} />
-                </div>
-                <div>
-                  <p className={cn("text-2xl font-bold", overdueFollowUps > 0 ? "text-destructive" : "text-accent")}>
-                    {followUpCount}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
-                    {overdueFollowUps > 0 ? `${overdueFollowUps} atrasado${overdueFollowUps > 1 ? 's' : ''}` : 'Follow-ups'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Kanban View */}
         {viewMode === 'kanban' && (
@@ -1116,7 +1111,7 @@ export default function Leads() {
               </CardContent>
             </Card>
           )}
-      </div>
+      </motion.div>
 
       {/* Lead Details Dialog */}
       <LeadDetailsDialog
