@@ -232,8 +232,15 @@ export default function Leads() {
   const tagFilteredReferrals = activeTags.length > 0
     ? baseReferrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
     : baseReferrals;
+
+  const searchFilteredReferrals = searchQuery.trim()
+    ? tagFilteredReferrals.filter(r => {
+        const q = searchQuery.toLowerCase();
+        return r.lead_name.toLowerCase().includes(q) || r.lead_phone.includes(q);
+      })
+    : tagFilteredReferrals;
   
-  const filteredReferrals = tagFilteredReferrals.filter((referral) => {
+  const filteredReferrals = searchFilteredReferrals.filter((referral) => {
     if (filter === 'all') return true;
     return referral.status === filter;
   });
