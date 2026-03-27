@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Pencil, Save, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Pencil, Save, X, User, Phone, UserCheck, FileText, Tag, CreditCard } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,11 +23,11 @@ interface EditLeadDialogProps {
   userName?: string;
 }
 
-const STATUS_OPTIONS: { value: ReferralStatus; label: string }[] = [
-  { value: 'new', label: 'Novo' },
-  { value: 'contacted', label: 'Contatado' },
-  { value: 'client', label: 'Cliente' },
-  { value: 'converted', label: 'Convertido' },
+const STATUS_OPTIONS: { value: ReferralStatus; label: string; color: string }[] = [
+  { value: 'new', label: 'Novo', color: 'bg-info/20 text-info border-info/30' },
+  { value: 'contacted', label: 'Contatado', color: 'bg-warning/20 text-warning border-warning/30' },
+  { value: 'client', label: 'Cliente', color: 'bg-success/15 text-success border-success/30' },
+  { value: 'converted', label: 'Convertido', color: 'bg-success/20 text-success border-success/30' },
 ];
 
 export function EditLeadDialog({
@@ -89,34 +90,66 @@ export function EditLeadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Pencil className="h-5 w-5 text-primary" />
+      <DialogContent className="max-w-lg p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/20 bg-gradient-to-b from-primary/[0.04] to-transparent">
+          <DialogTitle className="flex items-center gap-2.5 font-display text-lg">
+            <div className="p-2 rounded-xl lavender-gradient shadow-md shadow-primary/20">
+              <Pencil className="h-4 w-4 text-primary-foreground" />
+            </div>
             Editar Lead
           </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Altere as informações deste lead
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-name">Nome</Label>
-            <Input id="edit-name" value={leadName} onChange={e => setLeadName(e.target.value)} />
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="px-6 py-5 space-y-5 overflow-y-auto max-h-[calc(90vh-180px)]"
+        >
+          {/* Name & Phone row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <User className="h-3 w-3" /> Nome
+              </Label>
+              <Input
+                value={leadName}
+                onChange={e => setLeadName(e.target.value)}
+                className="bg-secondary/10 border-border/20 rounded-xl focus:border-primary/40 h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <Phone className="h-3 w-3" /> Telefone
+              </Label>
+              <Input
+                value={leadPhone}
+                onChange={e => setLeadPhone(e.target.value)}
+                className="bg-secondary/10 border-border/20 rounded-xl focus:border-primary/40 h-9 text-sm"
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-phone">Telefone</Label>
-            <Input id="edit-phone" value={leadPhone} onChange={e => setLeadPhone(e.target.value)} />
+          {/* Referrer */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+              <UserCheck className="h-3 w-3" /> Indicado por
+            </Label>
+            <Input
+              value={referrerName}
+              onChange={e => setReferrerName(e.target.value)}
+              className="bg-secondary/10 border-border/20 rounded-xl focus:border-primary/40 h-9 text-sm"
+            />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-referrer">Indicado por</Label>
-            <Input id="edit-referrer" value={referrerName} onChange={e => setReferrerName(e.target.value)} />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Status</Label>
+          {/* Status */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Status</Label>
             <Select value={status} onValueChange={v => setStatus(v as ReferralStatus)}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-secondary/10 border-border/20 rounded-xl h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -127,11 +160,19 @@ export function EditLeadDialog({
             </Select>
           </div>
 
+          {/* Plan (conditional) */}
           {status === 'converted' && (
-            <div className="space-y-1.5">
-              <Label>Plano convertido</Label>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-2"
+            >
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <CreditCard className="h-3 w-3" /> Plano convertido
+              </Label>
               <Select value={convertedPlanId} onValueChange={setConvertedPlanId}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-secondary/10 border-border/20 rounded-xl h-9 text-sm">
                   <SelectValue placeholder="Selecione um plano" />
                 </SelectTrigger>
                 <SelectContent>
@@ -140,12 +181,15 @@ export function EditLeadDialog({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </motion.div>
           )}
 
-          <div className="space-y-1.5">
-            <Label>Tags</Label>
-            <div className="flex flex-wrap gap-2">
+          {/* Tags */}
+          <div className="space-y-2.5">
+            <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+              <Tag className="h-3 w-3" /> Etiquetas
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
               {contactTagOptions.map(option => {
                 const isSelected = localTags.includes(option.value);
                 return (
@@ -158,10 +202,10 @@ export function EditLeadDialog({
                       );
                     }}
                     className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200",
+                      "px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all duration-200",
                       isSelected
-                        ? option.className + " ring-2 ring-primary/30 shadow-sm"
-                        : "bg-secondary/40 text-muted-foreground border-border/40 hover:border-primary/30 hover:bg-secondary/60"
+                        ? option.className + " ring-1 ring-primary/20 shadow-sm scale-[1.02]"
+                        : "bg-secondary/20 text-muted-foreground/60 border-border/20 hover:border-primary/30 hover:bg-secondary/40"
                     )}
                   >
                     {option.label}
@@ -171,25 +215,27 @@ export function EditLeadDialog({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-notes">Observações</Label>
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+              <FileText className="h-3 w-3" /> Observações
+            </Label>
             <Textarea
-              id="edit-notes"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Observações sobre este lead..."
-              className="min-h-[80px] resize-none"
+              className="min-h-[80px] bg-secondary/10 border-border/20 resize-none text-sm rounded-xl focus:border-primary/40"
             />
           </div>
-        </div>
+        </motion.div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            <X className="h-4 w-4 mr-2" />
+        <DialogFooter className="px-6 py-4 border-t border-border/15 gap-2 bg-card/50">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg border-border/30 text-xs h-9 px-4">
+            <X className="h-3.5 w-3.5 mr-1.5" />
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
+          <Button onClick={handleSave} disabled={saving} className="rounded-lg lavender-gradient text-primary-foreground font-medium text-xs h-9 px-5 shadow-md shadow-primary/20">
+            <Save className="h-3.5 w-3.5 mr-1.5" />
             {saving ? 'Salvando...' : 'Salvar'}
           </Button>
         </DialogFooter>
