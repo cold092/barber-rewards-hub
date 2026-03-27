@@ -33,7 +33,8 @@ import {
   TrendingUp,
   Filter,
   Tag,
-  MoreVertical
+  MoreVertical,
+  Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllReferrals, markAsContacted, confirmConversion, updateContactTag, undoContacted, undoConversion, deleteReferral } from '@/services/referralService';
