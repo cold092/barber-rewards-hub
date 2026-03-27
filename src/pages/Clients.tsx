@@ -102,6 +102,7 @@ export default function Clients() {
   const [converting, setConverting] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
   const [registerClientOpen, setRegisterClientOpen] = useState(false);
+  const [showTagFilter, setShowTagFilter] = useState(false);
   const [viewMode, setViewMode] = useState<ClientViewMode>(() => {
     const saved = localStorage.getItem(CLIENT_VIEW_MODE_KEY);
     return saved === 'list' ? 'list' : 'kanban';

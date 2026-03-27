@@ -97,6 +97,7 @@ export default function Leads() {
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTagFilter, setShowTagFilter] = useState(false);
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'converted' | 'client'>('all');
   const [listType, setListType] = useState<'leads' | 'clients'>('leads');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
