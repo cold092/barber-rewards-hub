@@ -33,6 +33,7 @@ import { getRewardPlans, REWARD_PLANS, PLAN_OVERRIDES_STORAGE_KEY, setPlanOverri
 import { DEFAULT_LEAD_MESSAGE, DEFAULT_CLIENT_MESSAGE } from '@/utils/whatsapp';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { upsertSetting, getGlobalSetting } from '@/services/settingsService';
 import { motion, AnimatePresence } from 'framer-motion';
