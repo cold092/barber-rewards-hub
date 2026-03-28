@@ -380,6 +380,11 @@
   }
 }
 
+@keyframes shimmerSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 5px;
