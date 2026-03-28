@@ -29,16 +29,6 @@ export function SystemTab() {
     setReconciling(true);
     setResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('reconcile-points', {
-        body: {},
-        headers: {},
-      });
-
-      if (error) throw error;
-
-      // The edge function returns dry_run by default, we need to pass query param
-      // Since supabase.functions.invoke doesn't support query params easily,
-      // let's use fetch directly
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reconcile-points?dry_run=${dryRun}`;
       const response = await fetch(url, {
         method: 'POST',
