@@ -20,8 +20,8 @@ import {
   Zap,
   Crown,
   Star,
-  GripVertical,
   Info,
+  Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { upsertSetting, getGlobalSetting } from '@/services/settingsService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SystemTab } from '@/components/settings/SystemTab';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
@@ -222,7 +223,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="tags" className="space-y-6" onValueChange={() => {}}>
-          <TabsList className="glass-card p-1 h-auto gap-1">
+          <TabsList className="glass-card p-1 h-auto gap-1 flex-wrap">
             <TabsTrigger value="tags" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
               <Tag className="h-4 w-4" />
               <span className="hidden sm:inline">Etiquetas</span>
@@ -239,6 +240,10 @@ export default function SettingsPage() {
             <TabsTrigger value="columns" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
               <Columns3 className="h-4 w-4" />
               Colunas
+            </TabsTrigger>
+            <TabsTrigger value="system" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <Wrench className="h-4 w-4" />
+              Sistema
             </TabsTrigger>
           </TabsList>
 
@@ -572,6 +577,9 @@ export default function SettingsPage() {
                 </div>
               </div>
             </motion.div>
+          </TabsContent>
+          <TabsContent value="system" className="mt-6">
+            <SystemTab />
           </TabsContent>
         </Tabs>
       </div>

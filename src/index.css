@@ -159,6 +159,9 @@
     letter-spacing: -0.01em;
     background-image: var(--gradient-mesh);
     background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -170,6 +173,17 @@
   h1 { @apply text-3xl lg:text-4xl font-bold; }
   h2 { @apply text-2xl lg:text-3xl; }
   h3 { @apply text-xl lg:text-2xl; }
+
+  /* Smooth focus rings globally */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
+    transition: box-shadow 0.15s ease;
+  }
+
+  /* Better input transitions */
+  input, textarea, select {
+    @apply transition-colors duration-200;
+  }
 }
 
 @layer components {
@@ -195,10 +209,11 @@
   .glass-card {
     @apply bg-card/50 backdrop-blur-xl border border-border/30 rounded-xl;
     box-shadow: var(--shadow-card), var(--shadow-inset);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-300 ease-out;
+    @apply glass-card;
   }
 
   .glass-card-hover:hover {
@@ -250,13 +265,39 @@
 
   /* Stat cards */
   .stat-card {
-    @apply glass-card p-4 transition-all duration-300 ease-out;
+    @apply glass-card p-4;
   }
 
   .stat-card:hover {
     @apply border-primary/15;
     transform: translateY(-2px);
     box-shadow: var(--shadow-card), var(--shadow-lavender);
+  }
+
+  /* Premium badge shimmer */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      hsl(262 80% 65% / 0.06) 45%,
+      hsl(262 80% 65% / 0.12) 50%,
+      hsl(262 80% 65% / 0.06) 55%,
+      transparent 60%
+    );
+    animation: shimmerSlide 3s ease-in-out infinite;
+  }
+
+  /* Subtle divider */
+  .divider-gradient {
+    @apply h-px w-full;
+    background: linear-gradient(to right, transparent, hsl(var(--border) / 0.5), transparent);
   }
 }
 
@@ -337,6 +378,11 @@
   50% {
     box-shadow: 0 0 24px 6px hsl(262 80% 65% / 0.12);
   }
+}
+
+@keyframes shimmerSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* Scrollbar styling */
