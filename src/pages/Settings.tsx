@@ -20,11 +20,7 @@ import {
   Zap,
   Crown,
   Star,
-  GripVertical,
   Info,
-  RefreshCw,
-  CheckCircle,
-  AlertTriangle,
   Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
