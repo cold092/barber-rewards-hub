@@ -582,6 +582,9 @@ export default function SettingsPage() {
               </div>
             </motion.div>
           </TabsContent>
+          <TabsContent value="system" className="mt-6">
+            <SystemTab />
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
