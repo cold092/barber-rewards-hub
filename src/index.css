@@ -159,6 +159,9 @@
     letter-spacing: -0.01em;
     background-image: var(--gradient-mesh);
     background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -170,6 +173,17 @@
   h1 { @apply text-3xl lg:text-4xl font-bold; }
   h2 { @apply text-2xl lg:text-3xl; }
   h3 { @apply text-xl lg:text-2xl; }
+
+  /* Smooth focus rings globally */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
+    transition: box-shadow 0.15s ease;
+  }
+
+  /* Better input transitions */
+  input, textarea, select {
+    @apply transition-colors duration-200;
+  }
 }
 
 @layer components {
