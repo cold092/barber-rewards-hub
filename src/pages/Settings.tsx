@@ -22,6 +22,10 @@ import {
   Star,
   GripVertical,
   Info,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle,
+  Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
