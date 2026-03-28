@@ -37,6 +37,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { upsertSetting, getGlobalSetting } from '@/services/settingsService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SystemTab } from '@/components/settings/SystemTab';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
