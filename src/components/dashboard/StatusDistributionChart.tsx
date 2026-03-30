@@ -1,31 +1,24 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { PieChartIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Referral } from '@/types/database';
 
 interface StatusDistributionChartProps {
   referrals: Referral[];
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  new: 'hsl(210, 90%, 60%)',
-  contacted: 'hsl(40, 85%, 55%)',
-  converted: 'hsl(145, 65%, 50%)'
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  new: 'Novos',
-  contacted: 'Contatados',
-  converted: 'Convertidos'
-};
+const STATUS_CONFIG = [
+  { status: 'new', label: 'Novos', color: 'hsl(217, 91%, 60%)', dotClass: 'bg-info' },
+  { status: 'contacted', label: 'Contatados', color: 'hsl(40, 85%, 55%)', dotClass: 'bg-warning' },
+  { status: 'converted', label: 'Convertidos', color: 'hsl(145, 65%, 50%)', dotClass: 'bg-success' },
+] as const;
 
 export default function StatusDistributionChart({ referrals }: StatusDistributionChartProps) {
-  const statusData = (['new', 'contacted', 'converted'] as const)
-    .map((status) => ({
-      status,
-      name: STATUS_LABELS[status],
-      value: referrals.filter((referral) => referral.status === status).length,
-      color: STATUS_COLORS[status]
+  const statusData = STATUS_CONFIG
+    .map((cfg) => ({
+      ...cfg,
+      name: cfg.label,
+      value: referrals.filter((r) => r.status === cfg.status).length,
     }))
     .filter((item) => item.value > 0);
 
@@ -33,89 +26,83 @@ export default function StatusDistributionChart({ referrals }: StatusDistributio
 
   if (total === 0) {
     return (
-      <Card className="glass-card border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-display">
-            <PieChartIcon className="h-5 w-5 text-primary" />
-            Distribuição de Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-8">
-            Nenhuma indicação encontrada para o filtro atual
-          </p>
-        </CardContent>
-      </Card>
+      <div className="glass-card rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <PieChartIcon className="h-4 w-4 text-primary" />
+          <h3 className="font-display font-semibold text-sm">Distribuição de Status</h3>
+        </div>
+        <p className="text-muted-foreground text-center py-10 text-sm">
+          Nenhuma indicação encontrada
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card className="glass-card border-border/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-display">
-          <PieChartIcon className="h-5 w-5 text-primary" />
-          Distribuição de Status
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center">
-          <div className="w-full h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                  labelLine={false}
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload as { name: string; value: number };
-                      return (
-                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                          <p className="font-semibold">{data.name}</p>
-                          <p className="text-sm text-muted-foreground">{data.value} indicações</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Legend
-                  verticalAlign="bottom"
-                  formatter={(value: string) => (
-                    <span className="text-sm text-foreground">{value}</span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="w-full mt-4 pt-4 border-t border-border/50">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-primary">{total}</p>
-                <p className="text-xs text-muted-foreground">Total de Indicações</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">
-                  {statusData.find((item) => item.status === 'converted')?.value ?? 0}
-                </p>
-                <p className="text-xs text-muted-foreground">Convertidos</p>
-              </div>
-            </div>
-          </div>
+    <div className="glass-card rounded-2xl p-6">
+      <div className="flex items-center gap-2 mb-1">
+        <PieChartIcon className="h-4 w-4 text-primary" />
+        <h3 className="font-display font-semibold text-sm">Distribuição de Status</h3>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-4">{total} indicações no período</p>
+
+      <div className="flex items-center gap-6">
+        {/* Chart */}
+        <div className="w-40 h-40 shrink-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={statusData}
+                cx="50%"
+                cy="50%"
+                innerRadius={42}
+                outerRadius={65}
+                paddingAngle={3}
+                dataKey="value"
+                strokeWidth={0}
+              >
+                {statusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload as { name: string; value: number };
+                    const pct = Math.round((data.value / total) * 100);
+                    return (
+                      <div className="bg-card border border-border/50 rounded-xl p-3 shadow-xl text-xs">
+                        <p className="font-semibold">{data.name}</p>
+                        <p className="text-muted-foreground">{data.value} indicações ({pct}%)</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Legend */}
+        <div className="flex-1 space-y-3">
+          {statusData.map((item) => {
+            const pct = Math.round((item.value / total) * 100);
+            return (
+              <div key={item.status} className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", item.dotClass)} />
+                  <span className="text-sm text-foreground">{item.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold tabular-nums">{item.value}</span>
+                  <span className="text-[10px] text-muted-foreground w-8 text-right">{pct}%</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
