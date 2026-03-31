@@ -72,6 +72,20 @@ export function NotificationCenter() {
               {overdueCount} follow-up{overdueCount > 1 ? 's' : ''} atrasado{overdueCount > 1 ? 's' : ''}
             </p>
           )}
+          {isSupported && (
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
+              <div className="flex items-center gap-2">
+                <BellRing className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Push notifications</span>
+              </div>
+              <Switch
+                checked={isSubscribed}
+                onCheckedChange={handleTogglePush}
+                disabled={pushLoading}
+                className="scale-75"
+              />
+            </div>
+          )}
         </div>
 
         <ScrollArea className="max-h-80">
