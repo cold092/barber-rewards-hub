@@ -100,22 +100,26 @@ export default function Reports() {
   }, [isAdmin]);
 
   const filteredReferrals = useMemo(() => {
-    const rangeFiltered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
-    const barberFiltered =
-      reportBarber === 'all'
-        ? rangeFiltered
-        : rangeFiltered.filter((referral) => referral.referrer_id === reportBarber);
+    let filtered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
+    if (reportBarber !== 'all') {
+      filtered = filtered.filter((referral) => referral.referrer_id === reportBarber);
+    }
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((referral) =>
+        selectedTags.some(tag => referral.tags?.includes(tag))
+      );
+    }
     switch (reportType) {
       case 'leads':
-        return barberFiltered.filter((referral) => !isClientReferral(referral));
+        return filtered.filter((referral) => !isClientReferral(referral));
       case 'clients':
-        return barberFiltered.filter((referral) => isClientReferral(referral));
+        return filtered.filter((referral) => isClientReferral(referral));
       case 'converted':
-        return barberFiltered.filter((referral) => referral.status === 'converted');
+        return filtered.filter((referral) => referral.status === 'converted');
       default:
-        return barberFiltered;
+        return filtered;
     }
-  }, [referrals, reportBarber, reportRange, reportType]);
+  }, [referrals, reportBarber, reportRange, reportType, selectedTags]);
 
   const totals = useMemo(() => ({
     total: filteredReferrals.length,
