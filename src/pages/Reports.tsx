@@ -354,6 +354,10 @@ export default function Reports() {
           <ConversionTrendChart referrals={filteredReferrals} range={reportRange} />
         </motion.div>
 
+        <motion.div variants={fadeUp}>
+          <BarberPerformanceChart referrals={referrals} barbers={barbers} />
+        </motion.div>
+
         {/* Revenue by Barber */}
         <motion.div variants={fadeUp}>
           <div className="glass-card rounded-2xl overflow-hidden">
