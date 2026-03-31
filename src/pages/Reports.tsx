@@ -294,6 +294,43 @@ export default function Reports() {
                 </SelectContent>
               </Select>
             </div>
+            {allTags.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-border/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Etiquetas</span>
+                  {selectedTags.length > 0 && (
+                    <button
+                      onClick={() => setSelectedTags([])}
+                      className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                      Limpar
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {allTags.map(tag => {
+                    const isActive = selectedTags.includes(tag);
+                    return (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className={cn(
+                          "text-[11px] cursor-pointer transition-all capitalize",
+                          isActive
+                            ? "bg-primary/15 text-primary border-primary/30 shadow-sm"
+                            : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
+                        )}
+                        onClick={() => toggleTag(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
 
