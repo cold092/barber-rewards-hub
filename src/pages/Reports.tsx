@@ -13,6 +13,7 @@ import { formatCurrencyBRL } from '@/utils/currency';
 import type { Referral } from '@/types/database';
 import type { Profile } from '@/types/database';
 import ConversionTrendChart from '@/components/dashboard/ConversionTrendChart';
+import BarberPerformanceChart from '@/components/dashboard/BarberPerformanceChart';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -351,6 +352,10 @@ export default function Reports() {
 
         <motion.div variants={fadeUp}>
           <ConversionTrendChart referrals={filteredReferrals} range={reportRange} />
+        </motion.div>
+
+        <motion.div variants={fadeUp}>
+          <BarberPerformanceChart referrals={referrals} barbers={barbers} />
         </motion.div>
 
         {/* Revenue by Barber */}
