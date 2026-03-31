@@ -45,6 +45,48 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Push notification handler
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  try {
+    const payload = event.data.json();
+    const { title, body, icon, tag, data } = payload;
+    event.waitUntil(
+      self.registration.showNotification(title || "Follow-up", {
+        body: body || "",
+        icon: icon || "/icon.svg",
+        badge: "/icon.svg",
+        tag: tag || "follow-up-push",
+        data: data || {},
+        vibrate: [200, 100, 200],
+        actions: [{ action: "open", title: "Ver leads" }],
+      })
+    );
+  } catch (e) {
+    const text = event.data.text();
+    event.waitUntil(
+      self.registration.showNotification("Follow-up", { body: text, icon: "/icon.svg" })
+    );
+  }
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/leads";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin)) {
+          client.focus();
+          client.navigate(url);
+          return;
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
     return;
