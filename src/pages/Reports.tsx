@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPlus, Filter, Trophy } from 'lucide-react';
+import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPlus, Filter, Trophy, Tag, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAllBarbers, getAllReferrals } from '@/services/referralService';
@@ -69,6 +70,17 @@ export default function Reports() {
   const [reportType, setReportType] = useState<ReportType>('all');
   const [reportRange, setReportRange] = useState<ReportRange>('all');
   const [reportBarber, setReportBarber] = useState<ReportBarber>('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    referrals.forEach(r => r.tags?.forEach(t => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [referrals]);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
 
   useEffect(() => {
     async function loadReferrals() {
@@ -88,22 +100,26 @@ export default function Reports() {
   }, [isAdmin]);
 
   const filteredReferrals = useMemo(() => {
-    const rangeFiltered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
-    const barberFiltered =
-      reportBarber === 'all'
-        ? rangeFiltered
-        : rangeFiltered.filter((referral) => referral.referrer_id === reportBarber);
+    let filtered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
+    if (reportBarber !== 'all') {
+      filtered = filtered.filter((referral) => referral.referrer_id === reportBarber);
+    }
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((referral) =>
+        selectedTags.some(tag => referral.tags?.includes(tag))
+      );
+    }
     switch (reportType) {
       case 'leads':
-        return barberFiltered.filter((referral) => !isClientReferral(referral));
+        return filtered.filter((referral) => !isClientReferral(referral));
       case 'clients':
-        return barberFiltered.filter((referral) => isClientReferral(referral));
+        return filtered.filter((referral) => isClientReferral(referral));
       case 'converted':
-        return barberFiltered.filter((referral) => referral.status === 'converted');
+        return filtered.filter((referral) => referral.status === 'converted');
       default:
-        return barberFiltered;
+        return filtered;
     }
-  }, [referrals, reportBarber, reportRange, reportType]);
+  }, [referrals, reportBarber, reportRange, reportType, selectedTags]);
 
   const totals = useMemo(() => ({
     total: filteredReferrals.length,
@@ -278,6 +294,43 @@ export default function Reports() {
                 </SelectContent>
               </Select>
             </div>
+            {allTags.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-border/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Etiquetas</span>
+                  {selectedTags.length > 0 && (
+                    <button
+                      onClick={() => setSelectedTags([])}
+                      className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                      Limpar
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {allTags.map(tag => {
+                    const isActive = selectedTags.includes(tag);
+                    return (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className={cn(
+                          "text-[11px] cursor-pointer transition-all capitalize",
+                          isActive
+                            ? "bg-primary/15 text-primary border-primary/30 shadow-sm"
+                            : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
+                        )}
+                        onClick={() => toggleTag(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
 
