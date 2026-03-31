@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Bell, BellDot, Calendar, Clock, ChevronRight, X } from 'lucide-react';
+import { Bell, BellDot, BellRing, Calendar, Clock, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useFollowUpNotifications, getUrgency, type FollowUpNotification } from '@/hooks/use-follow-up-notifications';
+import { usePushSubscription } from '@/hooks/use-push-subscription';
+import { toast } from 'sonner';
 
 const urgencyConfig = {
   overdue: { label: 'Atrasado', className: 'bg-destructive/20 text-destructive border-destructive/30', icon: Clock },
