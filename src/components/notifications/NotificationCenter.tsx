@@ -24,7 +24,18 @@ export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { notifications, overdueCount, totalUrgent, dismiss, canShow } = useFollowUpNotifications();
+  const { isSubscribed, isSupported, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription();
 
+  const handleTogglePush = async () => {
+    if (isSubscribed) {
+      await unsubscribe();
+      toast.info('Notificações push desativadas');
+    } else {
+      const ok = await subscribe();
+      if (ok) toast.success('Notificações push ativadas!');
+      else toast.error('Não foi possível ativar notificações push');
+    }
+  };
   if (!canShow) return null;
 
   const handleClick = (_notification: FollowUpNotification) => {
