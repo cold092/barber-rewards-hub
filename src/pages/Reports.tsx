@@ -70,6 +70,17 @@ export default function Reports() {
   const [reportType, setReportType] = useState<ReportType>('all');
   const [reportRange, setReportRange] = useState<ReportRange>('all');
   const [reportBarber, setReportBarber] = useState<ReportBarber>('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    referrals.forEach(r => r.tags?.forEach(t => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [referrals]);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
 
   useEffect(() => {
     async function loadReferrals() {
