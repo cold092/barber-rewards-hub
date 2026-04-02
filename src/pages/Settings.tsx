@@ -36,6 +36,9 @@ import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { upsertSetting, getGlobalSetting } from '@/services/settingsService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SystemTab } from '@/components/settings/SystemTab';
+import { NotificationsTab } from '@/components/settings/NotificationsTab';
+import { AppearanceTab } from '@/components/settings/AppearanceTab';
+import { GeneralTab } from '@/components/settings/GeneralTab';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
