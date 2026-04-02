@@ -28,6 +28,7 @@ import {
   Shield,
   Briefcase,
   Eye,
+  Gift,
 } from 'lucide-react';
 import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { path: '/clientes', label: 'Clientes', icon: UserCheck },
   { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
+  { path: '/resgates', label: 'Resgates', icon: Gift },
   { path: '/relatorios', label: 'Relatórios', icon: BarChart3, adminOnly: true },
   { path: '/configuracoes', label: 'Configurações', icon: Settings, adminOnly: true },
   { path: '/equipe', label: 'Gerenciar Equipe', icon: Users, adminOnly: true },

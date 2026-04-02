@@ -295,6 +295,56 @@ export type Database = {
         }
         Relationships: []
       }
+      redemptions: {
+        Row: {
+          admin_note: string | null
+          approved_by: string | null
+          created_at: string
+          description: string
+          id: string
+          organization_id: string
+          points: number
+          profile_id: string
+          status: Database["public"]["Enums"]["redemption_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          organization_id: string
+          points: number
+          profile_id: string
+          status?: Database["public"]["Enums"]["redemption_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          organization_id?: string
+          points?: number
+          profile_id?: string
+          status?: Database["public"]["Enums"]["redemption_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redemptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           client_since: string | null
@@ -407,6 +457,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_redemption: {
+        Args: { _admin_note?: string; _redemption_id: string }
+        Returns: undefined
+      }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
@@ -418,6 +472,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      reject_redemption: {
+        Args: { _admin_note?: string; _redemption_id: string }
+        Returns: undefined
       }
       update_profile_points: {
         Args: {
@@ -442,6 +500,7 @@ export type Database = {
         | "whatsapp_contact"
         | "conversion"
         | "created"
+      redemption_status: "pending" | "approved" | "rejected"
       referral_status: "new" | "contacted" | "converted" | "cliente" | "client"
     }
     CompositeTypes: {
@@ -580,6 +639,7 @@ export const Constants = {
         "conversion",
         "created",
       ],
+      redemption_status: ["pending", "approved", "rejected"],
       referral_status: ["new", "contacted", "converted", "cliente", "client"],
     },
   },
