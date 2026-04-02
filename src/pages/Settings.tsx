@@ -22,6 +22,9 @@ import {
   Star,
   Info,
   Wrench,
+  Bell,
+  Palette,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
@@ -33,6 +36,9 @@ import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { upsertSetting, getGlobalSetting } from '@/services/settingsService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SystemTab } from '@/components/settings/SystemTab';
+import { NotificationsTab } from '@/components/settings/NotificationsTab';
+import { AppearanceTab } from '@/components/settings/AppearanceTab';
+import { GeneralTab } from '@/components/settings/GeneralTab';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
@@ -222,8 +228,23 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="tags" className="space-y-6" onValueChange={() => {}}>
+        <Tabs defaultValue="general" className="space-y-6" onValueChange={() => {}}>
           <TabsList className="glass-card p-1 h-auto gap-1 flex-wrap">
+            <TabsTrigger value="general" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <Building2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Geral</span>
+              <span className="sm:hidden">Geral</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <Palette className="h-4 w-4" />
+              <span className="hidden sm:inline">Aparência</span>
+              <span className="sm:hidden">Visual</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Notificações</span>
+              <span className="sm:hidden">Alertas</span>
+            </TabsTrigger>
             <TabsTrigger value="tags" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
               <Tag className="h-4 w-4" />
               <span className="hidden sm:inline">Etiquetas</span>
@@ -246,6 +267,21 @@ export default function SettingsPage() {
               Sistema
             </TabsTrigger>
           </TabsList>
+
+          {/* ===== GENERAL ===== */}
+          <TabsContent value="general" className="mt-6">
+            <GeneralTab />
+          </TabsContent>
+
+          {/* ===== APPEARANCE ===== */}
+          <TabsContent value="appearance" className="mt-6">
+            <AppearanceTab />
+          </TabsContent>
+
+          {/* ===== NOTIFICATIONS ===== */}
+          <TabsContent value="notifications" className="mt-6">
+            <NotificationsTab />
+          </TabsContent>
 
           {/* ===== TAGS ===== */}
           <TabsContent value="tags" className="mt-6">
