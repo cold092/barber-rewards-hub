@@ -22,6 +22,9 @@ import {
   Star,
   Info,
   Wrench,
+  Bell,
+  Palette,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
