@@ -135,6 +135,13 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/resgates"
+      element={
+        <ProtectedRoute>
+          <Redemptions />
+        </ProtectedRoute>
+      }
+    <Route
       path="/relatorios"
       element={
         <ProtectedRoute>
