@@ -141,6 +141,7 @@ const AppRoutes = () => (
           <Redemptions />
         </ProtectedRoute>
       }
+    />
     <Route
       path="/relatorios"
       element={
