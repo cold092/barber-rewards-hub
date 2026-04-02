@@ -17,6 +17,7 @@ import ManageTeam from "./pages/ManageTeam";
 import Reports from "./pages/Reports";
 import WhatsApp from "./pages/WhatsApp";
 import SettingsPage from "./pages/Settings";
+import Redemptions from "./pages/Redemptions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
