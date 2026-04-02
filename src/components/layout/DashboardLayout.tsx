@@ -28,6 +28,7 @@ import {
   Shield,
   Briefcase,
   Eye,
+  Gift,
 } from 'lucide-react';
 import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
