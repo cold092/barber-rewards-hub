@@ -4,57 +4,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
-  Gift,
-  Plus,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Coins,
-  History,
-  Send,
-  MessageSquare,
-  AlertTriangle,
+  Gift, Plus, CheckCircle, XCircle, Clock, Coins,
+  History, Send, MessageSquare, ShoppingBag,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  getRedemptions,
-  createRedemption,
-  approveRedemption,
-  rejectRedemption,
+  getRedemptions, createRedemption, approveRedemption, rejectRedemption,
   type Redemption,
 } from '@/services/redemptionService';
+import { getRewardCatalog, getAllRewardCatalog, type RewardItem } from '@/services/rewardCatalogService';
+import RedemptionList from '@/components/redemptions/RedemptionList';
+import RewardCatalog from '@/components/redemptions/RewardCatalog';
 
 export default function Redemptions() {
   const { user, profile, isAdmin } = useAuth();
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
+  const [catalogItems, setCatalogItems] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [description, setDescription] = useState('');
   const [points, setPoints] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Admin review
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
-
-  // Profile names cache
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     setLoading(true);
-    const data = await getRedemptions();
+    const [data, catalog] = await Promise.all([
+      getRedemptions(),
+      isAdmin ? getAllRewardCatalog() : getRewardCatalog(),
+    ]);
     setRedemptions(data);
+    setCatalogItems(catalog);
 
-    // Load profile names for display
     const profileIds = [...new Set(data.map(r => r.profile_id))];
     const approverIds = [...new Set(data.filter(r => r.approved_by).map(r => r.approved_by!))];
     const allIds = [...new Set([...profileIds, ...approverIds])];
@@ -64,14 +56,12 @@ export default function Redemptions() {
         .from('profiles')
         .select('id, name')
         .in('id', allIds);
-
       if (profiles) {
         const names: Record<string, string> = {};
         profiles.forEach(p => { names[p.id] = p.name; });
         setProfileNames(names);
       }
     }
-
     setLoading(false);
   };
 
@@ -91,7 +81,6 @@ export default function Redemptions() {
       toast.error('Saldo insuficiente');
       return;
     }
-
     setSubmitting(true);
     const result = await createRedemption({
       organization_id: profile?.organization_id || '',
@@ -100,7 +89,6 @@ export default function Redemptions() {
       description: description.trim(),
       points: pts,
     });
-
     if (result.success) {
       toast.success('Solicitação de resgate enviada!');
       setShowNewDialog(false);
@@ -111,6 +99,12 @@ export default function Redemptions() {
       toast.error(result.error || 'Erro ao solicitar resgate');
     }
     setSubmitting(false);
+  };
+
+  const handleCatalogRedeem = (item: RewardItem) => {
+    setDescription(item.name);
+    setPoints(String(item.points_cost));
+    setShowNewDialog(true);
   };
 
   const handleApprove = async (id: string) => {
@@ -179,16 +173,16 @@ export default function Redemptions() {
                 <span className="lavender-text">Resgates</span>
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Solicite e acompanhe seus resgates de pontos
+                Escolha prêmios do catálogo ou solicite resgates personalizados
               </p>
             </div>
           </div>
           <Button
             className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90 transition-opacity"
-            onClick={() => setShowNewDialog(true)}
+            onClick={() => { setDescription(''); setPoints(''); setShowNewDialog(true); }}
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Novo Resgate</span>
+            <span className="hidden sm:inline">Resgate Livre</span>
           </Button>
         </div>
 
@@ -216,8 +210,12 @@ export default function Redemptions() {
         </motion.div>
 
         {/* Tabs */}
-        <Tabs defaultValue={isAdmin ? 'pending' : 'my'}>
+        <Tabs defaultValue="catalog">
           <TabsList className="glass-card p-1 h-auto gap-1">
+            <TabsTrigger value="catalog" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5">
+              <ShoppingBag className="h-4 w-4" />
+              Catálogo
+            </TabsTrigger>
             <TabsTrigger value="my" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5">
               <History className="h-4 w-4" />
               Meus Resgates
@@ -241,17 +239,19 @@ export default function Redemptions() {
             )}
           </TabsList>
 
-          {/* My Redemptions */}
-          <TabsContent value="my" className="mt-4">
-            <RedemptionList
-              items={myRedemptions}
-              statusConfig={statusConfig}
-              profileNames={profileNames}
-              showUser={false}
+          <TabsContent value="catalog" className="mt-4">
+            <RewardCatalog
+              items={catalogItems}
+              walletBalance={profile?.wallet_balance || 0}
+              onRedeem={handleCatalogRedeem}
+              onRefresh={loadData}
             />
           </TabsContent>
 
-          {/* Pending (admin) */}
+          <TabsContent value="my" className="mt-4">
+            <RedemptionList items={myRedemptions} statusConfig={statusConfig} profileNames={profileNames} showUser={false} />
+          </TabsContent>
+
           {isAdmin && (
             <TabsContent value="pending" className="mt-4">
               <RedemptionList
@@ -264,15 +264,9 @@ export default function Redemptions() {
             </TabsContent>
           )}
 
-          {/* All (admin) */}
           {isAdmin && (
             <TabsContent value="all" className="mt-4">
-              <RedemptionList
-                items={allSorted}
-                statusConfig={statusConfig}
-                profileNames={profileNames}
-                showUser
-              />
+              <RedemptionList items={allSorted} statusConfig={statusConfig} profileNames={profileNames} showUser />
             </TabsContent>
           )}
         </Tabs>
@@ -293,7 +287,6 @@ export default function Redemptions() {
                   Saldo disponível: <span className="font-bold text-primary">{profile?.wallet_balance || 0} pts</span>
                 </p>
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">O que deseja resgatar?</label>
                 <Textarea
@@ -303,7 +296,6 @@ export default function Redemptions() {
                   className="min-h-[80px] bg-background/40 border-border/30 focus:border-primary/40 rounded-xl resize-none"
                 />
               </div>
-
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pontos a resgatar</label>
                 <Input
@@ -355,7 +347,6 @@ export default function Redemptions() {
                       {new Date(r.created_at).toLocaleString('pt-BR')}
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Nota do admin (obrigatória para rejeição)
@@ -393,91 +384,5 @@ export default function Redemptions() {
         </Dialog>
       </div>
     </DashboardLayout>
-  );
-}
-
-// Reusable list component
-function RedemptionList({
-  items,
-  statusConfig,
-  profileNames,
-  showUser,
-  onReview,
-}: {
-  items: Redemption[];
-  statusConfig: Record<string, { label: string; icon: any; className: string }>;
-  profileNames: Record<string, string>;
-  showUser: boolean;
-  onReview?: (id: string) => void;
-}) {
-  if (items.length === 0) {
-    return (
-      <Card className="glass-card border-border/30">
-        <CardContent className="p-8 text-center">
-          <Gift className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Nenhum resgate encontrado</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <AnimatePresence mode="popLayout">
-        {items.map((r, i) => {
-          const config = statusConfig[r.status];
-          const StatusIcon = config.icon;
-          return (
-            <motion.div
-              key={r.id}
-              layout
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2, delay: i * 0.03 }}
-              className="glass-card rounded-xl p-4 border border-border/30 hover:border-border/50 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0 space-y-1">
-                  {showUser && (
-                    <p className="text-xs font-semibold text-primary">
-                      {profileNames[r.profile_id] || 'Usuário'}
-                    </p>
-                  )}
-                  <p className="text-sm font-medium">{r.description}</p>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-lg font-bold text-primary">{r.points} pts</span>
-                    <Badge variant="outline" className={cn('gap-1 text-[10px]', config.className)}>
-                      <StatusIcon className="h-3 w-3" />
-                      {config.label}
-                    </Badge>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    {new Date(r.created_at).toLocaleString('pt-BR')}
-                    {r.approved_by && ` • ${r.status === 'approved' ? 'Aprovado' : 'Rejeitado'} por ${profileNames[r.approved_by] || 'Admin'}`}
-                  </p>
-                  {r.admin_note && (
-                    <div className="flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-secondary/40 border border-border/20">
-                      <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
-                      <p className="text-xs text-muted-foreground">{r.admin_note}</p>
-                    </div>
-                  )}
-                </div>
-                {onReview && r.status === 'pending' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 gap-1.5 border-primary/30 hover:bg-primary/10 hover:border-primary/50"
-                    onClick={() => onReview(r.id)}
-                  >
-                    Avaliar
-                  </Button>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-    </div>
   );
 }
