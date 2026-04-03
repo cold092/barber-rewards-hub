@@ -59,7 +59,7 @@ self.addEventListener("push", (event) => {
         tag: tag || "follow-up-push",
         data: data || {},
         vibrate: [200, 100, 200],
-        actions: [{ action: "open", title: "Ver leads" }],
+        actions: [{ action: "open", title: tag === "redemption-push" ? "Ver resgates" : "Ver leads" }],
       })
     );
   } catch (e) {
