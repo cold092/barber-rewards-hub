@@ -53,6 +53,16 @@ export async function createRedemption(params: {
   return { success: true };
 }
 
+async function notifyRedemption(redemptionId: string, status: string) {
+  try {
+    await supabase.functions.invoke('notify-redemption', {
+      body: { redemption_id: redemptionId, status },
+    });
+  } catch (e) {
+    console.error('Error sending redemption notification:', e);
+  }
+}
+
 export async function approveRedemption(redemptionId: string, adminNote?: string): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase.rpc('approve_redemption', {
     _redemption_id: redemptionId,
@@ -63,6 +73,8 @@ export async function approveRedemption(redemptionId: string, adminNote?: string
     console.error('Error approving redemption:', error);
     return { success: false, error: error.message };
   }
+
+  notifyRedemption(redemptionId, 'approved');
   return { success: true };
 }
 
@@ -76,5 +88,7 @@ export async function rejectRedemption(redemptionId: string, adminNote?: string)
     console.error('Error rejecting redemption:', error);
     return { success: false, error: error.message };
   }
+
+  notifyRedemption(redemptionId, 'rejected');
   return { success: true };
 }
