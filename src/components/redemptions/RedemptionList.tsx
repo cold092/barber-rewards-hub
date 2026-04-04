@@ -54,7 +54,8 @@ export default function RedemptionList({
                 <div className="flex-1 min-w-0 space-y-1">
                   {showUser && (
                     <p className="text-xs font-semibold text-primary">
-                      {profileNames[r.profile_id] || 'Usuário'}
+                      {r.client_id ? (clientNames[r.client_id] || 'Cliente') : (profileNames[r.profile_id] || 'Usuário')}
+                      {r.client_id && <span className="text-muted-foreground font-normal ml-1">(Cliente)</span>}
                     </p>
                   )}
                   <p className="text-sm font-medium">{r.description}</p>
