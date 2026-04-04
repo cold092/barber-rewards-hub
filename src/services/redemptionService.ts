@@ -92,3 +92,57 @@ export async function rejectRedemption(redemptionId: string, adminNote?: string)
   notifyRedemption(redemptionId, 'rejected');
   return { success: true };
 }
+
+export async function createClientRedemption(params: {
+  organization_id: string;
+  client_id: string;
+  description: string;
+  points: number;
+}): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('redemptions')
+    .insert({
+      organization_id: params.organization_id,
+      client_id: params.client_id,
+      profile_id: '00000000-0000-0000-0000-000000000000',
+      user_id: '00000000-0000-0000-0000-000000000000',
+      description: params.description,
+      points: params.points,
+    } as any);
+
+  if (error) {
+    console.error('Error creating client redemption:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function approveClientRedemption(redemptionId: string, adminNote?: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.rpc('approve_client_redemption' as any, {
+    _redemption_id: redemptionId,
+    _admin_note: adminNote || null,
+  });
+
+  if (error) {
+    console.error('Error approving client redemption:', error);
+    return { success: false, error: error.message };
+  }
+
+  notifyRedemption(redemptionId, 'approved');
+  return { success: true };
+}
+
+export async function rejectClientRedemption(redemptionId: string, adminNote?: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.rpc('reject_client_redemption' as any, {
+    _redemption_id: redemptionId,
+    _admin_note: adminNote || null,
+  });
+
+  if (error) {
+    console.error('Error rejecting client redemption:', error);
+    return { success: false, error: error.message };
+  }
+
+  notifyRedemption(redemptionId, 'rejected');
+  return { success: true };
+}
