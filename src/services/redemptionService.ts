@@ -7,6 +7,7 @@ export interface Redemption {
   organization_id: string;
   profile_id: string;
   user_id: string;
+  client_id: string | null;
   description: string;
   points: number;
   status: RedemptionStatus;
