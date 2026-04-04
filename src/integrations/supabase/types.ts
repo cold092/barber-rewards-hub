@@ -20,36 +20,42 @@ export type Database = {
           created_by: string | null
           email: string | null
           id: string
+          lifetime_points: number
           name: string
           notes: string | null
           organization_id: string
           phone: string | null
           plan_id: string | null
           updated_at: string
+          wallet_balance: number
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           email?: string | null
           id?: string
+          lifetime_points?: number
           name: string
           notes?: string | null
           organization_id: string
           phone?: string | null
           plan_id?: string | null
           updated_at?: string
+          wallet_balance?: number
         }
         Update: {
           created_at?: string
           created_by?: string | null
           email?: string | null
           id?: string
+          lifetime_points?: number
           name?: string
           notes?: string | null
           organization_id?: string
           phone?: string | null
           plan_id?: string | null
           updated_at?: string
+          wallet_balance?: number
         }
         Relationships: [
           {
@@ -299,6 +305,7 @@ export type Database = {
         Row: {
           admin_note: string | null
           approved_by: string | null
+          client_id: string | null
           created_at: string
           description: string
           id: string
@@ -312,6 +319,7 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           approved_by?: string | null
+          client_id?: string | null
           created_at?: string
           description: string
           id?: string
@@ -325,6 +333,7 @@ export type Database = {
         Update: {
           admin_note?: string | null
           approved_by?: string | null
+          client_id?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -336,6 +345,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "redemptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "redemptions_organization_id_fkey"
             columns: ["organization_id"]
@@ -501,6 +517,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_client_redemption: {
+        Args: { _admin_note?: string; _redemption_id: string }
+        Returns: undefined
+      }
       approve_redemption: {
         Args: { _admin_note?: string; _redemption_id: string }
         Returns: undefined
@@ -516,6 +536,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      reject_client_redemption: {
+        Args: { _admin_note?: string; _redemption_id: string }
+        Returns: undefined
       }
       reject_redemption: {
         Args: { _admin_note?: string; _redemption_id: string }
