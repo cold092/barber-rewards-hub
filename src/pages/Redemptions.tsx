@@ -121,7 +121,7 @@ export default function Redemptions() {
         return;
       }
       const client = clients.find(c => c.id === selectedClientId);
-      if (client && pts > client.wallet_balance) {
+      if (client && pts > client.lead_points) {
         toast.error('Saldo insuficiente do cliente');
         return;
       }
@@ -411,7 +411,7 @@ export default function Redemptions() {
                       <SelectContent>
                         {clients.map(c => (
                           <SelectItem key={c.id} value={c.id}>
-                            {c.name} ({c.wallet_balance} pts)
+                            {c.name} ({c.lead_points} pts)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -421,7 +421,7 @@ export default function Redemptions() {
                     <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 flex items-center gap-3">
                       <Coins className="h-4 w-4 text-primary shrink-0" />
                       <p className="text-sm">
-                        Saldo do cliente: <span className="font-bold text-primary">{selectedClient.wallet_balance} pts</span>
+                        Saldo do cliente: <span className="font-bold text-primary">{selectedClient.lead_points} pts</span>
                       </p>
                     </div>
                   )}
