@@ -19,6 +19,7 @@ export default function RedemptionList({
   items,
   statusConfig,
   profileNames,
+  clientNames,
   showUser,
   onReview,
 }: RedemptionListProps) {
