@@ -28,7 +28,7 @@ import RewardCatalog from '@/components/redemptions/RewardCatalog';
 interface ClientOption {
   id: string;
   name: string;
-  wallet_balance: number;
+  lead_points: number;
 }
 
 export default function Redemptions() {
@@ -76,27 +76,28 @@ export default function Redemptions() {
       }
     }
 
-    // Load client names for client redemptions
-    const clientIds = [...new Set(data.filter(r => r.client_id).map(r => r.client_id!))];
-    if (clientIds.length > 0) {
-      const { data: clientsData } = await supabase
-        .from('clients')
-        .select('id, name')
-        .in('id', clientIds);
-      if (clientsData) {
+    // Load client names for client redemptions (from referrals)
+    const referralIds = [...new Set(data.filter(r => r.referral_id).map(r => r.referral_id!))];
+    if (referralIds.length > 0) {
+      const { data: referralsData } = await supabase
+        .from('referrals')
+        .select('id, lead_name')
+        .in('id', referralIds);
+      if (referralsData) {
         const names: Record<string, string> = {};
-        clientsData.forEach(c => { names[c.id] = c.name; });
+        referralsData.forEach(c => { names[c.id] = c.lead_name; });
         setClientNames(names);
       }
     }
 
-    // Load all clients for the selector
+    // Load all clients (converted referrals) for the selector
     const { data: allClients } = await supabase
-      .from('clients')
-      .select('id, name, wallet_balance')
-      .order('name');
+      .from('referrals')
+      .select('id, lead_name, lead_points')
+      .or('is_client.eq.true,status.eq.converted')
+      .order('lead_name');
     if (allClients) {
-      setClients(allClients as unknown as ClientOption[]);
+      setClients(allClients.map(c => ({ id: c.id, name: c.lead_name, lead_points: c.lead_points })));
     }
 
     setLoading(false);
@@ -121,14 +122,14 @@ export default function Redemptions() {
         return;
       }
       const client = clients.find(c => c.id === selectedClientId);
-      if (client && pts > client.wallet_balance) {
+      if (client && pts > client.lead_points) {
         toast.error('Saldo insuficiente do cliente');
         return;
       }
       setSubmitting(true);
       const result = await createClientRedemption({
         organization_id: profile?.organization_id || '',
-        client_id: selectedClientId,
+        referral_id: selectedClientId,
         description: description.trim(),
         points: pts,
       });
@@ -179,7 +180,7 @@ export default function Redemptions() {
   const handleApprove = async (id: string) => {
     setProcessingId(id);
     const redemption = redemptions.find(r => r.id === id);
-    const isClientRedemption = !!redemption?.client_id;
+    const isClientRedemption = !!redemption?.referral_id;
     const fn = isClientRedemption ? approveClientRedemption : approveRedemption;
     const result = await fn(id, adminNote.trim() || undefined);
     if (result.success) {
@@ -200,7 +201,7 @@ export default function Redemptions() {
     }
     setProcessingId(id);
     const redemption = redemptions.find(r => r.id === id);
-    const isClientRedemption = !!redemption?.client_id;
+    const isClientRedemption = !!redemption?.referral_id;
     const fn = isClientRedemption ? rejectClientRedemption : rejectRedemption;
     const result = await fn(id, adminNote.trim());
     if (result.success) {
@@ -221,12 +222,12 @@ export default function Redemptions() {
   };
 
   const getDisplayName = (r: Redemption) => {
-    if (r.client_id) return clientNames[r.client_id] || 'Cliente';
+    if (r.referral_id) return clientNames[r.referral_id] || 'Cliente';
     return profileNames[r.profile_id] || 'Usuário';
   };
 
-  const myRedemptions = redemptions.filter(r => r.user_id === user?.id && !r.client_id);
-  const clientRedemptions = redemptions.filter(r => !!r.client_id);
+  const myRedemptions = redemptions.filter(r => r.user_id === user?.id && !r.referral_id);
+  const clientRedemptions = redemptions.filter(r => !!r.referral_id);
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
   const allSorted = [...redemptions].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -411,7 +412,7 @@ export default function Redemptions() {
                       <SelectContent>
                         {clients.map(c => (
                           <SelectItem key={c.id} value={c.id}>
-                            {c.name} ({c.wallet_balance} pts)
+                            {c.name} ({c.lead_points} pts)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -421,7 +422,7 @@ export default function Redemptions() {
                     <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 flex items-center gap-3">
                       <Coins className="h-4 w-4 text-primary shrink-0" />
                       <p className="text-sm">
-                        Saldo do cliente: <span className="font-bold text-primary">{selectedClient.wallet_balance} pts</span>
+                        Saldo do cliente: <span className="font-bold text-primary">{selectedClient.lead_points} pts</span>
                       </p>
                     </div>
                   )}
@@ -452,7 +453,7 @@ export default function Redemptions() {
                   placeholder="Ex: 50"
                   className="h-10 bg-background/40 border-border/30 focus:border-primary/40"
                   min={1}
-                  max={redeemMode === 'client' ? selectedClient?.wallet_balance || 0 : profile?.wallet_balance || 0}
+                  max={redeemMode === 'client' ? selectedClient?.lead_points || 0 : profile?.wallet_balance || 0}
                 />
               </div>
             </div>
@@ -484,10 +485,10 @@ export default function Redemptions() {
             {reviewingId && (() => {
               const r = redemptions.find(x => x.id === reviewingId);
               if (!r) return null;
-              const name = r.client_id
-                ? (clientNames[r.client_id] || 'Cliente')
+              const name = r.referral_id
+                ? (clientNames[r.referral_id] || 'Cliente')
                 : (profileNames[r.profile_id] || 'Usuário');
-              const typeLabel = r.client_id ? '(Cliente)' : '(Colaborador)';
+              const typeLabel = r.referral_id ? '(Cliente)' : '(Colaborador)';
               return (
                 <div className="space-y-4 py-2">
                   <div className="p-4 rounded-xl bg-secondary/30 border border-border/30 space-y-2">

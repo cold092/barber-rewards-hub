@@ -7,7 +7,7 @@ export interface Redemption {
   organization_id: string;
   profile_id: string;
   user_id: string;
-  client_id: string | null;
+  referral_id: string | null;
   description: string;
   points: number;
   status: RedemptionStatus;
@@ -96,7 +96,7 @@ export async function rejectRedemption(redemptionId: string, adminNote?: string)
 
 export async function createClientRedemption(params: {
   organization_id: string;
-  client_id: string;
+  referral_id: string;
   description: string;
   points: number;
 }): Promise<{ success: boolean; error?: string }> {
@@ -104,7 +104,7 @@ export async function createClientRedemption(params: {
     .from('redemptions')
     .insert({
       organization_id: params.organization_id,
-      client_id: params.client_id,
+      referral_id: params.referral_id,
       profile_id: '00000000-0000-0000-0000-000000000000',
       user_id: '00000000-0000-0000-0000-000000000000',
       description: params.description,
