@@ -10,6 +10,7 @@ interface RedemptionListProps {
   items: Redemption[];
   statusConfig: Record<string, { label: string; icon: any; className: string }>;
   profileNames: Record<string, string>;
+  clientNames: Record<string, string>;
   showUser: boolean;
   onReview?: (id: string) => void;
 }
@@ -18,6 +19,7 @@ export default function RedemptionList({
   items,
   statusConfig,
   profileNames,
+  clientNames,
   showUser,
   onReview,
 }: RedemptionListProps) {
@@ -52,7 +54,8 @@ export default function RedemptionList({
                 <div className="flex-1 min-w-0 space-y-1">
                   {showUser && (
                     <p className="text-xs font-semibold text-primary">
-                      {profileNames[r.profile_id] || 'Usuário'}
+                      {r.client_id ? (clientNames[r.client_id] || 'Cliente') : (profileNames[r.profile_id] || 'Usuário')}
+                      {r.client_id && <span className="text-muted-foreground font-normal ml-1">(Cliente)</span>}
                     </p>
                   )}
                   <p className="text-sm font-medium">{r.description}</p>
