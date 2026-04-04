@@ -129,7 +129,7 @@ export default function Redemptions() {
       setSubmitting(true);
       const result = await createClientRedemption({
         organization_id: profile?.organization_id || '',
-        client_id: selectedClientId,
+        referral_id: selectedClientId,
         description: description.trim(),
         points: pts,
       });
