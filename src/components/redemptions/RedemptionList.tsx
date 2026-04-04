@@ -10,6 +10,7 @@ interface RedemptionListProps {
   items: Redemption[];
   statusConfig: Record<string, { label: string; icon: any; className: string }>;
   profileNames: Record<string, string>;
+  clientNames: Record<string, string>;
   showUser: boolean;
   onReview?: (id: string) => void;
 }
