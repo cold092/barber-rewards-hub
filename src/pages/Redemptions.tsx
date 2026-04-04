@@ -76,27 +76,28 @@ export default function Redemptions() {
       }
     }
 
-    // Load client names for client redemptions
-    const clientIds = [...new Set(data.filter(r => r.referral_id).map(r => r.referral_id!))];
-    if (clientIds.length > 0) {
-      const { data: clientsData } = await supabase
-        .from('clients')
-        .select('id, name')
-        .in('id', clientIds);
-      if (clientsData) {
+    // Load client names for client redemptions (from referrals)
+    const referralIds = [...new Set(data.filter(r => r.referral_id).map(r => r.referral_id!))];
+    if (referralIds.length > 0) {
+      const { data: referralsData } = await supabase
+        .from('referrals')
+        .select('id, lead_name')
+        .in('id', referralIds);
+      if (referralsData) {
         const names: Record<string, string> = {};
-        clientsData.forEach(c => { names[c.id] = c.name; });
+        referralsData.forEach(c => { names[c.id] = c.lead_name; });
         setClientNames(names);
       }
     }
 
-    // Load all clients for the selector
+    // Load all clients (converted referrals) for the selector
     const { data: allClients } = await supabase
-      .from('clients')
-      .select('id, name, wallet_balance')
-      .order('name');
+      .from('referrals')
+      .select('id, lead_name, lead_points')
+      .or('is_client.eq.true,status.eq.converted')
+      .order('lead_name');
     if (allClients) {
-      setClients(allClients as unknown as ClientOption[]);
+      setClients(allClients.map(c => ({ id: c.id, name: c.lead_name, lead_points: c.lead_points })));
     }
 
     setLoading(false);
