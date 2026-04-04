@@ -20,42 +20,36 @@ export type Database = {
           created_by: string | null
           email: string | null
           id: string
-          lifetime_points: number
           name: string
           notes: string | null
           organization_id: string
           phone: string | null
           plan_id: string | null
           updated_at: string
-          wallet_balance: number
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           email?: string | null
           id?: string
-          lifetime_points?: number
           name: string
           notes?: string | null
           organization_id: string
           phone?: string | null
           plan_id?: string | null
           updated_at?: string
-          wallet_balance?: number
         }
         Update: {
           created_at?: string
           created_by?: string | null
           email?: string | null
           id?: string
-          lifetime_points?: number
           name?: string
           notes?: string | null
           organization_id?: string
           phone?: string | null
           plan_id?: string | null
           updated_at?: string
-          wallet_balance?: number
         }
         Relationships: [
           {
@@ -305,13 +299,13 @@ export type Database = {
         Row: {
           admin_note: string | null
           approved_by: string | null
-          client_id: string | null
           created_at: string
           description: string
           id: string
           organization_id: string
           points: number
           profile_id: string
+          referral_id: string | null
           status: Database["public"]["Enums"]["redemption_status"]
           updated_at: string
           user_id: string
@@ -319,13 +313,13 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           approved_by?: string | null
-          client_id?: string | null
           created_at?: string
           description: string
           id?: string
           organization_id: string
           points: number
           profile_id: string
+          referral_id?: string | null
           status?: Database["public"]["Enums"]["redemption_status"]
           updated_at?: string
           user_id: string
@@ -333,30 +327,30 @@ export type Database = {
         Update: {
           admin_note?: string | null
           approved_by?: string | null
-          client_id?: string | null
           created_at?: string
           description?: string
           id?: string
           organization_id?: string
           points?: number
           profile_id?: string
+          referral_id?: string | null
           status?: Database["public"]["Enums"]["redemption_status"]
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "redemptions_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "redemptions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
             referencedColumns: ["id"]
           },
         ]
