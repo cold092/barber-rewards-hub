@@ -77,7 +77,7 @@ export default function Redemptions() {
     }
 
     // Load client names for client redemptions
-    const clientIds = [...new Set(data.filter(r => r.client_id).map(r => r.client_id!))];
+    const clientIds = [...new Set(data.filter(r => r.referral_id).map(r => r.referral_id!))];
     if (clientIds.length > 0) {
       const { data: clientsData } = await supabase
         .from('clients')
@@ -179,7 +179,7 @@ export default function Redemptions() {
   const handleApprove = async (id: string) => {
     setProcessingId(id);
     const redemption = redemptions.find(r => r.id === id);
-    const isClientRedemption = !!redemption?.client_id;
+    const isClientRedemption = !!redemption?.referral_id;
     const fn = isClientRedemption ? approveClientRedemption : approveRedemption;
     const result = await fn(id, adminNote.trim() || undefined);
     if (result.success) {
@@ -200,7 +200,7 @@ export default function Redemptions() {
     }
     setProcessingId(id);
     const redemption = redemptions.find(r => r.id === id);
-    const isClientRedemption = !!redemption?.client_id;
+    const isClientRedemption = !!redemption?.referral_id;
     const fn = isClientRedemption ? rejectClientRedemption : rejectRedemption;
     const result = await fn(id, adminNote.trim());
     if (result.success) {
@@ -221,12 +221,12 @@ export default function Redemptions() {
   };
 
   const getDisplayName = (r: Redemption) => {
-    if (r.client_id) return clientNames[r.client_id] || 'Cliente';
+    if (r.referral_id) return clientNames[r.referral_id] || 'Cliente';
     return profileNames[r.profile_id] || 'Usuário';
   };
 
-  const myRedemptions = redemptions.filter(r => r.user_id === user?.id && !r.client_id);
-  const clientRedemptions = redemptions.filter(r => !!r.client_id);
+  const myRedemptions = redemptions.filter(r => r.user_id === user?.id && !r.referral_id);
+  const clientRedemptions = redemptions.filter(r => !!r.referral_id);
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
   const allSorted = [...redemptions].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -484,10 +484,10 @@ export default function Redemptions() {
             {reviewingId && (() => {
               const r = redemptions.find(x => x.id === reviewingId);
               if (!r) return null;
-              const name = r.client_id
-                ? (clientNames[r.client_id] || 'Cliente')
+              const name = r.referral_id
+                ? (clientNames[r.referral_id] || 'Cliente')
                 : (profileNames[r.profile_id] || 'Usuário');
-              const typeLabel = r.client_id ? '(Cliente)' : '(Colaborador)';
+              const typeLabel = r.referral_id ? '(Cliente)' : '(Colaborador)';
               return (
                 <div className="space-y-4 py-2">
                   <div className="p-4 rounded-xl bg-secondary/30 border border-border/30 space-y-2">
