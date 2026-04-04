@@ -28,7 +28,7 @@ import RewardCatalog from '@/components/redemptions/RewardCatalog';
 interface ClientOption {
   id: string;
   name: string;
-  wallet_balance: number;
+  lead_points: number;
 }
 
 export default function Redemptions() {
