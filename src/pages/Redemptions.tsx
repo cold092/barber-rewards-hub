@@ -453,7 +453,7 @@ export default function Redemptions() {
                   placeholder="Ex: 50"
                   className="h-10 bg-background/40 border-border/30 focus:border-primary/40"
                   min={1}
-                  max={redeemMode === 'client' ? selectedClient?.wallet_balance || 0 : profile?.wallet_balance || 0}
+                  max={redeemMode === 'client' ? selectedClient?.lead_points || 0 : profile?.wallet_balance || 0}
                 />
               </div>
             </div>
