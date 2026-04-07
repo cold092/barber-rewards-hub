@@ -19,7 +19,7 @@ const fadeUp = {
 interface PointBreakdownItem {
   label: string;
   points: number;
-  type: 'referral' | 'conversion' | 'chain';
+  type: 'referral' | 'conversion' | 'chain' | 'redemption';
   date: string;
 }
 
