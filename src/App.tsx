@@ -18,13 +18,15 @@ import Reports from "./pages/Reports";
 import WhatsApp from "./pages/WhatsApp";
 import SettingsPage from "./pages/Settings";
 import Redemptions from "./pages/Redemptions";
+import ClientAuth from "./pages/ClientAuth";
+import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 // Protected route component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+function ProtectedRoute({ children, allowClient }: { children: React.ReactNode; allowClient?: boolean }) {
+  const { user, loading, role } = useAuth();
 
   if (loading) {
     return (
@@ -36,6 +38,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect client users to portal if they try to access admin pages
+  if (role === 'client' && !allowClient) {
+    return <Navigate to="/portal" replace />;
   }
 
   return <>{children}</>;
@@ -184,6 +191,18 @@ const AppRoutes = () => (
         <AuthRoute>
           <Auth />
         </AuthRoute>
+      }
+    />
+    <Route
+      path="/cliente"
+      element={<ClientAuth />}
+    />
+    <Route
+      path="/portal"
+      element={
+        <ProtectedRoute allowClient>
+          <ClientPortal />
+        </ProtectedRoute>
       }
     />
     <Route path="*" element={<NotFound />} />

@@ -358,6 +358,7 @@ export type Database = {
       referrals: {
         Row: {
           client_since: string | null
+          client_user_id: string | null
           contact_tag: string | null
           converted_plan_id: string | null
           created_at: string
@@ -383,6 +384,7 @@ export type Database = {
         }
         Insert: {
           client_since?: string | null
+          client_user_id?: string | null
           contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string
@@ -408,6 +410,7 @@ export type Database = {
         }
         Update: {
           client_since?: string | null
+          client_user_id?: string | null
           contact_tag?: string | null
           converted_plan_id?: string | null
           created_at?: string

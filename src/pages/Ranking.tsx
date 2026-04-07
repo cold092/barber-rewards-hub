@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Crown, ChevronDown, UserPlus, ArrowRightLeft, Star } from 'lucide-react';
+import { Trophy, Medal, Crown, ChevronDown, UserPlus, ArrowRightLeft, Star, Gift, Wallet } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ const fadeUp = {
 interface PointBreakdownItem {
   label: string;
   points: number;
-  type: 'referral' | 'conversion' | 'chain';
+  type: 'referral' | 'conversion' | 'chain' | 'redemption';
   date: string;
 }
 
@@ -142,17 +142,27 @@ export default function Ranking() {
 
       const actualPoints = clientReferral?.lead_points || 0;
 
-      // Get referrals made BY this client
-      const { data: referrals } = await supabase
-        .from('referrals')
-        .select('id, lead_name, lead_points, status, is_client, converted_plan_id, created_at')
-        .eq('referred_by_lead_id', clientId)
-        .order('created_at', { ascending: false });
+      // Get referrals made BY this client AND redemptions in parallel
+      const [referralsResult, redemptionsResult] = await Promise.all([
+        supabase
+          .from('referrals')
+          .select('id, lead_name, lead_points, status, is_client, converted_plan_id, created_at')
+          .eq('referred_by_lead_id', clientId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('redemptions')
+          .select('id, description, points, status, created_at')
+          .eq('referral_id', clientId)
+          .order('created_at', { ascending: false }),
+      ]);
+
+      const referrals = referralsResult.data || [];
+      const redemptions = redemptionsResult.data || [];
 
       const items: PointBreakdownItem[] = [];
       let conversionPointsTotal = 0;
 
-      (referrals || []).forEach((ref) => {
+      referrals.forEach((ref) => {
         if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
           const plan = getPlanById(ref.converted_plan_id);
           if (plan) {
@@ -167,17 +177,31 @@ export default function Ranking() {
         }
       });
 
-      // Registration bonus = actual lead_points minus conversion points
-      const registrationBonus = actualPoints - conversionPointsTotal;
+      // Registration bonus = actual lead_points minus conversion points (+ redeemed points back)
+      const approvedRedemptionPoints = redemptions
+        .filter(r => r.status === 'approved')
+        .reduce((sum, r) => sum + r.points, 0);
+      const registrationBonus = actualPoints - conversionPointsTotal + approvedRedemptionPoints;
       if (registrationBonus > 0) {
-        const totalReferrals = (referrals || []).length;
+        const totalReferrals = referrals.length;
         items.push({
           label: `Bônus de indicações (${totalReferrals} leads indicados)`,
           points: registrationBonus,
           type: 'referral',
-          date: referrals?.[referrals.length - 1]?.created_at || new Date().toISOString(),
+          date: referrals[referrals.length - 1]?.created_at || new Date().toISOString(),
         });
       }
+
+      // Add redemption history
+      redemptions.forEach((r) => {
+        const statusLabel = r.status === 'approved' ? '✓' : r.status === 'rejected' ? '✗' : '⏳';
+        items.push({
+          label: `${statusLabel} Resgate: ${r.description}`,
+          points: -(r.status === 'approved' ? r.points : 0),
+          type: 'redemption',
+          date: r.created_at,
+        });
+      });
 
       setClientBreakdowns(prev => ({ ...prev, [clientId]: items }));
     } catch (err) {
@@ -236,12 +260,14 @@ export default function Ranking() {
               <div key={i} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors">
                 <div className={cn(
                   'w-6 h-6 rounded-md flex items-center justify-center shrink-0',
-                  item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : 'bg-success/15'
+                  item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : item.type === 'redemption' ? 'bg-destructive/15' : 'bg-success/15'
                 )}>
                   {item.type === 'referral' ? (
                     <UserPlus className="h-3 w-3 text-info" />
                   ) : item.type === 'chain' ? (
                     <ArrowRightLeft className="h-3 w-3 text-warning" />
+                  ) : item.type === 'redemption' ? (
+                    <Gift className="h-3 w-3 text-destructive" />
                   ) : (
                     <Star className="h-3 w-3 text-success" />
                   )}
@@ -256,9 +282,10 @@ export default function Ranking() {
                 <span className={cn(
                   'text-xs font-bold shrink-0',
                   item.points === 0 ? 'text-muted-foreground' :
+                  item.type === 'redemption' ? 'text-destructive' :
                   item.type === 'referral' ? 'text-info' : item.type === 'chain' ? 'text-warning' : 'text-success'
                 )}>
-                  {item.points === 0 ? '—' : `+${item.points}`}
+                  {item.points === 0 ? '—' : item.points < 0 ? `${item.points}` : `+${item.points}`}
                 </span>
               </div>
             ))}
@@ -378,7 +405,14 @@ export default function Ranking() {
                   <p className={cn('font-semibold text-sm', index === 0 && 'text-primary')}>
                     {entry.clientName}
                   </p>
-                  <p className="text-xs text-muted-foreground">{entry.referralCount} indicações</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">{entry.referralCount} indicações</p>
+                    <span className="text-[10px] text-muted-foreground">•</span>
+                    <p className="text-xs text-success flex items-center gap-0.5">
+                      <Wallet className="h-3 w-3" />
+                      {entry.points} pts resgatáveis
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
