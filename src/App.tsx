@@ -188,6 +188,18 @@ const AppRoutes = () => (
         </AuthRoute>
       }
     />
+    <Route
+      path="/cliente"
+      element={<ClientAuth />}
+    />
+    <Route
+      path="/portal"
+      element={
+        <ProtectedRoute>
+          <ClientPortal />
+        </ProtectedRoute>
+      }
+    />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
