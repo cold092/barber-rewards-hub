@@ -260,12 +260,14 @@ export default function Ranking() {
               <div key={i} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-secondary/40 transition-colors">
                 <div className={cn(
                   'w-6 h-6 rounded-md flex items-center justify-center shrink-0',
-                  item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : 'bg-success/15'
+                  item.type === 'referral' ? 'bg-info/15' : item.type === 'chain' ? 'bg-warning/15' : item.type === 'redemption' ? 'bg-destructive/15' : 'bg-success/15'
                 )}>
                   {item.type === 'referral' ? (
                     <UserPlus className="h-3 w-3 text-info" />
                   ) : item.type === 'chain' ? (
                     <ArrowRightLeft className="h-3 w-3 text-warning" />
+                  ) : item.type === 'redemption' ? (
+                    <Gift className="h-3 w-3 text-destructive" />
                   ) : (
                     <Star className="h-3 w-3 text-success" />
                   )}
