@@ -142,17 +142,27 @@ export default function Ranking() {
 
       const actualPoints = clientReferral?.lead_points || 0;
 
-      // Get referrals made BY this client
-      const { data: referrals } = await supabase
-        .from('referrals')
-        .select('id, lead_name, lead_points, status, is_client, converted_plan_id, created_at')
-        .eq('referred_by_lead_id', clientId)
-        .order('created_at', { ascending: false });
+      // Get referrals made BY this client AND redemptions in parallel
+      const [referralsResult, redemptionsResult] = await Promise.all([
+        supabase
+          .from('referrals')
+          .select('id, lead_name, lead_points, status, is_client, converted_plan_id, created_at')
+          .eq('referred_by_lead_id', clientId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('redemptions')
+          .select('id, description, points, status, created_at')
+          .eq('referral_id', clientId)
+          .order('created_at', { ascending: false }),
+      ]);
+
+      const referrals = referralsResult.data || [];
+      const redemptions = redemptionsResult.data || [];
 
       const items: PointBreakdownItem[] = [];
       let conversionPointsTotal = 0;
 
-      (referrals || []).forEach((ref) => {
+      referrals.forEach((ref) => {
         if (ref.converted_plan_id && (ref.status === 'converted' || ref.is_client)) {
           const plan = getPlanById(ref.converted_plan_id);
           if (plan) {
@@ -167,17 +177,31 @@ export default function Ranking() {
         }
       });
 
-      // Registration bonus = actual lead_points minus conversion points
-      const registrationBonus = actualPoints - conversionPointsTotal;
+      // Registration bonus = actual lead_points minus conversion points (+ redeemed points back)
+      const approvedRedemptionPoints = redemptions
+        .filter(r => r.status === 'approved')
+        .reduce((sum, r) => sum + r.points, 0);
+      const registrationBonus = actualPoints - conversionPointsTotal + approvedRedemptionPoints;
       if (registrationBonus > 0) {
-        const totalReferrals = (referrals || []).length;
+        const totalReferrals = referrals.length;
         items.push({
           label: `Bônus de indicações (${totalReferrals} leads indicados)`,
           points: registrationBonus,
           type: 'referral',
-          date: referrals?.[referrals.length - 1]?.created_at || new Date().toISOString(),
+          date: referrals[referrals.length - 1]?.created_at || new Date().toISOString(),
         });
       }
+
+      // Add redemption history
+      redemptions.forEach((r) => {
+        const statusLabel = r.status === 'approved' ? '✓' : r.status === 'rejected' ? '✗' : '⏳';
+        items.push({
+          label: `${statusLabel} Resgate: ${r.description}`,
+          points: -(r.status === 'approved' ? r.points : 0),
+          type: 'redemption',
+          date: r.created_at,
+        });
+      });
 
       setClientBreakdowns(prev => ({ ...prev, [clientId]: items }));
     } catch (err) {
