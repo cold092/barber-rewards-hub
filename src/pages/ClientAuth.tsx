@@ -71,34 +71,22 @@ export default function ClientAuth() {
     setNotFound(false);
 
     try {
-      // Normalize phone: remove non-digits
-      const normalizedPhone = phone.replace(/\D/g, '');
-
-      // Search in referrals (converted clients)
-      const { data: referrals } = await supabase
-        .from('referrals')
-        .select('id, lead_name, lead_phone, lead_points, is_client, status, client_user_id')
-        .or('is_client.eq.true,status.eq.converted');
-
-      const matchedReferral = referrals?.find(r => {
-        const refPhone = r.lead_phone.replace(/\D/g, '');
-        return refPhone.includes(normalizedPhone) || normalizedPhone.includes(refPhone);
+      const { data, error } = await supabase.functions.invoke('client-phone-lookup', {
+        body: { phone },
       });
 
-      if (matchedReferral) {
-        if (matchedReferral.client_user_id) {
-          toast.info('Este número já está vinculado a uma conta. Faça login.');
-          setNotFound(false);
-          setFoundRecord(null);
-        } else {
-          setFoundRecord({
-            type: 'referral',
-            id: matchedReferral.id,
-            name: matchedReferral.lead_name,
-            phone: matchedReferral.lead_phone,
-            points: matchedReferral.lead_points,
-          });
-        }
+      if (error) throw error;
+
+      if (data.already_linked) {
+        toast.info('Este número já está vinculado a uma conta. Faça login.');
+      } else if (data.found) {
+        setFoundRecord({
+          type: 'referral',
+          id: data.id,
+          name: data.name,
+          phone: data.phone,
+          points: data.points,
+        });
       } else {
         setNotFound(true);
       }
