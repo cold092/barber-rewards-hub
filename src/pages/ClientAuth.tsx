@@ -124,14 +124,6 @@ export default function ClientAuth() {
 
       if (error) throw error;
 
-      // Link the referral to the new user
-      if (data.user) {
-        await supabase
-          .from('referrals')
-          .update({ client_user_id: data.user.id } as any)
-          .eq('id', foundRecord.id);
-      }
-
       toast.success('Conta criada! Verifique seu email para confirmar.');
     } catch (err: any) {
       if (err.message?.includes('already registered')) {
