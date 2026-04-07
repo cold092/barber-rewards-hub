@@ -25,8 +25,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 // Protected route component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+function ProtectedRoute({ children, allowClient }: { children: React.ReactNode; allowClient?: boolean }) {
+  const { user, loading, role } = useAuth();
 
   if (loading) {
     return (
@@ -38,6 +38,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect client users to portal if they try to access admin pages
+  if (role === 'client' && !allowClient) {
+    return <Navigate to="/portal" replace />;
   }
 
   return <>{children}</>;
