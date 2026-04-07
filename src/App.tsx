@@ -200,7 +200,7 @@ const AppRoutes = () => (
     <Route
       path="/portal"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute allowClient>
           <ClientPortal />
         </ProtectedRoute>
       }
