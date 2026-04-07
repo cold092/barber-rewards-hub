@@ -18,6 +18,8 @@ import Reports from "./pages/Reports";
 import WhatsApp from "./pages/WhatsApp";
 import SettingsPage from "./pages/Settings";
 import Redemptions from "./pages/Redemptions";
+import ClientAuth from "./pages/ClientAuth";
+import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
