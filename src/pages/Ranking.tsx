@@ -405,7 +405,14 @@ export default function Ranking() {
                   <p className={cn('font-semibold text-sm', index === 0 && 'text-primary')}>
                     {entry.clientName}
                   </p>
-                  <p className="text-xs text-muted-foreground">{entry.referralCount} indicações</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">{entry.referralCount} indicações</p>
+                    <span className="text-[10px] text-muted-foreground">•</span>
+                    <p className="text-xs text-success flex items-center gap-0.5">
+                      <Wallet className="h-3 w-3" />
+                      {entry.points} pts resgatáveis
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
