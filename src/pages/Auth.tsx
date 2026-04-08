@@ -189,9 +189,14 @@ export default function Auth() {
           </CardContent>
         </Card>
         
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Cadastre sua barbearia e comece a gerenciar indicações
-        </p>
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Cadastre sua barbearia e comece a gerenciar indicações
+          </p>
+          <a href="/cliente" className="inline-flex items-center gap-1 text-sm text-primary hover:underline font-medium">
+            Sou cliente — acessar meu portal
+          </a>
+        </div>
       </div>
     </div>
   );
