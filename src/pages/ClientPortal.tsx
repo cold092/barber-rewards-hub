@@ -349,6 +349,65 @@ export default function ClientPortal() {
           {/* My Referrals */}
           <TabsContent value="referrals" className="mt-4">
             <div className="space-y-3">
+              {/* Refer Friend Button */}
+              <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-success hover:bg-success/90 text-success-foreground">
+                    <Plus className="h-4 w-4 mr-2" /> Indicar um amigo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Indicar um amigo</DialogTitle>
+                    <DialogDescription>
+                      Indique um amigo e ganhe +{REFERRAL_BONUS_POINTS} pontos quando ele for cadastrado!
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleReferFriend} className="space-y-4 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="friend-name">Nome do amigo</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="friend-name"
+                          placeholder="Nome completo"
+                          value={newFriendName}
+                          onChange={(e) => setNewFriendName(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="friend-phone">Telefone</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="friend-phone"
+                          type="tel"
+                          placeholder="(11) 99999-9999"
+                          value={newFriendPhone}
+                          onChange={(e) => setNewFriendPhone(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-success hover:bg-success/90 text-success-foreground"
+                      disabled={submittingReferral}
+                    >
+                      {submittingReferral ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
+                      ) : (
+                        <><UserPlus className="h-4 w-4 mr-2" /> Indicar amigo</>
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
               {myReferrals.length === 0 ? (
                 <div className="text-center py-8">
                   <UserPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
