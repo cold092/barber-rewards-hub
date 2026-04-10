@@ -48,7 +48,10 @@ export default function ClientPortal() {
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
-
+  const [referralDialogOpen, setReferralDialogOpen] = useState(false);
+  const [newFriendName, setNewFriendName] = useState('');
+  const [newFriendPhone, setNewFriendPhone] = useState('');
+  const [submittingReferral, setSubmittingReferral] = useState(false);
   useEffect(() => {
     if (user) loadData();
   }, [user]);
