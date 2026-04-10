@@ -131,6 +131,46 @@ export default function ClientPortal() {
     window.location.href = '/cliente';
   };
 
+  const handleReferFriend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newFriendName.trim();
+    const phone = newFriendPhone.trim();
+
+    if (!name || name.length < 2) {
+      toast.error('Nome deve ter no mínimo 2 caracteres');
+      return;
+    }
+    if (!isValidPhone(phone)) {
+      toast.error('Telefone inválido (mínimo 10 dígitos)');
+      return;
+    }
+    if (!referral) return;
+
+    setSubmittingReferral(true);
+    try {
+      const result = await registerLeadByLead(
+        referral.referrer_id,
+        referral.referrer_name,
+        referral.id,
+        { leadName: name, leadPhone: phone }
+      );
+
+      if (result.success) {
+        toast.success(`${name} indicado(a) com sucesso! Você ganhou +${REFERRAL_BONUS_POINTS} pontos 🎉`);
+        setNewFriendName('');
+        setNewFriendPhone('');
+        setReferralDialogOpen(false);
+        loadData();
+      } else {
+        toast.error(result.error || 'Erro ao indicar amigo');
+      }
+    } catch (err) {
+      console.error('Refer friend error:', err);
+      toast.error('Erro ao indicar amigo');
+    }
+    setSubmittingReferral(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
