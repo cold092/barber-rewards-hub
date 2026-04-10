@@ -5,14 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Wallet, Gift, Users, LogOut, Trophy, Clock, CheckCircle2,
-  XCircle, Star, UserPlus, Loader2,
+  XCircle, Star, UserPlus, Loader2, Phone, User, Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getPlanById } from '@/config/plans';
+import { registerLeadByLead } from '@/services/referralService';
+import { isValidPhone } from '@/utils/whatsapp';
+import { REFERRAL_BONUS_POINTS } from '@/config/plans';
 import type { Redemption } from '@/services/redemptionService';
 
 interface ClientReferral {
@@ -40,7 +48,10 @@ export default function ClientPortal() {
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
-
+  const [referralDialogOpen, setReferralDialogOpen] = useState(false);
+  const [newFriendName, setNewFriendName] = useState('');
+  const [newFriendPhone, setNewFriendPhone] = useState('');
+  const [submittingReferral, setSubmittingReferral] = useState(false);
   useEffect(() => {
     if (user) loadData();
   }, [user]);
@@ -118,6 +129,46 @@ export default function ClientPortal() {
   const handleLogout = async () => {
     await signOut();
     window.location.href = '/cliente';
+  };
+
+  const handleReferFriend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newFriendName.trim();
+    const phone = newFriendPhone.trim();
+
+    if (!name || name.length < 2) {
+      toast.error('Nome deve ter no mínimo 2 caracteres');
+      return;
+    }
+    if (!isValidPhone(phone)) {
+      toast.error('Telefone inválido (mínimo 10 dígitos)');
+      return;
+    }
+    if (!referral) return;
+
+    setSubmittingReferral(true);
+    try {
+      const result = await registerLeadByLead(
+        referral.referrer_id,
+        referral.referrer_name,
+        referral.id,
+        { leadName: name, leadPhone: phone }
+      );
+
+      if (result.success) {
+        toast.success(`${name} indicado(a) com sucesso! Você ganhou +${REFERRAL_BONUS_POINTS} pontos 🎉`);
+        setNewFriendName('');
+        setNewFriendPhone('');
+        setReferralDialogOpen(false);
+        loadData();
+      } else {
+        toast.error(result.error || 'Erro ao indicar amigo');
+      }
+    } catch (err) {
+      console.error('Refer friend error:', err);
+      toast.error('Erro ao indicar amigo');
+    }
+    setSubmittingReferral(false);
   };
 
   if (loading) {
@@ -298,6 +349,65 @@ export default function ClientPortal() {
           {/* My Referrals */}
           <TabsContent value="referrals" className="mt-4">
             <div className="space-y-3">
+              {/* Refer Friend Button */}
+              <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-success hover:bg-success/90 text-success-foreground">
+                    <Plus className="h-4 w-4 mr-2" /> Indicar um amigo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Indicar um amigo</DialogTitle>
+                    <DialogDescription>
+                      Indique um amigo e ganhe +{REFERRAL_BONUS_POINTS} pontos quando ele for cadastrado!
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleReferFriend} className="space-y-4 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="friend-name">Nome do amigo</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="friend-name"
+                          placeholder="Nome completo"
+                          value={newFriendName}
+                          onChange={(e) => setNewFriendName(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="friend-phone">Telefone</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="friend-phone"
+                          type="tel"
+                          placeholder="(11) 99999-9999"
+                          value={newFriendPhone}
+                          onChange={(e) => setNewFriendPhone(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-success hover:bg-success/90 text-success-foreground"
+                      disabled={submittingReferral}
+                    >
+                      {submittingReferral ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
+                      ) : (
+                        <><UserPlus className="h-4 w-4 mr-2" /> Indicar amigo</>
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
               {myReferrals.length === 0 ? (
                 <div className="text-center py-8">
                   <UserPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
