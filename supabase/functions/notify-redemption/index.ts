@@ -188,15 +188,32 @@ Deno.serve(async (req) => {
       body += ` • "${redemption.admin_note}"`;
     }
 
-    const sent = await sendPushToUser(
-      supabase,
-      redemption.user_id,
-      title,
-      body,
-      "/resgates",
-      privateKey,
-      publicKeyBytes
-    );
+    let totalSent = 0;
+    const DUMMY_UUID = "00000000-0000-0000-0000-000000000000";
+
+    // Notify staff member (if not a dummy user_id)
+    if (redemption.user_id && redemption.user_id !== DUMMY_UUID) {
+      totalSent += await sendPushToUser(
+        supabase, redemption.user_id, title, body, "/resgates", privateKey, publicKeyBytes
+      );
+    }
+
+    // Notify client via referral's client_user_id
+    if (redemption.referral_id) {
+      const { data: referral } = await supabase
+        .from("referrals")
+        .select("client_user_id")
+        .eq("id", redemption.referral_id)
+        .single();
+
+      if (referral?.client_user_id && referral.client_user_id !== DUMMY_UUID) {
+        totalSent += await sendPushToUser(
+          supabase, referral.client_user_id, title, body, "/portal", privateKey, publicKeyBytes
+        );
+      }
+    }
+
+    const sent = totalSent;
 
     return new Response(JSON.stringify({ sent }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
