@@ -37,8 +37,10 @@ export default function Redemptions() {
   const [catalogItems, setCatalogItems] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [description, setDescription] = useState('');
-  const [points, setPoints] = useState('');
+  const [selectedRewardId, setSelectedRewardId] = useState('');
+  const [customDescription, setCustomDescription] = useState('');
+  const [customPoints, setCustomPoints] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [redeemMode, setRedeemMode] = useState<'self' | 'client'>('self');
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -105,12 +107,29 @@ export default function Redemptions() {
 
   useEffect(() => { loadData(); }, []);
 
+  const getSelectedReward = () => catalogItems.find(i => i.id === selectedRewardId);
+
   const handleSubmit = async () => {
-    if (!description.trim() || !points.trim()) {
-      toast.error('Preencha todos os campos');
-      return;
+    let desc: string;
+    let pts: number;
+
+    if (useCustom) {
+      if (!customDescription.trim() || !customPoints.trim()) {
+        toast.error('Preencha todos os campos');
+        return;
+      }
+      desc = customDescription.trim();
+      pts = parseInt(customPoints);
+    } else {
+      const reward = getSelectedReward();
+      if (!reward) {
+        toast.error('Selecione um prêmio do catálogo');
+        return;
+      }
+      desc = reward.name;
+      pts = reward.points_cost;
     }
-    const pts = parseInt(points);
+
     if (!pts || pts <= 0) {
       toast.error('Pontos devem ser maior que zero');
       return;
@@ -130,15 +149,12 @@ export default function Redemptions() {
       const result = await createClientRedemption({
         organization_id: profile?.organization_id || '',
         referral_id: selectedClientId,
-        description: description.trim(),
+        description: desc,
         points: pts,
       });
       if (result.success) {
         toast.success('Resgate do cliente registrado!');
-        setShowNewDialog(false);
-        setDescription('');
-        setPoints('');
-        setSelectedClientId('');
+        resetDialog();
         loadData();
       } else {
         toast.error(result.error || 'Erro ao registrar resgate');
@@ -154,20 +170,27 @@ export default function Redemptions() {
         organization_id: profile?.organization_id || '',
         profile_id: profile?.id || '',
         user_id: user?.id || '',
-        description: description.trim(),
+        description: desc,
         points: pts,
       });
       if (result.success) {
         toast.success('Solicitação de resgate enviada!');
-        setShowNewDialog(false);
-        setDescription('');
-        setPoints('');
+        resetDialog();
         loadData();
       } else {
         toast.error(result.error || 'Erro ao solicitar resgate');
       }
       setSubmitting(false);
     }
+  };
+
+  const resetDialog = () => {
+    setShowNewDialog(false);
+    setSelectedRewardId('');
+    setCustomDescription('');
+    setCustomPoints('');
+    setUseCustom(false);
+    setSelectedClientId('');
   };
 
   const handleCatalogRedeem = (item: RewardItem) => {
