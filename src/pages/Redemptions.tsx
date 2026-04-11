@@ -195,8 +195,8 @@ export default function Redemptions() {
 
   const handleCatalogRedeem = (item: RewardItem) => {
     setRedeemMode('self');
-    setDescription(item.name);
-    setPoints(String(item.points_cost));
+    setSelectedRewardId(item.id);
+    setUseCustom(false);
     setShowNewDialog(true);
   };
 
@@ -293,14 +293,14 @@ export default function Redemptions() {
             <Button
               variant="outline"
               className="gap-2 border-primary/30 hover:bg-primary/10"
-              onClick={() => { setRedeemMode('client'); setDescription(''); setPoints(''); setSelectedClientId(''); setShowNewDialog(true); }}
+              onClick={() => { setRedeemMode('client'); setSelectedRewardId(''); setUseCustom(false); setSelectedClientId(''); setShowNewDialog(true); }}
             >
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Resgate Cliente</span>
             </Button>
             <Button
               className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90 transition-opacity"
-              onClick={() => { setRedeemMode('self'); setDescription(''); setPoints(''); setShowNewDialog(true); }}
+              onClick={() => { setRedeemMode('self'); setSelectedRewardId(''); setUseCustom(false); setShowNewDialog(true); }}
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Resgate Livre</span>
@@ -458,27 +458,75 @@ export default function Redemptions() {
                   </p>
                 </div>
               )}
+              {/* Catalog Selector */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">O que deseja resgatar?</label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: Desconto de R$50 no próximo corte, produto X..."
-                  className="min-h-[80px] bg-background/40 border-border/30 focus:border-primary/40 rounded-xl resize-none"
-                />
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Selecionar prêmio</label>
+                <Select value={useCustom ? '__custom__' : selectedRewardId} onValueChange={(val) => {
+                  if (val === '__custom__') {
+                    setUseCustom(true);
+                    setSelectedRewardId('');
+                  } else {
+                    setUseCustom(false);
+                    setSelectedRewardId(val);
+                  }
+                }}>
+                  <SelectTrigger className="bg-background/40 border-border/30">
+                    <SelectValue placeholder="Escolha um prêmio do catálogo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeCatalogItems.map(item => (
+                      <SelectItem key={item.id} value={item.id}>
+                        <div className="flex items-center justify-between gap-3 w-full">
+                          <span>{item.name}</span>
+                          <span className="text-xs font-bold text-primary ml-2">{item.points_cost} pts</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    {isAdmin && (
+                      <SelectItem value="__custom__">
+                        <span className="text-muted-foreground">✏️ Resgate personalizado</span>
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pontos a resgatar</label>
-                <Input
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(e.target.value)}
-                  placeholder="Ex: 50"
-                  className="h-10 bg-background/40 border-border/30 focus:border-primary/40"
-                  min={1}
-                  max={redeemMode === 'client' ? selectedClient?.lead_points || 0 : profile?.wallet_balance || 0}
-                />
-              </div>
+
+              {/* Show selected reward info */}
+              {!useCustom && getSelectedReward() && (
+                <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 space-y-1">
+                  <p className="text-sm font-semibold">{getSelectedReward()!.name}</p>
+                  {getSelectedReward()!.description && (
+                    <p className="text-xs text-muted-foreground">{getSelectedReward()!.description}</p>
+                  )}
+                  <p className="text-lg font-bold text-primary">{getSelectedReward()!.points_cost} pts</p>
+                </div>
+              )}
+
+              {/* Custom fields (admin only) */}
+              {useCustom && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">O que deseja resgatar?</label>
+                    <Textarea
+                      value={customDescription}
+                      onChange={(e) => setCustomDescription(e.target.value)}
+                      placeholder="Ex: Desconto de R$50 no próximo corte..."
+                      className="min-h-[60px] bg-background/40 border-border/30 focus:border-primary/40 rounded-xl resize-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pontos a resgatar</label>
+                    <Input
+                      type="number"
+                      value={customPoints}
+                      onChange={(e) => setCustomPoints(e.target.value)}
+                      placeholder="Ex: 50"
+                      className="h-10 bg-background/40 border-border/30 focus:border-primary/40"
+                      min={1}
+                    />
+                  </div>
+                </>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowNewDialog(false)} className="border-border/40">
