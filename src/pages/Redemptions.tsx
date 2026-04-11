@@ -37,8 +37,10 @@ export default function Redemptions() {
   const [catalogItems, setCatalogItems] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [description, setDescription] = useState('');
-  const [points, setPoints] = useState('');
+  const [selectedRewardId, setSelectedRewardId] = useState('');
+  const [customDescription, setCustomDescription] = useState('');
+  const [customPoints, setCustomPoints] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [redeemMode, setRedeemMode] = useState<'self' | 'client'>('self');
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -105,12 +107,29 @@ export default function Redemptions() {
 
   useEffect(() => { loadData(); }, []);
 
+  const getSelectedReward = () => catalogItems.find(i => i.id === selectedRewardId);
+
   const handleSubmit = async () => {
-    if (!description.trim() || !points.trim()) {
-      toast.error('Preencha todos os campos');
-      return;
+    let desc: string;
+    let pts: number;
+
+    if (useCustom) {
+      if (!customDescription.trim() || !customPoints.trim()) {
+        toast.error('Preencha todos os campos');
+        return;
+      }
+      desc = customDescription.trim();
+      pts = parseInt(customPoints);
+    } else {
+      const reward = getSelectedReward();
+      if (!reward) {
+        toast.error('Selecione um prêmio do catálogo');
+        return;
+      }
+      desc = reward.name;
+      pts = reward.points_cost;
     }
-    const pts = parseInt(points);
+
     if (!pts || pts <= 0) {
       toast.error('Pontos devem ser maior que zero');
       return;
@@ -130,15 +149,12 @@ export default function Redemptions() {
       const result = await createClientRedemption({
         organization_id: profile?.organization_id || '',
         referral_id: selectedClientId,
-        description: description.trim(),
+        description: desc,
         points: pts,
       });
       if (result.success) {
         toast.success('Resgate do cliente registrado!');
-        setShowNewDialog(false);
-        setDescription('');
-        setPoints('');
-        setSelectedClientId('');
+        resetDialog();
         loadData();
       } else {
         toast.error(result.error || 'Erro ao registrar resgate');
@@ -154,14 +170,12 @@ export default function Redemptions() {
         organization_id: profile?.organization_id || '',
         profile_id: profile?.id || '',
         user_id: user?.id || '',
-        description: description.trim(),
+        description: desc,
         points: pts,
       });
       if (result.success) {
         toast.success('Solicitação de resgate enviada!');
-        setShowNewDialog(false);
-        setDescription('');
-        setPoints('');
+        resetDialog();
         loadData();
       } else {
         toast.error(result.error || 'Erro ao solicitar resgate');
@@ -170,10 +184,19 @@ export default function Redemptions() {
     }
   };
 
+  const resetDialog = () => {
+    setShowNewDialog(false);
+    setSelectedRewardId('');
+    setCustomDescription('');
+    setCustomPoints('');
+    setUseCustom(false);
+    setSelectedClientId('');
+  };
+
   const handleCatalogRedeem = (item: RewardItem) => {
     setRedeemMode('self');
-    setDescription(item.name);
-    setPoints(String(item.points_cost));
+    setSelectedRewardId(item.id);
+    setUseCustom(false);
     setShowNewDialog(true);
   };
 
@@ -226,6 +249,7 @@ export default function Redemptions() {
     return profileNames[r.profile_id] || 'Usuário';
   };
 
+  const activeCatalogItems = catalogItems.filter(i => i.active);
   const myRedemptions = redemptions.filter(r => r.user_id === user?.id && !r.referral_id);
   const clientRedemptions = redemptions.filter(r => !!r.referral_id);
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
@@ -270,14 +294,14 @@ export default function Redemptions() {
             <Button
               variant="outline"
               className="gap-2 border-primary/30 hover:bg-primary/10"
-              onClick={() => { setRedeemMode('client'); setDescription(''); setPoints(''); setSelectedClientId(''); setShowNewDialog(true); }}
+              onClick={() => { setRedeemMode('client'); setSelectedRewardId(''); setUseCustom(false); setSelectedClientId(''); setShowNewDialog(true); }}
             >
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Resgate Cliente</span>
             </Button>
             <Button
               className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90 transition-opacity"
-              onClick={() => { setRedeemMode('self'); setDescription(''); setPoints(''); setShowNewDialog(true); }}
+              onClick={() => { setRedeemMode('self'); setSelectedRewardId(''); setUseCustom(false); setShowNewDialog(true); }}
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Resgate Livre</span>
@@ -435,27 +459,75 @@ export default function Redemptions() {
                   </p>
                 </div>
               )}
+              {/* Catalog Selector */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">O que deseja resgatar?</label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: Desconto de R$50 no próximo corte, produto X..."
-                  className="min-h-[80px] bg-background/40 border-border/30 focus:border-primary/40 rounded-xl resize-none"
-                />
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Selecionar prêmio</label>
+                <Select value={useCustom ? '__custom__' : selectedRewardId} onValueChange={(val) => {
+                  if (val === '__custom__') {
+                    setUseCustom(true);
+                    setSelectedRewardId('');
+                  } else {
+                    setUseCustom(false);
+                    setSelectedRewardId(val);
+                  }
+                }}>
+                  <SelectTrigger className="bg-background/40 border-border/30">
+                    <SelectValue placeholder="Escolha um prêmio do catálogo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeCatalogItems.map(item => (
+                      <SelectItem key={item.id} value={item.id}>
+                        <div className="flex items-center justify-between gap-3 w-full">
+                          <span>{item.name}</span>
+                          <span className="text-xs font-bold text-primary ml-2">{item.points_cost} pts</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    {isAdmin && (
+                      <SelectItem value="__custom__">
+                        <span className="text-muted-foreground">✏️ Resgate personalizado</span>
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pontos a resgatar</label>
-                <Input
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(e.target.value)}
-                  placeholder="Ex: 50"
-                  className="h-10 bg-background/40 border-border/30 focus:border-primary/40"
-                  min={1}
-                  max={redeemMode === 'client' ? selectedClient?.lead_points || 0 : profile?.wallet_balance || 0}
-                />
-              </div>
+
+              {/* Show selected reward info */}
+              {!useCustom && getSelectedReward() && (
+                <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 space-y-1">
+                  <p className="text-sm font-semibold">{getSelectedReward()!.name}</p>
+                  {getSelectedReward()!.description && (
+                    <p className="text-xs text-muted-foreground">{getSelectedReward()!.description}</p>
+                  )}
+                  <p className="text-lg font-bold text-primary">{getSelectedReward()!.points_cost} pts</p>
+                </div>
+              )}
+
+              {/* Custom fields (admin only) */}
+              {useCustom && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">O que deseja resgatar?</label>
+                    <Textarea
+                      value={customDescription}
+                      onChange={(e) => setCustomDescription(e.target.value)}
+                      placeholder="Ex: Desconto de R$50 no próximo corte..."
+                      className="min-h-[60px] bg-background/40 border-border/30 focus:border-primary/40 rounded-xl resize-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pontos a resgatar</label>
+                    <Input
+                      type="number"
+                      value={customPoints}
+                      onChange={(e) => setCustomPoints(e.target.value)}
+                      placeholder="Ex: 50"
+                      className="h-10 bg-background/40 border-border/30 focus:border-primary/40"
+                      min={1}
+                    />
+                  </div>
+                </>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowNewDialog(false)} className="border-border/40">
