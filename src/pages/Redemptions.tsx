@@ -42,6 +42,7 @@ export default function Redemptions() {
   const [customPoints, setCustomPoints] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [redeemMode, setRedeemMode] = useState<'self' | 'client'>('self');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [clients, setClients] = useState<ClientOption[]>([]);
@@ -186,11 +187,73 @@ export default function Redemptions() {
 
   const resetDialog = () => {
     setShowNewDialog(false);
+    setShowConfirmation(false);
     setSelectedRewardId('');
     setCustomDescription('');
     setCustomPoints('');
     setUseCustom(false);
     setSelectedClientId('');
+  };
+
+  const getConfirmationData = () => {
+    let desc: string;
+    let pts: number;
+
+    if (useCustom) {
+      desc = customDescription.trim();
+      pts = parseInt(customPoints);
+    } else {
+      const reward = getSelectedReward();
+      desc = reward?.name || '';
+      pts = reward?.points_cost || 0;
+    }
+
+    const currentBalance = redeemMode === 'client'
+      ? (selectedClient?.lead_points || 0)
+      : (profile?.wallet_balance || 0);
+    const remainingBalance = currentBalance - pts;
+    const beneficiary = redeemMode === 'client' ? selectedClient?.name : profile?.name;
+
+    return { desc, pts, currentBalance, remainingBalance, beneficiary };
+  };
+
+  const handleConfirmStep = () => {
+    // Run validations first
+    if (useCustom) {
+      if (!customDescription.trim() || !customPoints.trim()) {
+        toast.error('Preencha todos os campos');
+        return;
+      }
+      if (parseInt(customPoints) <= 0) {
+        toast.error('Pontos devem ser maior que zero');
+        return;
+      }
+    } else {
+      if (!getSelectedReward()) {
+        toast.error('Selecione um prêmio do catálogo');
+        return;
+      }
+    }
+
+    if (redeemMode === 'client' && !selectedClientId) {
+      toast.error('Selecione um cliente');
+      return;
+    }
+
+    const { pts, currentBalance } = getConfirmationData();
+    if (redeemMode === 'client') {
+      if (pts > currentBalance) {
+        toast.error('Saldo insuficiente do cliente');
+        return;
+      }
+    } else {
+      if (pts > currentBalance) {
+        toast.error('Saldo insuficiente');
+        return;
+      }
+    }
+
+    setShowConfirmation(true);
   };
 
   const handleCatalogRedeem = (item: RewardItem) => {
@@ -529,18 +592,70 @@ export default function Redemptions() {
                 </>
               )}
             </div>
+            {/* Confirmation Summary */}
+            {showConfirmation && (() => {
+              const { desc, pts, currentBalance, remainingBalance, beneficiary } = getConfirmationData();
+              return (
+                <div className="p-4 rounded-xl bg-warning/5 border border-warning/20 space-y-3">
+                  <p className="text-xs font-semibold text-warning uppercase tracking-wider flex items-center gap-1.5">
+                    <Gift className="h-3.5 w-3.5" />
+                    Confirmar resgate
+                  </p>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Beneficiário</span>
+                      <span className="font-medium">{beneficiary}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Prêmio</span>
+                      <span className="font-medium">{desc}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Custo</span>
+                      <span className="font-bold text-primary">{pts} pts</span>
+                    </div>
+                    <div className="border-t border-border/30 pt-1.5 flex justify-between text-sm">
+                      <span className="text-muted-foreground">Saldo atual</span>
+                      <span>{currentBalance} pts</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Saldo após resgate</span>
+                      <span className={cn('font-bold', remainingBalance < 0 ? 'text-destructive' : 'text-success')}>{remainingBalance} pts</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowNewDialog(false)} className="border-border/40">
-                Cancelar
-              </Button>
-              <Button
-                className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90"
-                onClick={handleSubmit}
-                disabled={submitting}
-              >
-                <Send className="h-4 w-4" />
-                {redeemMode === 'client' ? 'Registrar resgate' : 'Enviar solicitação'}
-              </Button>
+              {showConfirmation ? (
+                <>
+                  <Button variant="outline" onClick={() => setShowConfirmation(false)} className="border-border/40">
+                    Voltar
+                  </Button>
+                  <Button
+                    className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90"
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Confirmar resgate
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={() => setShowNewDialog(false)} className="border-border/40">
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90"
+                    onClick={handleConfirmStep}
+                  >
+                    <Send className="h-4 w-4" />
+                    {redeemMode === 'client' ? 'Registrar resgate' : 'Enviar solicitação'}
+                  </Button>
+                </>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>

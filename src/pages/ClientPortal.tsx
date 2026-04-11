@@ -48,6 +48,7 @@ export default function ClientPortal() {
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
+  const [confirmReward, setConfirmReward] = useState<RewardItem | null>(null);
   const [referralDialogOpen, setReferralDialogOpen] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
   const [newFriendPhone, setNewFriendPhone] = useState('');
@@ -298,7 +299,7 @@ export default function ClientPortal() {
                       <Button
                         size="sm"
                         disabled={balance < reward.points_cost || redeeming}
-                        onClick={() => handleRedeem(reward)}
+                        onClick={() => setConfirmReward(reward)}
                         className={cn(
                           'text-xs',
                           balance >= reward.points_cost
