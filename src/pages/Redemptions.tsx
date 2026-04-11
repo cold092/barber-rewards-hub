@@ -249,6 +249,7 @@ export default function Redemptions() {
     return profileNames[r.profile_id] || 'Usuário';
   };
 
+  const activeCatalogItems = catalogItems.filter(i => i.active);
   const myRedemptions = redemptions.filter(r => r.user_id === user?.id && !r.referral_id);
   const clientRedemptions = redemptions.filter(r => !!r.referral_id);
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
