@@ -451,6 +451,62 @@ export default function ClientPortal() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={!!confirmReward} onOpenChange={(open) => { if (!open) setConfirmReward(null); }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <Gift className="h-5 w-5 text-primary" />
+                Confirmar resgate
+              </DialogTitle>
+              <DialogDescription>Revise os detalhes antes de confirmar:</DialogDescription>
+            </DialogHeader>
+            {confirmReward && (
+              <div className="space-y-3 py-2">
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/15 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Prêmio</span>
+                    <span className="font-semibold">{confirmReward.name}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Custo</span>
+                    <span className="font-bold text-primary">{confirmReward.points_cost} pts</span>
+                  </div>
+                  <div className="border-t border-border/30 pt-2 flex justify-between text-sm">
+                    <span className="text-muted-foreground">Saldo atual</span>
+                    <span>{balance} pts</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Saldo após resgate</span>
+                    <span className={cn('font-bold', (balance - confirmReward.points_cost) >= 0 ? 'text-success' : 'text-destructive')}>
+                      {balance - confirmReward.points_cost} pts
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setConfirmReward(null)}>
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                disabled={redeeming}
+                onClick={() => {
+                  if (confirmReward) {
+                    handleRedeem(confirmReward);
+                    setConfirmReward(null);
+                  }
+                }}
+                className="bg-success hover:bg-success/90 text-success-foreground gap-1.5"
+              >
+                {redeeming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Confirmar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
