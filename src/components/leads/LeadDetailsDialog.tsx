@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Phone, 
   MessageCircle, 
@@ -30,6 +30,7 @@ import { FollowUpPicker } from './FollowUpPicker';
 import { updateLeadNotes } from '@/services/leadHistoryService';
 import { formatPhoneNumber } from '@/utils/whatsapp';
 import { getPlanById } from '@/config/plans';
+import { supabase } from '@/integrations/supabase/client';
 import type { Referral } from '@/types/database';
 
 interface LeadDetailsDialogProps {
@@ -75,12 +76,29 @@ export function LeadDetailsDialog({
   const [localTags, setLocalTags] = useState<string[]>(referral?.tags || []);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
+  const [referringClientName, setReferringClientName] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalTags(referral?.tags || []);
     setNotes(referral?.notes || '');
     setEditingNotes(false);
   }, [referral?.id, referral?.tags, referral?.notes]);
+
+  // Fetch the referring client's name when referred_by_lead_id exists
+  useEffect(() => {
+    if (!referral?.referred_by_lead_id) {
+      setReferringClientName(null);
+      return;
+    }
+    supabase
+      .from('referrals')
+      .select('lead_name')
+      .eq('id', referral.referred_by_lead_id)
+      .single()
+      .then(({ data }) => {
+        setReferringClientName(data?.lead_name || null);
+      });
+  }, [referral?.referred_by_lead_id]);
 
   const handleSaveNotes = async () => {
     if (!referral) return;
@@ -192,14 +210,27 @@ export function LeadDetailsDialog({
               <TabsContent value="details" className="mt-4" asChild forceMount={activeTab === 'details' ? true : undefined}>
                 {activeTab === 'details' ? (
                   <motion.div key="details" variants={tabVariants} initial="hidden" animate="visible" exit="exit" className="space-y-5">
-                    {/* Referrer card */}
-                    <div className="flex items-center gap-3 p-3.5 rounded-xl bg-primary/[0.06] border border-primary/15">
-                      <div className="w-9 h-9 rounded-lg lavender-gradient flex items-center justify-center shadow-sm shadow-primary/20 shrink-0">
-                        <UserCheck className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Indicado por</p>
-                        <p className="font-semibold text-sm truncate">{referral.referrer_name}</p>
+                    {/* Referrer cards */}
+                    <div className="space-y-2.5">
+                      {referringClientName && (
+                        <div className="flex items-center gap-3 p-3.5 rounded-xl bg-success/[0.06] border border-success/15">
+                          <div className="w-9 h-9 rounded-lg bg-success/20 flex items-center justify-center shadow-sm shrink-0">
+                            <User className="h-4 w-4 text-success" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Indicado pelo cliente</p>
+                            <p className="font-semibold text-sm truncate">{referringClientName}</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-primary/[0.06] border border-primary/15">
+                        <div className="w-9 h-9 rounded-lg lavender-gradient flex items-center justify-center shadow-sm shadow-primary/20 shrink-0">
+                          <UserCheck className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Colaborador responsável</p>
+                          <p className="font-semibold text-sm truncate">{referral.referrer_name}</p>
+                        </div>
                       </div>
                     </div>
 
