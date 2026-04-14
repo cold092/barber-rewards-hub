@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -44,33 +44,47 @@ export function SearchableSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between font-normal bg-secondary/10 border-border/20 rounded-xl h-11 text-sm hover:bg-secondary/20",
+            "w-full justify-between font-normal bg-secondary/10 border-border/20 rounded-xl h-11 text-sm hover:bg-secondary/20 px-3",
             !value && "text-muted-foreground",
             className
           )}
         >
           {loading ? (
-            <span className="text-muted-foreground">Carregando...</span>
+            <span className="text-muted-foreground text-xs">Carregando...</span>
           ) : selected ? (
-            <span className="flex items-center gap-2 truncate">
+            <span className="flex items-center gap-2 truncate min-w-0">
               {selected.icon}
-              <span className="truncate">{selected.label}</span>
+              <span className="truncate text-foreground">{selected.label}</span>
               {selected.sublabel && (
-                <span className="text-muted-foreground/60 text-xs truncate">({selected.sublabel})</span>
+                <span className="text-muted-foreground/50 text-[11px] truncate hidden sm:inline">
+                  {selected.sublabel}
+                </span>
               )}
             </span>
           ) : (
-            placeholder
+            <span className="text-sm">{placeholder}</span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className={cn(
+            "ml-1 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-transform duration-200",
+            open && "rotate-180"
+          )} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
-            <CommandGroup>
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-0 rounded-xl border-border/30 shadow-xl shadow-black/10 overflow-hidden"
+        align="start"
+        sideOffset={4}
+      >
+        <Command className="rounded-xl [&_[cmdk-input-wrapper]]:border-border/15">
+          <CommandInput
+            placeholder={searchPlaceholder}
+            className="h-10 text-sm ring-0 outline-none border-none focus:ring-0 focus:outline-none"
+          />
+          <CommandList className="max-h-[200px] overflow-y-auto">
+            <CommandEmpty className="py-4 text-center text-xs text-muted-foreground/60">
+              {emptyMessage}
+            </CommandEmpty>
+            <CommandGroup className="p-1">
               {options.map(option => (
                 <CommandItem
                   key={option.value}
@@ -79,13 +93,19 @@ export function SearchableSelect({
                     onValueChange(option.value === value ? '' : option.value);
                     setOpen(false);
                   }}
+                  className="rounded-lg px-2.5 py-2 text-sm cursor-pointer"
                 >
-                  <Check className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
-                  <span className="flex items-center gap-2">
+                  <Check className={cn(
+                    "mr-1.5 h-3.5 w-3.5 shrink-0 transition-opacity",
+                    value === option.value ? "opacity-100 text-primary" : "opacity-0"
+                  )} />
+                  <span className="flex items-center gap-2 min-w-0 truncate">
                     {option.icon}
-                    <span>{option.label}</span>
+                    <span className="truncate">{option.label}</span>
                     {option.sublabel && (
-                      <span className="text-muted-foreground/60 text-xs">({option.sublabel})</span>
+                      <span className="text-muted-foreground/50 text-[11px] truncate">
+                        {option.sublabel}
+                      </span>
                     )}
                   </span>
                 </CommandItem>
