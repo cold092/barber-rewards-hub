@@ -115,6 +115,7 @@ export default function Leads() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   // Details dialog state
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
