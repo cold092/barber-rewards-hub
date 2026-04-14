@@ -380,7 +380,13 @@ export default function Leads() {
       );
       setReferrals((prev) =>
         prev.map((r) => r.id === convertingReferral.id
-          ? { ...r, status: 'converted' as ReferralStatus, converted_plan_id: selectedPlan, is_client: true }
+          ? { 
+              ...r, 
+              status: 'converted' as ReferralStatus, 
+              converted_plan_id: selectedPlan, 
+              is_client: true,
+              tags: r.tags.includes('Convertido') ? r.tags : [...r.tags, 'Convertido']
+            }
           : r)
       );
       setConvertDialogOpen(false);
