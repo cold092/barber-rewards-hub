@@ -115,6 +115,17 @@ export default function Ranking() {
         });
       }
 
+      // Calculate residual points not accounted for in breakdown
+      const calculatedTotal = items.reduce((sum, i) => sum + i.points, 0);
+      if (actualLifetime > calculatedTotal) {
+        items.push({
+          label: 'Outros pontos (ajustes, bônus manuais, etc.)',
+          points: actualLifetime - calculatedTotal,
+          type: 'referral',
+          date: new Date().toISOString(),
+        });
+      }
+
       setBreakdowns(prev => ({ ...prev, [profileId]: items }));
     } catch (err) {
       console.error('Error loading breakdown:', err);

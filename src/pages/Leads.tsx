@@ -707,6 +707,15 @@ export default function Leads() {
 
             {/* Toolbar */}
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs h-7 lavender-gradient lavender-glow text-primary-foreground"
+                onClick={() => window.location.href = '/register-lead'}
+              >
+                <Users className="h-3.5 w-3.5" />
+                Cadastrar
+              </Button>
+
               {/* View Toggle */}
               <div className="flex items-center rounded-lg border border-border/40 bg-secondary/30 p-0.5">
                 <Button
