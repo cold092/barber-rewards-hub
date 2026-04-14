@@ -75,10 +75,10 @@ export function SearchableSelect({
         align="start"
         sideOffset={4}
       >
-        <Command className="rounded-xl [&_[cmdk-input-wrapper]]:border-border/15">
+        <Command className="rounded-xl [&_[cmdk-input-wrapper]]:border-border/15 [&_[cmdk-input-wrapper]]:outline-none [&_[cmdk-input-wrapper]]:ring-0 [&_[cmdk-input-wrapper]]:shadow-none [&_[cmdk-input-wrapper]]:focus-within:outline-none [&_[cmdk-input-wrapper]]:focus-within:ring-0 [&_[cmdk-input-wrapper]]:focus-within:shadow-none [&_[cmdk-input]]:outline-none [&_[cmdk-input]]:ring-0 [&_[cmdk-input]]:shadow-none [&_[cmdk-input]]:border-0 [&_[cmdk-input]]:focus:outline-none [&_[cmdk-input]]:focus:ring-0 [&_[cmdk-input]]:focus:shadow-none [&_[cmdk-input]]:focus-visible:outline-none [&_[cmdk-input]]:focus-visible:ring-0">
           <CommandInput
             placeholder={searchPlaceholder}
-            className="h-10 text-sm ring-0 outline-none border-none focus:ring-0 focus:outline-none"
+            className="h-10 text-sm outline-none ring-0 shadow-none border-0 focus:outline-none focus:ring-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0"
           />
           <CommandList className="max-h-[200px] overflow-y-auto">
             <CommandEmpty className="py-4 text-center text-xs text-muted-foreground/60">
