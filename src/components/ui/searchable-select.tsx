@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronDown, Search } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -75,14 +75,11 @@ export function SearchableSelect({
         align="start"
         sideOffset={4}
       >
-        <Command className="rounded-xl">
-          <div className="flex items-center border-b border-border/15 px-3">
-            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
-            <CommandInput
-              placeholder={searchPlaceholder}
-              className="h-10 text-sm border-0 focus:ring-0 placeholder:text-muted-foreground/40"
-            />
-          </div>
+        <Command className="rounded-xl [&_[cmdk-input-wrapper]]:border-border/15">
+          <CommandInput
+            placeholder={searchPlaceholder}
+            className="h-10 text-sm ring-0 outline-none border-none focus:ring-0 focus:outline-none"
+          />
           <CommandList className="max-h-[200px] overflow-y-auto">
             <CommandEmpty className="py-4 text-center text-xs text-muted-foreground/60">
               {emptyMessage}
