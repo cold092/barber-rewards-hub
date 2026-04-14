@@ -45,6 +45,31 @@ const stripCreatedByFields = <T extends Record<string, unknown>>(payload: T): T 
 };
 
 /**
+ * Check if a phone number is already registered in referrals
+ * Returns the matching referral name if found, null otherwise
+ */
+export async function checkDuplicatePhone(phone: string): Promise<{ exists: boolean; name?: string; type?: string }> {
+  const normalized = phone.replace(/\D/g, '');
+  if (normalized.length < 8) return { exists: false };
+
+  const { data: referrals } = await supabase
+    .from('referrals')
+    .select('lead_name, lead_phone, is_client, status');
+
+  if (!referrals) return { exists: false };
+
+  const match = referrals.find(r => {
+    const refPhone = r.lead_phone.replace(/\D/g, '');
+    return refPhone === normalized || refPhone.endsWith(normalized) || normalized.endsWith(refPhone);
+  });
+
+  if (!match) return { exists: false };
+
+  const type = match.is_client || match.status === 'converted' ? 'cliente' : 'lead';
+  return { exists: true, name: match.lead_name, type };
+}
+
+/**
  * Register a new lead/referral
  * Awards REFERRAL_BONUS_POINTS to the referrer immediately
  */
