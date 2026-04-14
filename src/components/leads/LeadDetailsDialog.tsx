@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Phone, 
   MessageCircle, 
@@ -30,6 +30,7 @@ import { FollowUpPicker } from './FollowUpPicker';
 import { updateLeadNotes } from '@/services/leadHistoryService';
 import { formatPhoneNumber } from '@/utils/whatsapp';
 import { getPlanById } from '@/config/plans';
+import { supabase } from '@/integrations/supabase/client';
 import type { Referral } from '@/types/database';
 
 interface LeadDetailsDialogProps {
@@ -75,12 +76,29 @@ export function LeadDetailsDialog({
   const [localTags, setLocalTags] = useState<string[]>(referral?.tags || []);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
+  const [referringClientName, setReferringClientName] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalTags(referral?.tags || []);
     setNotes(referral?.notes || '');
     setEditingNotes(false);
   }, [referral?.id, referral?.tags, referral?.notes]);
+
+  // Fetch the referring client's name when referred_by_lead_id exists
+  useEffect(() => {
+    if (!referral?.referred_by_lead_id) {
+      setReferringClientName(null);
+      return;
+    }
+    supabase
+      .from('referrals')
+      .select('lead_name')
+      .eq('id', referral.referred_by_lead_id)
+      .single()
+      .then(({ data }) => {
+        setReferringClientName(data?.lead_name || null);
+      });
+  }, [referral?.referred_by_lead_id]);
 
   const handleSaveNotes = async () => {
     if (!referral) return;
