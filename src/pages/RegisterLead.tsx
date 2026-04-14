@@ -197,9 +197,9 @@ export default function RegisterLead() {
 
                     {referrerType === 'user' && (
                       <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">Selecione quem indicou este lead</Label>
+                        <Label className="text-xs text-muted-foreground">Colaborador responsável por este lead</Label>
                         <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
-                          <SelectTrigger className={selectClass}><SelectValue placeholder="Quem indicou este lead?" /></SelectTrigger>
+                          <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar colaborador" /></SelectTrigger>
                           <SelectContent>
                             {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
                               : referrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>)
@@ -216,9 +216,9 @@ export default function RegisterLead() {
                     {referrerType === 'lead' && (
                       <div className="space-y-3">
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">Cliente que fez a indicação</Label>
+                          <Label className="text-xs text-muted-foreground">Selecione o cliente que trouxe este lead</Label>
                           <Select value={selectedLeadReferrerId} onValueChange={setSelectedLeadReferrerId}>
-                            <SelectTrigger className={selectClass}><SelectValue placeholder="Quem indicou este lead?" /></SelectTrigger>
+                            <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar cliente indicador" /></SelectTrigger>
                             <SelectContent>
                               {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
                                 : leadReferrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>)
@@ -231,9 +231,9 @@ export default function RegisterLead() {
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">Colaborador responsável pelo atendimento</Label>
+                          <Label className="text-xs text-muted-foreground">Colaborador que vai atender este lead</Label>
                           <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
-                            <SelectTrigger className={selectClass}><SelectValue placeholder="Quem vai atender este lead?" /></SelectTrigger>
+                            <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar colaborador responsável" /></SelectTrigger>
                             <SelectContent>
                               {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
                                 : referrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>)
@@ -283,9 +283,9 @@ export default function RegisterLead() {
 
                     {barberReferrerType === 'client' && (
                       <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">Selecione o cliente que fez a indicação</Label>
+                        <Label className="text-xs text-muted-foreground">Selecione o cliente que trouxe este lead</Label>
                         <Select value={selectedBarberClientId} onValueChange={setSelectedBarberClientId}>
-                          <SelectTrigger className={selectClass}><SelectValue placeholder="Quem indicou este lead?" /></SelectTrigger>
+                          <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar cliente indicador" /></SelectTrigger>
                           <SelectContent>
                             {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
                               : barberClients.length === 0 ? (<SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>)
