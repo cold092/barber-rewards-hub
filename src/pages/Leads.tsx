@@ -53,7 +53,7 @@ import type { Referral, ReferralStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getGlobalSetting, upsertSetting } from '@/services/settingsService';
 
@@ -115,6 +115,7 @@ export default function Leads() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [tagSettingsOpen, setTagSettingsOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   // Details dialog state
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
@@ -707,6 +708,15 @@ export default function Leads() {
 
             {/* Toolbar */}
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs h-7 lavender-gradient lavender-glow text-primary-foreground"
+                onClick={() => navigate('/register-lead')}
+              >
+                <Users className="h-3.5 w-3.5" />
+                Cadastrar
+              </Button>
+
               {/* View Toggle */}
               <div className="flex items-center rounded-lg border border-border/40 bg-secondary/30 p-0.5">
                 <Button

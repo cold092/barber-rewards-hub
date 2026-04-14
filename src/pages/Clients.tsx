@@ -336,12 +336,17 @@ export default function Clients() {
     toast.success('CSV exportado com sucesso');
   };
 
-  if (loading) {
+  if (loading && !registerClientOpen) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-pulse text-muted-foreground">Carregando...</div>
         </div>
+        <RegisterClientDialog
+          open={registerClientOpen}
+          onOpenChange={setRegisterClientOpen}
+          onClientCreated={loadReferrals}
+        />
       </DashboardLayout>
     );
   }
