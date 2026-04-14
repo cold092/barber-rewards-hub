@@ -214,33 +214,27 @@ export default function RegisterLead() {
                       <div className="space-y-3">
                         <div className="space-y-2">
                           <Label className="text-xs text-muted-foreground">Selecione o cliente que trouxe este lead</Label>
-                          <Select value={selectedLeadReferrerId} onValueChange={setSelectedLeadReferrerId}>
-                            <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar cliente indicador" /></SelectTrigger>
-                            <SelectContent>
-                              {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
-                                : leadReferrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>)
-                                : leadReferrers.map(l => (
-                                  <SelectItem key={l.id} value={l.id}>
-                                    <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" />{l.name} ({l.phone})</div>
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                          <SearchableSelect
+                            options={leadReferrers.map(l => ({ value: l.id, label: l.name, sublabel: l.phone, icon: <User className="h-4 w-4 text-muted-foreground" /> }))}
+                            value={selectedLeadReferrerId}
+                            onValueChange={setSelectedLeadReferrerId}
+                            placeholder="Selecionar cliente indicador"
+                            searchPlaceholder="Buscar por nome ou telefone..."
+                            emptyMessage="Nenhum cliente cadastrado ainda"
+                            loading={loadingReferrers}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label className="text-xs text-muted-foreground">Colaborador que vai atender este lead</Label>
-                          <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
-                            <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar colaborador responsável" /></SelectTrigger>
-                            <SelectContent>
-                              {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
-                                : referrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>)
-                                : referrers.map(r => (
-                                  <SelectItem key={r.id} value={r.id}>
-                                    <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />{r.name}</div>
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                          <SearchableSelect
+                            options={referrers.map(r => ({ value: r.id, label: r.name, icon: <Users className="h-4 w-4 text-muted-foreground" /> }))}
+                            value={selectedReferrerId}
+                            onValueChange={setSelectedReferrerId}
+                            placeholder="Selecionar colaborador responsável"
+                            searchPlaceholder="Buscar colaborador..."
+                            emptyMessage="Nenhum colaborador encontrado"
+                            loading={loadingReferrers}
+                          />
                         </div>
                       </div>
                     )}
@@ -281,18 +275,15 @@ export default function RegisterLead() {
                     {barberReferrerType === 'client' && (
                       <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground">Selecione o cliente que trouxe este lead</Label>
-                        <Select value={selectedBarberClientId} onValueChange={setSelectedBarberClientId}>
-                          <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar cliente indicador" /></SelectTrigger>
-                          <SelectContent>
-                            {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
-                              : barberClients.length === 0 ? (<SelectItem value="empty" disabled>Nenhum cliente cadastrado ainda</SelectItem>)
-                              : barberClients.map(c => (
-                                <SelectItem key={c.id} value={c.id}>
-                                  <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" />{c.name} ({c.phone})</div>
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                          options={barberClients.map(c => ({ value: c.id, label: c.name, sublabel: c.phone, icon: <User className="h-4 w-4 text-muted-foreground" /> }))}
+                          value={selectedBarberClientId}
+                          onValueChange={setSelectedBarberClientId}
+                          placeholder="Selecionar cliente indicador"
+                          searchPlaceholder="Buscar por nome ou telefone..."
+                          emptyMessage="Nenhum cliente cadastrado ainda"
+                          loading={loadingReferrers}
+                        />
                       </div>
                     )}
                   </motion.div>
