@@ -711,7 +711,7 @@ export default function Leads() {
               <Button
                 size="sm"
                 className="gap-1.5 text-xs h-7 lavender-gradient lavender-glow text-primary-foreground"
-                onClick={() => window.location.href = '/register-lead'}
+                onClick={() => navigate('/register-lead')}
               >
                 <Users className="h-3.5 w-3.5" />
                 Cadastrar
