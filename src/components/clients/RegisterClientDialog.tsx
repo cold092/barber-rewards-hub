@@ -9,7 +9,7 @@ import { UserPlus, User, Phone, Mail, FileText, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { registerClient } from '@/services/referralService';
+import { registerClient, checkDuplicatePhone } from '@/services/referralService';
 import { addHistoryEvent } from '@/services/leadHistoryService';
 
 const clientSchema = z.object({
@@ -55,6 +55,15 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
     }
 
     setLoading(true);
+
+    // Check for duplicate phone
+    const duplicate = await checkDuplicatePhone(phone.trim());
+    if (duplicate.exists) {
+      toast.error(`Este número já está cadastrado como ${duplicate.type}: ${duplicate.name}`);
+      setLoading(false);
+      return;
+    }
+
     const createdBy = role ? { id: profile.id, name: profile.name, role } : undefined;
     const result = await registerClient(
       profile.id,

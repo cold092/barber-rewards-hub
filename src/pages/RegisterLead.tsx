@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { UserPlus, Phone, User, Users, Link, Sparkles, ArrowRight, Zap, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { registerLead, getAllBarbers, getAllLeadsAsReferrers, registerLeadByLead, getBarberLeadsAsReferrers } from '@/services/referralService';
+import { registerLead, getAllBarbers, getAllLeadsAsReferrers, registerLeadByLead, getBarberLeadsAsReferrers, checkDuplicatePhone } from '@/services/referralService';
 import { BARBER_REFERRAL_CONVERSION_PERCENT, REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { isValidPhone } from '@/utils/whatsapp';
 import type { Profile } from '@/types/database';
@@ -76,6 +76,15 @@ export default function RegisterLead() {
     if (!profile) { toast.error('Perfil não encontrado'); return; }
 
     setLoading(true);
+
+    // Check for duplicate phone
+    const duplicate = await checkDuplicatePhone(phone.trim());
+    if (duplicate.exists) {
+      toast.error(`Este número já está cadastrado como ${duplicate.type}: ${duplicate.name}`);
+      setLoading(false);
+      return;
+    }
+
     const createdBy = role && profile ? { id: profile.id, name: profile.name, role } : undefined;
 
     // Admin + lead referrer
