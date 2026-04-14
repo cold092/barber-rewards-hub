@@ -22,6 +22,7 @@ import {
   UserCheck,
   BarChart3,
   ChevronLeft,
+  ChevronDown,
   Sun,
   Moon,
   Crown,
@@ -29,6 +30,8 @@ import {
   Briefcase,
   Eye,
   Gift,
+  ClipboardPlus,
+  Contact,
 } from 'lucide-react';
 import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
@@ -42,13 +45,22 @@ interface NavItem {
   label: string;
   icon: typeof LayoutDashboard;
   adminOnly?: boolean;
+  children?: NavItem[];
 }
 
 const navItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/leads', label: 'Leads', icon: Users },
   { path: '/clientes', label: 'Clientes', icon: UserCheck },
-  { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
+  { 
+    path: '/cadastro', 
+    label: 'Cadastro', 
+    icon: ClipboardPlus,
+    children: [
+      { path: '/cadastro/cliente', label: 'Cliente', icon: Contact },
+      { path: '/cadastro/lead', label: 'Lead', icon: UserPlus },
+    ],
+  },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
   { path: '/resgates', label: 'Resgates', icon: Gift },
   { path: '/relatorios', label: 'Relatórios', icon: BarChart3, adminOnly: true },
