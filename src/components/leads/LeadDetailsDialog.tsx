@@ -210,14 +210,27 @@ export function LeadDetailsDialog({
               <TabsContent value="details" className="mt-4" asChild forceMount={activeTab === 'details' ? true : undefined}>
                 {activeTab === 'details' ? (
                   <motion.div key="details" variants={tabVariants} initial="hidden" animate="visible" exit="exit" className="space-y-5">
-                    {/* Referrer card */}
-                    <div className="flex items-center gap-3 p-3.5 rounded-xl bg-primary/[0.06] border border-primary/15">
-                      <div className="w-9 h-9 rounded-lg lavender-gradient flex items-center justify-center shadow-sm shadow-primary/20 shrink-0">
-                        <UserCheck className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Indicado por</p>
-                        <p className="font-semibold text-sm truncate">{referral.referrer_name}</p>
+                    {/* Referrer cards */}
+                    <div className="space-y-2.5">
+                      {referringClientName && (
+                        <div className="flex items-center gap-3 p-3.5 rounded-xl bg-success/[0.06] border border-success/15">
+                          <div className="w-9 h-9 rounded-lg bg-success/20 flex items-center justify-center shadow-sm shrink-0">
+                            <User className="h-4 w-4 text-success" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Indicado pelo cliente</p>
+                            <p className="font-semibold text-sm truncate">{referringClientName}</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-primary/[0.06] border border-primary/15">
+                        <div className="w-9 h-9 rounded-lg lavender-gradient flex items-center justify-center shadow-sm shadow-primary/20 shrink-0">
+                          <UserCheck className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Colaborador responsável</p>
+                          <p className="font-semibold text-sm truncate">{referral.referrer_name}</p>
+                        </div>
                       </div>
                     </div>
 
