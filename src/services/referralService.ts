@@ -319,7 +319,7 @@ export async function confirmConversion(
     // Get the referral to find the referrer
     const { data: referral, error: referralError } = await supabase
       .from('referrals')
-      .select('referrer_id, status, referred_by_lead_id')
+      .select('referrer_id, status, referred_by_lead_id, tags')
       .eq('id', referralId)
       .single();
 
@@ -332,6 +332,10 @@ export async function confirmConversion(
       return { success: false, error: 'Esta indicação já foi convertida' };
     }
 
+    // Build updated tags with "Convertido" system tag
+    const currentTags = referral.tags || [];
+    const updatedTags = currentTags.includes('Convertido') ? currentTags : [...currentTags, 'Convertido'];
+
     // Update the referral status
     const { error: updateReferralError } = await supabase
       .from('referrals')
@@ -339,7 +343,8 @@ export async function confirmConversion(
         status: 'converted' as ReferralStatus,
         converted_plan_id: planId,
         is_client: true,
-        client_since: new Date().toISOString()
+        client_since: new Date().toISOString(),
+        tags: updatedTags
       })
       .eq('id', referralId);
 
