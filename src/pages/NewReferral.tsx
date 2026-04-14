@@ -31,7 +31,11 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-export default function NewReferral() {
+interface NewReferralProps {
+  defaultEntryType?: 'lead' | 'client';
+}
+
+export default function NewReferral({ defaultEntryType = 'lead' }: NewReferralProps) {
   const navigate = useNavigate();
   const { profile, isAdmin, role } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -48,7 +52,7 @@ export default function NewReferral() {
   const [barberReferrerType, setBarberReferrerType] = useState<'self' | 'client'>('self');
   const [clientReferrerType, setClientReferrerType] = useState<'barber' | 'team'>('barber');
   const [selectedBarberClientId, setSelectedBarberClientId] = useState('');
-  const [entryType, setEntryType] = useState<'lead' | 'client'>('lead');
+  const [entryType, setEntryType] = useState<'lead' | 'client'>(defaultEntryType);
 
   useEffect(() => {
     async function loadReferrers() {

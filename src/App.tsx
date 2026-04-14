@@ -124,14 +124,28 @@ const AppRoutes = () => (
       }
     />
     <Route
-      path="/nova-indicacao"
+      path="/cadastro/lead"
       element={
         <ProtectedRoute>
           <LeadTagConfigProvider>
-            <NewReferral />
+            <NewReferral defaultEntryType="lead" />
           </LeadTagConfigProvider>
         </ProtectedRoute>
       }
+    />
+    <Route
+      path="/cadastro/cliente"
+      element={
+        <ProtectedRoute>
+          <LeadTagConfigProvider>
+            <NewReferral defaultEntryType="client" />
+          </LeadTagConfigProvider>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/nova-indicacao"
+      element={<Navigate to="/cadastro/lead" replace />}
     />
     <Route
       path="/ranking"

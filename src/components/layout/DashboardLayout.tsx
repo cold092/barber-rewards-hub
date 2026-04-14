@@ -22,6 +22,7 @@ import {
   UserCheck,
   BarChart3,
   ChevronLeft,
+  ChevronDown,
   Sun,
   Moon,
   Crown,
@@ -29,6 +30,8 @@ import {
   Briefcase,
   Eye,
   Gift,
+  ClipboardPlus,
+  Contact,
 } from 'lucide-react';
 import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
@@ -42,13 +45,22 @@ interface NavItem {
   label: string;
   icon: typeof LayoutDashboard;
   adminOnly?: boolean;
+  children?: NavItem[];
 }
 
 const navItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/leads', label: 'Leads', icon: Users },
   { path: '/clientes', label: 'Clientes', icon: UserCheck },
-  { path: '/nova-indicacao', label: 'Nova Indicação', icon: UserPlus },
+  { 
+    path: '/cadastro', 
+    label: 'Cadastro', 
+    icon: ClipboardPlus,
+    children: [
+      { path: '/cadastro/cliente', label: 'Cliente', icon: Contact },
+      { path: '/cadastro/lead', label: 'Lead', icon: UserPlus },
+    ],
+  },
   { path: '/ranking', label: 'Ranking', icon: Trophy },
   { path: '/resgates', label: 'Resgates', icon: Gift },
   { path: '/relatorios', label: 'Relatórios', icon: BarChart3, adminOnly: true },
@@ -63,7 +75,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isViewingAs, viewAsProfile, clearViewAs } = useViewAs();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    navItems.forEach(item => {
+      if (item.children?.some(child => location.pathname === child.path)) {
+        initial[item.path] = true;
+      }
+    });
+    return initial;
+  });
   const { theme, toggleTheme } = useTheme();
+
+  const toggleMenu = (path: string) => {
+    setExpandedMenus(prev => ({ ...prev, [path]: !prev[path] }));
+  };
   
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
@@ -148,6 +173,98 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <TooltipProvider delayDuration={0}>
               {filteredNavItems.map((item) => {
                 const isActive = location.pathname === item.path;
+                const hasChildren = item.children && item.children.length > 0;
+                const isChildActive = hasChildren && item.children!.some(child => location.pathname === child.path);
+                const isExpanded = expandedMenus[item.path] || false;
+
+                if (hasChildren) {
+                  const parentButton = (
+                    <button
+                      key={item.path}
+                      className={cn(
+                        "nav-item w-full flex items-center gap-3 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
+                        collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5" : "px-3 py-2.5",
+                        isChildActive && "text-sidebar-primary"
+                      )}
+                      onClick={() => {
+                        if (collapsed) {
+                          navigate(item.children![0].path);
+                          setSidebarOpen(false);
+                        } else {
+                          toggleMenu(item.path);
+                        }
+                      }}
+                    >
+                      <item.icon className={cn(
+                        "shrink-0 transition-colors",
+                        collapsed ? "h-5 w-5" : "h-[18px] w-[18px]",
+                        isChildActive ? "text-primary" : "text-sidebar-foreground/50"
+                      )} />
+                      <span className={cn("truncate flex-1 text-left", collapsed && "lg:hidden")}>{item.label}</span>
+                      <ChevronDown className={cn(
+                        "h-3.5 w-3.5 shrink-0 transition-transform duration-200 text-sidebar-foreground/40",
+                        isExpanded && "rotate-180",
+                        collapsed && "lg:hidden"
+                      )} />
+                    </button>
+                  );
+
+                  if (collapsed) {
+                    return (
+                      <Tooltip key={item.path}>
+                        <TooltipTrigger asChild>
+                          {parentButton}
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="hidden lg:block font-medium">
+                          {item.label}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
+                  return (
+                    <div key={item.path}>
+                      {parentButton}
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="ml-4 pl-3 border-l border-sidebar-border/40 space-y-0.5 py-1">
+                              {item.children!.map(child => {
+                                const childActive = location.pathname === child.path;
+                                return (
+                                  <button
+                                    key={child.path}
+                                    className={cn(
+                                      "nav-item w-full flex items-center gap-2.5 text-[13px] font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 px-2.5 py-2 rounded-lg",
+                                      childActive && "nav-item-active text-sidebar-primary bg-sidebar-accent"
+                                    )}
+                                    onClick={() => {
+                                      navigate(child.path);
+                                      setSidebarOpen(false);
+                                    }}
+                                  >
+                                    <child.icon className={cn(
+                                      "h-4 w-4 shrink-0",
+                                      childActive ? "text-primary" : "text-sidebar-foreground/40"
+                                    )} />
+                                    <span className="truncate">{child.label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }
+
                 const navButton = (
                   <button
                     key={item.path}
