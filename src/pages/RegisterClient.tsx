@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { cn } from '@/lib/utils';
 import { UserCheck, Phone, User, Users, ArrowRight, Crown, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -151,18 +151,15 @@ export default function RegisterClient() {
                       </button>
                     </div>
                     {responsibleType === 'barber' && (
-                      <Select value={selectedBarberId} onValueChange={setSelectedBarberId}>
-                        <SelectTrigger className={selectClass}><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
-                        <SelectContent>
-                          {loadingBarbers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
-                            : barbers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador</SelectItem>)
-                            : barbers.map(b => (
-                              <SelectItem key={b.id} value={b.id}>
-                                <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />{b.name}</div>
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        options={barbers.map(b => ({ value: b.id, label: b.name, icon: <Users className="h-4 w-4 text-muted-foreground" /> }))}
+                        value={selectedBarberId}
+                        onValueChange={setSelectedBarberId}
+                        placeholder="Selecionar colaborador"
+                        searchPlaceholder="Buscar colaborador..."
+                        emptyMessage="Nenhum colaborador encontrado"
+                        loading={loadingBarbers}
+                      />
                     )}
                     {responsibleType === 'team' && (
                       <div className="rounded-xl bg-secondary/15 border border-border/15 p-3.5">
