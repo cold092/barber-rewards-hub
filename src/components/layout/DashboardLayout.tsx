@@ -75,7 +75,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isViewingAs, viewAsProfile, clearViewAs } = useViewAs();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const { theme, toggleTheme } = useTheme();
+
+  // Auto-expand parent menu if a child route is active
+  useState(() => {
+    navItems.forEach(item => {
+      if (item.children?.some(child => location.pathname === child.path)) {
+        setExpandedMenus(prev => ({ ...prev, [item.path]: true }));
+      }
+    });
+  });
+
+  const toggleMenu = (path: string) => {
+    setExpandedMenus(prev => ({ ...prev, [path]: !prev[path] }));
+  };
   
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
