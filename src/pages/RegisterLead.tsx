@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { cn } from '@/lib/utils';
 import { UserPlus, Phone, User, Users, Link, Sparkles, ArrowRight, Zap, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
@@ -198,18 +198,15 @@ export default function RegisterLead() {
                     {referrerType === 'user' && (
                       <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground">Colaborador responsável por este lead</Label>
-                        <Select value={selectedReferrerId} onValueChange={setSelectedReferrerId}>
-                          <SelectTrigger className={selectClass}><SelectValue placeholder="Selecionar colaborador" /></SelectTrigger>
-                          <SelectContent>
-                            {loadingReferrers ? (<SelectItem value="loading" disabled>Carregando...</SelectItem>)
-                              : referrers.length === 0 ? (<SelectItem value="empty" disabled>Nenhum colaborador encontrado</SelectItem>)
-                              : referrers.map(r => (
-                                <SelectItem key={r.id} value={r.id}>
-                                  <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />{r.name}</div>
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                          options={referrers.map(r => ({ value: r.id, label: r.name, icon: <Users className="h-4 w-4 text-muted-foreground" /> }))}
+                          value={selectedReferrerId}
+                          onValueChange={setSelectedReferrerId}
+                          placeholder="Selecionar colaborador"
+                          searchPlaceholder="Buscar colaborador..."
+                          emptyMessage="Nenhum colaborador encontrado"
+                          loading={loadingReferrers}
+                        />
                       </div>
                     )}
 
