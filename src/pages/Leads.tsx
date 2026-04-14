@@ -225,7 +225,8 @@ export default function Leads() {
   };
 
   const allClientReferrals = referrals.filter(isClientReferral);
-  const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral));
+  // Converted leads appear in BOTH views: leads kanban (Convertidos column) and clients
+  const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral) || referral.status === 'converted');
   const baseReferrals = listType === 'clients' ? allClientReferrals : allLeadReferrals;
   
   // Apply tag filter
