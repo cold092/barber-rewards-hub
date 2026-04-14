@@ -11,7 +11,8 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Leads from "./pages/Leads";
 import Clients from "./pages/Clients";
-import NewReferral from "./pages/NewReferral";
+import RegisterClient from "./pages/RegisterClient";
+import RegisterLead from "./pages/RegisterLead";
 import Ranking from "./pages/Ranking";
 import ManageTeam from "./pages/ManageTeam";
 import Reports from "./pages/Reports";
@@ -128,7 +129,7 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <LeadTagConfigProvider>
-            <NewReferral defaultEntryType="lead" />
+            <RegisterLead />
           </LeadTagConfigProvider>
         </ProtectedRoute>
       }
@@ -138,7 +139,7 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <LeadTagConfigProvider>
-            <NewReferral defaultEntryType="client" />
+            <RegisterClient />
           </LeadTagConfigProvider>
         </ProtectedRoute>
       }
