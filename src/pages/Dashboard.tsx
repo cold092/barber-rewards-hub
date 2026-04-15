@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { DashboardSkeleton } from '@/components/ui/skeleton-card';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -116,9 +117,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-pulse text-muted-foreground">Carregando...</div>
-        </div>
+        <DashboardSkeleton />
       </DashboardLayout>
     );
   }
