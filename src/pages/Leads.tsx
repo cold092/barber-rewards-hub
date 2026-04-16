@@ -47,6 +47,7 @@ import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
 import { ColumnManager, type ColumnConfig } from '@/components/leads/ColumnManager';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
+import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { useTagConfig } from '@/contexts/TagConfigContext';
 import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
@@ -95,6 +96,7 @@ export default function Leads() {
   const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
   const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
   const { activeTags } = useTagFilter();
+  const { activeStatuses: globalStatuses, activeTags: globalTags, activeCollaborator: globalCollaborator } = useGlobalFilter();
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
