@@ -36,6 +36,7 @@ import { ColumnManager } from '@/components/leads/ColumnManager';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
+import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { useTagConfig } from '@/contexts/TagConfigContext';
 import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
@@ -93,6 +94,7 @@ export default function Clients() {
   const isViewingAsBarber = isViewingAs && effectiveRole === 'barber';
 
   const { activeTags } = useTagFilter();
+  const { activeStatuses: globalStatuses, activeTags: globalTags, activeCollaborator: globalCollaborator } = useGlobalFilter();
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
