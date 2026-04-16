@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ViewAsProvider } from "@/contexts/ViewAsContext";
 import { TagFilterProvider } from "@/contexts/TagFilterContext";
+import { GlobalFilterProvider } from "@/contexts/GlobalFilterContext";
 import { LeadTagConfigProvider, ClientTagConfigProvider } from "@/contexts/TagConfigContext";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -231,6 +232,7 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <TagFilterProvider>
+          <GlobalFilterProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -240,6 +242,7 @@ const App = () => (
               </ViewAsProvider>
             </AuthProvider>
           </BrowserRouter>
+          </GlobalFilterProvider>
         </TagFilterProvider>
       </TooltipProvider>
     </QueryClientProvider>
