@@ -167,10 +167,18 @@ export default function Clients() {
     };
   }, [user]);
 
-  // Filter by active tags
+  // Apply global filters first
+  const globalFiltered = referrals.filter(r => {
+    if (globalStatuses.length > 0 && !globalStatuses.includes(r.status)) return false;
+    if (globalTags.length > 0 && !(r.tags || []).some(t => globalTags.includes(t))) return false;
+    if (globalCollaborator && r.referrer_id !== globalCollaborator) return false;
+    return true;
+  });
+
+  // Then local tag filter
   const tagFiltered = activeTags.length > 0
-    ? referrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
-    : referrals;
+    ? globalFiltered.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
+    : globalFiltered;
 
   const filteredReferrals = searchQuery.trim()
     ? tagFiltered.filter(r => {
