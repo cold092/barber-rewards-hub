@@ -69,6 +69,7 @@ export default function Dashboard() {
   const isAdmin = isViewingAs ? (effectiveRole === 'admin' || effectiveRole === 'owner') : realIsAdmin;
   const isBarber = isViewingAs ? effectiveRole === 'barber' : realIsBarber;
   const isViewingAsBarber = isViewingAs && effectiveRole === 'barber';
+  const { activeTags, activeStatuses, activeCollaborator } = useGlobalFilter();
 
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [myReferrals, setMyReferrals] = useState<Referral[]>([]);
@@ -98,7 +99,15 @@ export default function Dashboard() {
     loadData();
   }, [profile, isBarber, isViewingAs, effectiveProfile]);
 
-  const displayReferrals = (isBarber || isViewingAsBarber) ? myReferrals : referrals;
+  const baseDisplayReferrals = (isBarber || isViewingAsBarber) ? myReferrals : referrals;
+  
+  // Apply global filters
+  const displayReferrals = baseDisplayReferrals.filter(r => {
+    if (activeStatuses.length > 0 && !activeStatuses.includes(r.status)) return false;
+    if (activeTags.length > 0 && !(r.tags || []).some(t => activeTags.includes(t))) return false;
+    if (activeCollaborator && r.referrer_id !== activeCollaborator) return false;
+    return true;
+  });
   const stats = {
     totalLeads: displayReferrals.length,
     converted: displayReferrals.filter(r => r.status === 'converted').length,
