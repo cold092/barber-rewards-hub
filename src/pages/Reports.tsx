@@ -131,7 +131,7 @@ export default function Reports() {
       default:
         return filtered;
     }
-  }, [referrals, reportBarber, reportRange, reportType, selectedTags]);
+  }, [referrals, reportBarber, reportRange, reportType, selectedTags, globalStatuses, globalTags, globalCollaborator]);
 
   const totals = useMemo(() => ({
     total: filteredReferrals.length,
