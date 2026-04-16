@@ -1,7 +1,9 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageTransition } from './PageTransition';
+import { GlobalFilterBar } from '@/components/filters/GlobalFilterBar';
+import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useTheme } from '@/hooks/use-theme';
@@ -11,6 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Scissors, 
+  Filter,
   LayoutDashboard, 
   Users, 
   Trophy, 
@@ -73,8 +76,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
   const { isViewingAs, viewAsProfile, clearViewAs } = useViewAs();
+  const { hasActiveFilters } = useGlobalFilter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [showGlobalFilter, setShowGlobalFilter] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     navItems.forEach(item => {
@@ -115,6 +120,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <span className="font-display font-bold lavender-text text-sm">Growth Game</span>
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-9 w-9 relative", (showGlobalFilter || hasActiveFilters) && "text-primary")}
+              onClick={() => setShowGlobalFilter(!showGlobalFilter)}
+            >
+              <Filter className="h-4 w-4" />
+              {hasActiveFilters && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </Button>
             <NotificationCenter />
             <Button
               variant="ghost"
@@ -459,7 +475,32 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
         )}
-        <div className="p-4 lg:p-8 max-w-[1600px]">
+
+        {/* Desktop filter toggle bar */}
+        <div className="hidden lg:flex items-center justify-end px-8 pt-4 pb-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-7 gap-1.5 text-xs font-medium relative",
+              (showGlobalFilter || hasActiveFilters) && "text-primary"
+            )}
+            onClick={() => setShowGlobalFilter(!showGlobalFilter)}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filtros globais
+            {hasActiveFilters && (
+              <span className="h-2 w-2 rounded-full bg-primary" />
+            )}
+          </Button>
+        </div>
+
+        {/* Global Filter Bar */}
+        <AnimatePresence>
+          {showGlobalFilter && <GlobalFilterBar />}
+        </AnimatePresence>
+
+        <div className="p-4 lg:px-8 lg:pb-8 lg:pt-4 max-w-[1600px]">
           <PageTransition>
             {children}
           </PageTransition>

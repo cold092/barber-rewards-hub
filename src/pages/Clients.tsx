@@ -36,6 +36,7 @@ import { ColumnManager } from '@/components/leads/ColumnManager';
 import type { ColumnConfig } from '@/components/leads/ColumnManager';
 import { GlobalTagFilter } from '@/components/filters/GlobalTagFilter';
 import { useTagFilter } from '@/contexts/TagFilterContext';
+import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { useTagConfig } from '@/contexts/TagConfigContext';
 import { TagSettingsDialog } from '@/components/settings/TagSettingsDialog';
 import type { Referral, ReferralStatus } from '@/types/database';
@@ -93,6 +94,7 @@ export default function Clients() {
   const isViewingAsBarber = isViewingAs && effectiveRole === 'barber';
 
   const { activeTags } = useTagFilter();
+  const { activeStatuses: globalStatuses, activeTags: globalTags, activeCollaborator: globalCollaborator } = useGlobalFilter();
   const { tags: contactTagOptions } = useTagConfig();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,10 +167,18 @@ export default function Clients() {
     };
   }, [user]);
 
-  // Filter by active tags
+  // Apply global filters first
+  const globalFiltered = referrals.filter(r => {
+    if (globalStatuses.length > 0 && !globalStatuses.includes(r.status)) return false;
+    if (globalTags.length > 0 && !(r.tags || []).some(t => globalTags.includes(t))) return false;
+    if (globalCollaborator && r.referrer_id !== globalCollaborator) return false;
+    return true;
+  });
+
+  // Then local tag filter
   const tagFiltered = activeTags.length > 0
-    ? referrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
-    : referrals;
+    ? globalFiltered.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
+    : globalFiltered;
 
   const filteredReferrals = searchQuery.trim()
     ? tagFiltered.filter(r => {

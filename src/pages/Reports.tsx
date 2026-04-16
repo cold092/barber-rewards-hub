@@ -6,6 +6,7 @@ import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPl
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { getAllBarbers, getAllReferrals } from '@/services/referralService';
 import PlanDistributionChart from '@/components/dashboard/PlanDistributionChart';
 import StatusDistributionChart from '@/components/dashboard/StatusDistributionChart';
@@ -64,6 +65,7 @@ const STAT_CONFIG = [
 
 export default function Reports() {
   const { isAdmin } = useAuth();
+  const { activeStatuses: globalStatuses, activeTags: globalTags, activeCollaborator: globalCollaborator } = useGlobalFilter();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [barbers, setBarbers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +103,16 @@ export default function Reports() {
 
   const filteredReferrals = useMemo(() => {
     let filtered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
+    // Apply global filters
+    if (globalStatuses.length > 0) {
+      filtered = filtered.filter(r => globalStatuses.includes(r.status));
+    }
+    if (globalTags.length > 0) {
+      filtered = filtered.filter(r => (r.tags || []).some(t => globalTags.includes(t)));
+    }
+    if (globalCollaborator) {
+      filtered = filtered.filter(r => r.referrer_id === globalCollaborator);
+    }
     if (reportBarber !== 'all') {
       filtered = filtered.filter((referral) => referral.referrer_id === reportBarber);
     }
@@ -119,7 +131,7 @@ export default function Reports() {
       default:
         return filtered;
     }
-  }, [referrals, reportBarber, reportRange, reportType, selectedTags]);
+  }, [referrals, reportBarber, reportRange, reportType, selectedTags, globalStatuses, globalTags, globalCollaborator]);
 
   const totals = useMemo(() => ({
     total: filteredReferrals.length,
