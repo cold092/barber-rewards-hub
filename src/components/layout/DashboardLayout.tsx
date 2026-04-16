@@ -119,6 +119,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <span className="font-display font-bold lavender-text text-sm">Growth Game</span>
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-9 w-9 relative", (showGlobalFilter || hasActiveFilters) && "text-primary")}
+              onClick={() => setShowGlobalFilter(!showGlobalFilter)}
+            >
+              <Filter className="h-4 w-4" />
+              {hasActiveFilters && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </Button>
             <NotificationCenter />
             <Button
               variant="ghost"
