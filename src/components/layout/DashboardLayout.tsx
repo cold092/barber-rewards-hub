@@ -475,7 +475,32 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
         )}
-        <div className="p-4 lg:p-8 max-w-[1600px]">
+
+        {/* Desktop filter toggle bar */}
+        <div className="hidden lg:flex items-center justify-end px-8 pt-4 pb-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-7 gap-1.5 text-xs font-medium relative",
+              (showGlobalFilter || hasActiveFilters) && "text-primary"
+            )}
+            onClick={() => setShowGlobalFilter(!showGlobalFilter)}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filtros globais
+            {hasActiveFilters && (
+              <span className="h-2 w-2 rounded-full bg-primary" />
+            )}
+          </Button>
+        </div>
+
+        {/* Global Filter Bar */}
+        <AnimatePresence>
+          {showGlobalFilter && <GlobalFilterBar />}
+        </AnimatePresence>
+
+        <div className="p-4 lg:px-8 lg:pb-8 lg:pt-4 max-w-[1600px]">
           <PageTransition>
             {children}
           </PageTransition>
