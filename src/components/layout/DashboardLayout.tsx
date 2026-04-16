@@ -1,7 +1,9 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageTransition } from './PageTransition';
+import { GlobalFilterBar } from '@/components/filters/GlobalFilterBar';
+import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useTheme } from '@/hooks/use-theme';
