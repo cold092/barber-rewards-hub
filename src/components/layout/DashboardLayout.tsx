@@ -75,8 +75,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const { profile, role, signOut, isAdmin } = useAuth();
   const { isViewingAs, viewAsProfile, clearViewAs } = useViewAs();
+  const { hasActiveFilters } = useGlobalFilter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [showGlobalFilter, setShowGlobalFilter] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     navItems.forEach(item => {
