@@ -228,14 +228,21 @@ export default function Leads() {
   };
 
   const allClientReferrals = referrals.filter(isClientReferral);
-  // Converted leads appear in BOTH views: leads kanban (Convertidos column) and clients
   const allLeadReferrals = referrals.filter((referral) => !isClientReferral(referral) || referral.status === 'converted');
   const baseReferrals = listType === 'clients' ? allClientReferrals : allLeadReferrals;
   
-  // Apply tag filter
+  // Apply global filters first
+  const globalFilteredReferrals = baseReferrals.filter(r => {
+    if (globalStatuses.length > 0 && !globalStatuses.includes(r.status)) return false;
+    if (globalTags.length > 0 && !(r.tags || []).some(t => globalTags.includes(t))) return false;
+    if (globalCollaborator && r.referrer_id !== globalCollaborator) return false;
+    return true;
+  });
+
+  // Then apply local tag filter
   const tagFilteredReferrals = activeTags.length > 0
-    ? baseReferrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
-    : baseReferrals;
+    ? globalFilteredReferrals.filter(r => (r.tags || []).some(t => activeTags.includes(t)))
+    : globalFilteredReferrals;
 
   const searchFilteredReferrals = searchQuery.trim()
     ? tagFilteredReferrals.filter(r => {
