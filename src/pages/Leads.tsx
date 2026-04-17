@@ -667,8 +667,8 @@ export default function Leads() {
             {/* Title Row */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl lavender-gradient lavender-glow">
-                  <Users className="h-5 w-5 text-primary-foreground" />
+                <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+                  <Users className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight">Leads</h1>

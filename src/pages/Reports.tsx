@@ -244,8 +244,8 @@ export default function Reports() {
         {/* Header + Actions */}
         <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-              <BarChart3 className="h-6 w-6 text-primary" />
+            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+              <BarChart3 className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-2xl font-display font-bold text-foreground">Relatórios</h1>
