@@ -719,7 +719,7 @@ export default function Leads() {
             <div className="flex items-center gap-2 flex-wrap">
               <Button
                 size="sm"
-                className="gap-1.5 text-xs h-7 lavender-gradient lavender-glow text-primary-foreground"
+                className="gap-1.5 text-xs h-7 btn-bank px-3"
                 onClick={() => navigate('/register-lead')}
               >
                 <Users className="h-3.5 w-3.5" />
