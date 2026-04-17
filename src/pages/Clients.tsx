@@ -379,8 +379,8 @@ export default function Clients() {
             {/* Title Row */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-success/20">
-                  <UserCheck className="h-5 w-5 text-success" />
+                <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+                  <UserCheck className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight">Clientes</h1>
