@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,145 +6,142 @@
 
 @layer base {
   :root {
-    /* Refined Black & Lavender — deeper, richer palette */
-    --background: 260 20% 3.5%;
-    --foreground: 250 15% 93%;
+    /* ── BankDash-inspired light theme — clean, blue, professional ── */
+    --background: 220 30% 97%;
+    --foreground: 222 35% 14%;
 
-    --card: 260 18% 7%;
-    --card-foreground: 250 12% 93%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 35% 14%;
 
-    --popover: 260 18% 9%;
-    --popover-foreground: 250 12% 93%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 35% 14%;
 
-    /* Vivid lavender primary */
-    --primary: 262 80% 65%;
-    --primary-foreground: 260 20% 98%;
+    /* Primary blue — like BankDash */
+    --primary: 230 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 235 85% 70%;
 
-    /* Deep plum secondary */
-    --secondary: 260 25% 12%;
-    --secondary-foreground: 260 15% 80%;
+    /* Soft secondary */
+    --secondary: 220 30% 95%;
+    --secondary-foreground: 222 35% 25%;
 
-    --muted: 260 18% 10%;
-    --muted-foreground: 260 12% 45%;
+    --muted: 220 25% 94%;
+    --muted-foreground: 222 15% 50%;
 
-    /* Soft lilac accent */
-    --accent: 275 65% 70%;
-    --accent-foreground: 260 20% 98%;
+    /* Accent — playful pink/magenta like in references */
+    --accent: 330 80% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 75% 58%;
     --destructive-foreground: 0 0% 100%;
 
     /* Emerald success */
-    --success: 162 55% 42%;
+    --success: 158 65% 45%;
     --success-foreground: 0 0% 100%;
 
     /* Amber warning */
-    --warning: 38 92% 50%;
-    --warning-foreground: 260 20% 4%;
+    --warning: 35 95% 55%;
+    --warning-foreground: 0 0% 100%;
 
-    /* Info blue */
-    --info: 210 80% 55%;
+    /* Info cyan */
+    --info: 200 85% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 260 18% 13%;
-    --input: 260 18% 11%;
-    --ring: 262 80% 65%;
+    --border: 220 20% 91%;
+    --input: 220 20% 94%;
+    --ring: 230 80% 60%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Sidebar — near-black */
-    --sidebar-background: 260 22% 3%;
-    --sidebar-foreground: 260 12% 70%;
-    --sidebar-primary: 262 80% 65%;
-    --sidebar-primary-foreground: 260 20% 98%;
-    --sidebar-accent: 260 22% 9%;
-    --sidebar-accent-foreground: 260 12% 90%;
-    --sidebar-border: 260 18% 10%;
-    --sidebar-ring: 262 80% 65%;
+    /* Sidebar — pure white, clean */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 20% 45%;
+    --sidebar-primary: 230 80% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 30% 96%;
+    --sidebar-accent-foreground: 230 80% 60%;
+    --sidebar-border: 220 20% 92%;
+    --sidebar-ring: 230 80% 60%;
 
-    /* Gradients */
-    --gradient-lavender: linear-gradient(135deg, hsl(262 80% 65%), hsl(285 65% 58%));
-    --gradient-lavender-soft: linear-gradient(135deg, hsl(262 80% 65% / 0.15), hsl(285 65% 58% / 0.08));
-    --gradient-dark: linear-gradient(180deg, hsl(260 20% 5%), hsl(260 22% 3%));
-    --gradient-card: linear-gradient(145deg, hsl(260 18% 9%), hsl(260 18% 5%));
-    --gradient-glow: radial-gradient(ellipse at center, hsl(262 80% 65% / 0.12), transparent 70%);
-    --gradient-mesh: radial-gradient(at 20% 80%, hsl(262 80% 65% / 0.06) 0%, transparent 50%),
-                     radial-gradient(at 80% 20%, hsl(285 65% 58% / 0.04) 0%, transparent 50%);
+    /* Bank-style gradients */
+    --gradient-blue: linear-gradient(135deg, hsl(230 80% 60%), hsl(245 75% 55%));
+    --gradient-blue-soft: linear-gradient(135deg, hsl(230 80% 60% / 0.12), hsl(245 75% 55% / 0.06));
+    --gradient-card: linear-gradient(135deg, hsl(230 80% 60%) 0%, hsl(245 75% 55%) 100%);
+    --gradient-glow: radial-gradient(ellipse at top, hsl(230 80% 60% / 0.08), transparent 60%);
 
-    /* Shadows */
-    --shadow-lavender: 0 4px 20px -4px hsl(262 80% 65% / 0.25);
-    --shadow-lg: 0 10px 40px -10px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 24px hsl(262 80% 65% / 0.18);
-    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3), 0 4px 12px hsl(0 0% 0% / 0.15);
-    --shadow-inset: inset 0 1px 0 0 hsl(260 18% 18% / 0.12);
+    /* Soft shadows (light theme) */
+    --shadow-sm: 0 1px 2px hsl(220 30% 50% / 0.04);
+    --shadow-card: 0 2px 8px hsl(220 30% 50% / 0.06), 0 1px 2px hsl(220 30% 50% / 0.04);
+    --shadow-lg: 0 8px 24px hsl(220 30% 50% / 0.08), 0 2px 6px hsl(220 30% 50% / 0.04);
+    --shadow-blue: 0 8px 24px hsl(230 80% 60% / 0.25);
+    --shadow-glow: 0 0 30px hsl(230 80% 60% / 0.15);
   }
 
-  /* ── Light theme ── */
-  .light {
-    --background: 240 20% 97%;
-    --foreground: 260 20% 10%;
+  /* ── Optional dark variant — kept for theme toggle ── */
+  .dark {
+    --background: 222 30% 8%;
+    --foreground: 220 15% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 260 20% 10%;
+    --card: 222 25% 12%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 260 20% 10%;
+    --popover: 222 25% 12%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 262 80% 55%;
+    --primary: 230 80% 65%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 235 85% 75%;
 
-    --secondary: 260 15% 93%;
-    --secondary-foreground: 260 20% 25%;
+    --secondary: 222 20% 18%;
+    --secondary-foreground: 220 15% 90%;
 
-    --muted: 260 12% 92%;
-    --muted-foreground: 260 10% 42%;
+    --muted: 222 20% 16%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 275 55% 62%;
+    --accent: 330 80% 65%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 162 55% 38%;
+    --success: 158 60% 50%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 260 20% 10%;
+    --warning: 35 90% 60%;
+    --warning-foreground: 0 0% 5%;
 
-    --info: 210 80% 50%;
+    --info: 200 80% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 260 12% 86%;
-    --input: 260 12% 90%;
-    --ring: 262 80% 55%;
+    --border: 222 20% 20%;
+    --input: 222 20% 18%;
+    --ring: 230 80% 65%;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 260 15% 30%;
-    --sidebar-primary: 262 80% 55%;
+    --sidebar-background: 222 25% 10%;
+    --sidebar-foreground: 220 15% 70%;
+    --sidebar-primary: 230 80% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 15% 95%;
-    --sidebar-accent-foreground: 260 15% 15%;
-    --sidebar-border: 260 12% 90%;
-    --sidebar-ring: 262 80% 55%;
+    --sidebar-accent: 222 25% 16%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 222 20% 18%;
+    --sidebar-ring: 230 80% 65%;
 
-    --gradient-lavender: linear-gradient(135deg, hsl(262 80% 55%), hsl(285 55% 52%));
-    --gradient-lavender-soft: linear-gradient(135deg, hsl(262 80% 55% / 0.1), hsl(285 55% 52% / 0.06));
-    --gradient-dark: linear-gradient(180deg, hsl(240 20% 97%), hsl(240 20% 95%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(260 12% 98%));
-    --gradient-glow: radial-gradient(ellipse at center, hsl(262 80% 55% / 0.08), transparent 70%);
-    --gradient-mesh: radial-gradient(at 20% 80%, hsl(262 80% 55% / 0.04) 0%, transparent 50%),
-                     radial-gradient(at 80% 20%, hsl(285 55% 52% / 0.03) 0%, transparent 50%);
+    --gradient-blue: linear-gradient(135deg, hsl(230 80% 65%), hsl(245 75% 60%));
+    --gradient-blue-soft: linear-gradient(135deg, hsl(230 80% 65% / 0.18), hsl(245 75% 60% / 0.08));
+    --gradient-card: linear-gradient(135deg, hsl(230 80% 65%) 0%, hsl(245 75% 60%) 100%);
+    --gradient-glow: radial-gradient(ellipse at top, hsl(230 80% 65% / 0.15), transparent 60%);
 
-    --shadow-lavender: 0 4px 20px -4px hsl(262 80% 55% / 0.15);
-    --shadow-lg: 0 10px 40px -10px hsl(0 0% 0% / 0.1);
-    --shadow-glow: 0 0 24px hsl(262 80% 55% / 0.1);
-    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.06), 0 4px 12px hsl(0 0% 0% / 0.04);
-    --shadow-inset: inset 0 1px 0 0 hsl(0 0% 100% / 0.6);
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.2);
+    --shadow-card: 0 4px 12px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 12px 32px hsl(0 0% 0% / 0.4);
+    --shadow-blue: 0 8px 24px hsl(230 80% 65% / 0.3);
+    --shadow-glow: 0 0 30px hsl(230 80% 65% / 0.25);
   }
 
-  .dark {
-    --background: 260 20% 3.5%;
-    --foreground: 250 15% 93%;
+  /* Light is default - explicit class for theme toggle */
+  .light {
+    --background: 220 30% 97%;
+    --foreground: 222 35% 14%;
   }
 }
 
@@ -155,126 +152,185 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Outfit', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     letter-spacing: -0.01em;
-    background-image: var(--gradient-mesh);
-    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Sora', system-ui, sans-serif;
-    @apply font-semibold tracking-tight;
-    letter-spacing: -0.025em;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    @apply font-bold tracking-tight;
+    letter-spacing: -0.02em;
   }
 
-  h1 { @apply text-3xl lg:text-4xl font-bold; }
-  h2 { @apply text-2xl lg:text-3xl; }
-  h3 { @apply text-xl lg:text-2xl; }
+  h1 { @apply text-2xl lg:text-3xl; }
+  h2 { @apply text-xl lg:text-2xl; }
+  h3 { @apply text-lg lg:text-xl; }
 
-  /* Smooth focus rings globally */
   *:focus-visible {
     @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
     transition: box-shadow 0.15s ease;
   }
 
-  /* Better input transitions */
   input, textarea, select {
     @apply transition-colors duration-200;
   }
 }
 
 @layer components {
-  .lavender-gradient {
-    background: var(--gradient-lavender);
+  /* BankDash-style card (white, soft shadow, rounded) */
+  .bank-card {
+    @apply bg-card rounded-2xl border border-border/50;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
 
-  .lavender-text {
-    background: var(--gradient-lavender);
+  .bank-card-hover {
+    @apply bank-card cursor-pointer;
+  }
+
+  .bank-card-hover:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  /* Featured blue gradient card (like balance card in BankDash) */
+  .gradient-card {
+    background: var(--gradient-card);
+    @apply text-white rounded-2xl;
+    box-shadow: var(--shadow-blue);
+  }
+
+  /* Soft round icon container — like BankDash circular icons */
+  .icon-circle {
+    @apply rounded-full flex items-center justify-center shrink-0;
+  }
+
+  .icon-circle-primary {
+    @apply icon-circle bg-primary/10 text-primary;
+  }
+
+  .icon-circle-success {
+    @apply icon-circle bg-success/10 text-success;
+  }
+
+  .icon-circle-warning {
+    @apply icon-circle bg-warning/10 text-warning;
+  }
+
+  .icon-circle-info {
+    @apply icon-circle bg-info/10 text-info;
+  }
+
+  .icon-circle-accent {
+    @apply icon-circle bg-accent/10 text-accent;
+  }
+
+  /* Blue text gradient */
+  .blue-text {
+    background: var(--gradient-blue);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .card-gradient {
-    background: var(--gradient-card);
+  .blue-gradient {
+    background: var(--gradient-blue);
   }
 
-  .lavender-glow {
-    box-shadow: var(--shadow-lavender);
+  .blue-glow {
+    box-shadow: var(--shadow-blue);
   }
 
-  .glass-card {
-    @apply bg-card/50 backdrop-blur-xl border border-border/30 rounded-xl;
-    box-shadow: var(--shadow-card), var(--shadow-inset);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-  }
-
-  .glass-card-hover {
-    @apply glass-card;
-  }
-
-  .glass-card-hover:hover {
-    @apply border-primary/20 bg-card/70;
-    box-shadow: var(--shadow-card), var(--shadow-inset), 0 0 0 1px hsl(262 80% 65% / 0.08);
-    transform: translateY(-1px);
-  }
-
-  .elegant-border {
-    @apply border border-border/40 rounded-xl;
-    background: var(--gradient-card);
-  }
-
-  .btn-lavender {
-    @apply bg-primary text-primary-foreground font-medium rounded-lg;
-    box-shadow: var(--shadow-lavender);
+  /* Primary button BankDash style */
+  .btn-bank {
+    @apply bg-primary text-primary-foreground font-medium rounded-xl;
+    box-shadow: var(--shadow-blue);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .btn-lavender:hover {
-    filter: brightness(1.12);
+  .btn-bank:hover {
+    filter: brightness(1.1);
     box-shadow: var(--shadow-glow);
     transform: translateY(-1px);
   }
 
-  .btn-lavender:active {
+  .btn-bank:active {
     transform: translateY(0);
     filter: brightness(0.95);
   }
 
-  /* Sidebar nav items */
+  /* Sidebar nav item — BankDash style with left blue indicator */
   .nav-item {
-    @apply relative overflow-hidden rounded-lg transition-all duration-200 ease-out;
+    @apply relative rounded-xl transition-all duration-200 ease-out;
   }
 
   .nav-item::before {
     content: '';
-    @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-0 rounded-full bg-primary;
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 rounded-r-full bg-primary;
     transition: height 0.2s ease-out;
   }
 
   .nav-item-active::before {
-    @apply h-5;
+    @apply h-7;
   }
 
   .nav-item-active {
-    @apply bg-sidebar-accent text-sidebar-primary;
+    @apply text-primary font-semibold;
   }
 
-  /* Stat cards */
-  .stat-card {
-    @apply glass-card p-4;
+  /* ── Legacy aliases mapped to new tokens for backwards compatibility ── */
+  .lavender-gradient { background: var(--gradient-blue); }
+  .lavender-text {
+    background: var(--gradient-blue);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-
-  .stat-card:hover {
-    @apply border-primary/15;
+  .lavender-glow { box-shadow: var(--shadow-blue); }
+  .gold-gradient { background: var(--gradient-blue); }
+  .gold-text {
+    background: var(--gradient-blue);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gold-glow { box-shadow: var(--shadow-blue); }
+  .glass-card {
+    @apply bg-card rounded-2xl border border-border/50;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .glass-card-hover {
+    @apply glass-card;
+  }
+  .glass-card-hover:hover {
+    box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-card), var(--shadow-lavender);
+  }
+  .stat-card {
+    @apply bank-card p-5;
+  }
+  .stat-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+  .elegant-border {
+    @apply border border-border/50 rounded-2xl bg-card;
+  }
+  .card-gradient {
+    background: var(--gradient-card);
+  }
+  .btn-lavender {
+    @apply btn-bank;
+  }
+  .divider-gradient {
+    @apply h-px w-full;
+    background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
   }
 
-  /* Premium badge shimmer */
   .shimmer {
     position: relative;
     overflow: hidden;
@@ -286,36 +342,12 @@
     background: linear-gradient(
       105deg,
       transparent 40%,
-      hsl(262 80% 65% / 0.06) 45%,
-      hsl(262 80% 65% / 0.12) 50%,
-      hsl(262 80% 65% / 0.06) 55%,
+      hsl(230 80% 60% / 0.06) 45%,
+      hsl(230 80% 60% / 0.12) 50%,
+      hsl(230 80% 60% / 0.06) 55%,
       transparent 60%
     );
     animation: shimmerSlide 3s ease-in-out infinite;
-  }
-
-  /* Subtle divider */
-  .divider-gradient {
-    @apply h-px w-full;
-    background: linear-gradient(to right, transparent, hsl(var(--border) / 0.5), transparent);
-  }
-}
-
-/* Legacy gold classes mapped to lavender for backwards compatibility */
-@layer components {
-  .gold-gradient {
-    background: var(--gradient-lavender);
-  }
-
-  .gold-text {
-    background: var(--gradient-lavender);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .gold-glow {
-    box-shadow: var(--shadow-lavender);
   }
 }
 
@@ -338,10 +370,9 @@
 
   .hover-lift:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lavender);
+    box-shadow: var(--shadow-lg);
   }
 
-  /* Staggered children animation */
   .stagger-children > * {
     opacity: 0;
     animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -373,10 +404,10 @@
 
 @keyframes glowPulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 hsl(262 80% 65% / 0.3);
+    box-shadow: 0 0 0 0 hsl(230 80% 60% / 0.3);
   }
   50% {
-    box-shadow: 0 0 24px 6px hsl(262 80% 65% / 0.12);
+    box-shadow: 0 0 24px 6px hsl(230 80% 60% / 0.12);
   }
 }
 
@@ -385,10 +416,9 @@
   100% { transform: translateX(100%); }
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -404,8 +434,7 @@
   background: hsl(var(--primary) / 0.4);
 }
 
-/* Selection */
 ::selection {
-  background: hsl(262 80% 65% / 0.3);
-  color: hsl(260 20% 98%);
+  background: hsl(230 80% 60% / 0.2);
+  color: hsl(222 35% 14%);
 }

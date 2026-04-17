@@ -162,7 +162,7 @@ export default function Auth() {
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="glass-card border-border/40 rounded-2xl overflow-hidden"
+          className="bank-card border-border/50 rounded-2xl overflow-hidden bg-card"
         >
           <div className="p-6 pb-4 text-center">
             <h2 className="text-lg font-display font-semibold text-foreground">Acesso ao Sistema</h2>
