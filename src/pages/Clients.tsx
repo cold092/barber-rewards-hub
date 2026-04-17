@@ -531,7 +531,7 @@ export default function Clients() {
           </div>
           <div className="bank-card p-3 flex items-center gap-2.5">
             <div className="icon-circle-primary h-9 w-9 shrink-0">
-              <Crown className="h-4 w-4" />
+              <Star className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <span className="block text-base font-bold text-foreground leading-tight">{vipCount}</span>
@@ -540,7 +540,7 @@ export default function Clients() {
           </div>
           <div className="bank-card p-3 flex items-center gap-2.5">
             <div className="icon-circle-warning h-9 w-9 shrink-0">
-              <Sparkles className="h-4 w-4" />
+              <TrendingUp className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <span className="block text-base font-bold text-foreground leading-tight">{avgPoints}</span>

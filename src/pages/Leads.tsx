@@ -967,7 +967,7 @@ export default function Leads() {
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-2 md:hidden">
           <div className="bank-card p-3 flex items-center gap-2.5">
             <div className="icon-circle-info h-9 w-9 shrink-0">
-              <UserPlus className="h-4 w-4" />
+              <Users className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <span className="block text-base font-bold text-foreground leading-tight">{referrals.filter(r => r.status === 'new').length}</span>
@@ -976,7 +976,7 @@ export default function Leads() {
           </div>
           <div className="bank-card p-3 flex items-center gap-2.5">
             <div className="icon-circle-warning h-9 w-9 shrink-0">
-              <Bell className="h-4 w-4" />
+              <Clock className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <span className="block text-base font-bold text-foreground leading-tight">{referrals.filter(r => r.status === 'contacted').length}</span>
@@ -985,7 +985,7 @@ export default function Leads() {
           </div>
           <div className="bank-card p-3 flex items-center gap-2.5">
             <div className="icon-circle-success h-9 w-9 shrink-0">
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <span className="block text-base font-bold text-foreground leading-tight">{referrals.filter(r => r.status === 'converted').length}</span>
