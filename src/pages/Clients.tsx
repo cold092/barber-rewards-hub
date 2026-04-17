@@ -411,7 +411,7 @@ export default function Clients() {
             <div className="flex items-center gap-2 flex-wrap">
               <Button
                 size="sm"
-                className="gap-1.5 text-xs h-7 gold-gradient gold-glow text-primary-foreground"
+                className="gap-1.5 text-xs h-7 btn-bank px-3"
                 onClick={() => setRegisterClientOpen(true)}
               >
                 <UserPlus className="h-3.5 w-3.5" />

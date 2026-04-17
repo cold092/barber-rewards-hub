@@ -226,7 +226,7 @@ export default function RegisterClient() {
                 <motion.div variants={fadeUp} className="pt-2">
                   <Button
                     type="submit"
-                    className="w-full h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold shadow-lg shadow-emerald-500/20 text-sm gap-2"
+                    className="w-full h-11 btn-bank text-sm gap-2"
                     disabled={loading || (isAdmin && responsibleType === 'barber' && (loadingBarbers || !selectedBarberId))}
                   >
                     {loading ? 'Registrando...' : 'Cadastrar Cliente'}

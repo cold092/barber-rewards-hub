@@ -188,7 +188,7 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
               <X className="h-3.5 w-3.5 mr-1.5" />
               Cancelar
             </Button>
-            <Button type="submit" className="rounded-lg lavender-gradient text-primary-foreground font-medium text-xs h-9 px-5 shadow-md shadow-primary/20" disabled={loading}>
+            <Button type="submit" className="btn-bank text-xs h-9 px-5" disabled={loading}>
               <UserPlus className="h-3.5 w-3.5 mr-1.5" />
               {loading ? 'Cadastrando...' : 'Cadastrar Cliente'}
             </Button>
