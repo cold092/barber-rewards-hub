@@ -520,17 +520,32 @@ export default function Clients() {
 
         {/* Mobile Stats */}
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-2 md:hidden">
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-success/[0.06] border border-success/15">
-            <span className="text-lg font-bold text-success">{totalClients}</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-medium">Total</span>
+          <div className="bank-card p-3 flex items-center gap-2.5">
+            <div className="icon-circle-success h-9 w-9 shrink-0">
+              <UserCheck className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-base font-bold text-foreground leading-tight">{totalClients}</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">Total</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-primary/[0.06] border border-primary/15">
-            <span className="text-lg font-bold text-primary">{vipCount}</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-medium">SQL/VIP</span>
+          <div className="bank-card p-3 flex items-center gap-2.5">
+            <div className="icon-circle-primary h-9 w-9 shrink-0">
+              <Star className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-base font-bold text-foreground leading-tight">{vipCount}</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">SQL/VIP</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-accent/[0.06] border border-accent/15">
-            <span className="text-lg font-bold text-accent">{avgPoints}</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-medium">Média pts</span>
+          <div className="bank-card p-3 flex items-center gap-2.5">
+            <div className="icon-circle-warning h-9 w-9 shrink-0">
+              <TrendingUp className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-base font-bold text-foreground leading-tight">{avgPoints}</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">Média pts</span>
+            </div>
           </div>
         </motion.div>
 
