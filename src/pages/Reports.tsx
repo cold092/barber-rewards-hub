@@ -55,12 +55,12 @@ const fadeUp = {
 };
 
 const STAT_CONFIG = [
-  { key: 'total', label: 'Total Indicações', icon: BarChart3, gradient: 'from-primary/20 to-primary/5', text: 'text-primary', border: 'border-primary/20' },
-  { key: 'leads', label: 'Leads Ativos', icon: UserPlus, gradient: 'from-info/20 to-info/5', text: 'text-info', border: 'border-info/20' },
-  { key: 'clients', label: 'Clientes', icon: Users, gradient: 'from-warning/20 to-warning/5', text: 'text-warning', border: 'border-warning/20' },
-  { key: 'converted', label: 'Convertidos', icon: CheckCircle, gradient: 'from-success/20 to-success/5', text: 'text-success', border: 'border-success/20' },
-  { key: 'revenue', label: 'Receita Total', icon: DollarSign, gradient: 'from-primary/20 to-primary/5', text: 'text-primary', border: 'border-primary/20' },
-  { key: 'ticket', label: 'Ticket Médio', icon: TrendingUp, gradient: 'from-accent/20 to-accent/5', text: 'text-accent', border: 'border-accent/20' },
+  { key: 'total', label: 'Total Indicações', icon: BarChart3, circle: 'icon-circle-primary' },
+  { key: 'leads', label: 'Leads Ativos', icon: UserPlus, circle: 'icon-circle-info' },
+  { key: 'clients', label: 'Clientes', icon: Users, circle: 'icon-circle-warning' },
+  { key: 'converted', label: 'Convertidos', icon: CheckCircle, circle: 'icon-circle-success' },
+  { key: 'revenue', label: 'Receita Total', icon: DollarSign, circle: 'icon-circle-primary' },
+  { key: 'ticket', label: 'Ticket Médio', icon: TrendingUp, circle: 'icon-circle-success' },
 ] as const;
 
 export default function Reports() {
@@ -354,22 +354,19 @@ export default function Reports() {
               return (
                 <div
                   key={stat.key}
-                  className={cn(
-                    "glass-card rounded-xl p-4 flex flex-col gap-2 border",
-                    stat.border
-                  )}
+                  className="bank-card hover-lift group p-4 flex items-center gap-3"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider leading-tight">
+                  <div className={cn(stat.circle, "h-11 w-11 shrink-0 transition-transform duration-300 group-hover:scale-110")}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider leading-tight truncate">
                       {stat.label}
                     </span>
-                    <div className={cn("p-1.5 rounded-lg bg-gradient-to-br", stat.gradient)}>
-                      <Icon className={cn("h-3 w-3", stat.text)} />
-                    </div>
+                    <p className="text-lg font-bold tracking-tight text-foreground truncate">
+                      {statValues[stat.key]}
+                    </p>
                   </div>
-                  <p className={cn("text-xl font-bold tracking-tight", stat.text)}>
-                    {statValues[stat.key]}
-                  </p>
                 </div>
               );
             })}

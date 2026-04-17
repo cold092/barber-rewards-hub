@@ -965,17 +965,32 @@ export default function Leads() {
 
         {/* Mobile Stats */}
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-3 gap-2 md:hidden">
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-info/[0.06] border border-info/15">
-            <span className="text-lg font-bold text-info">{referrals.filter(r => r.status === 'new').length}</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-medium">Novos</span>
+          <div className="bank-card p-3 flex items-center gap-2.5">
+            <div className="icon-circle-info h-9 w-9 shrink-0">
+              <UserPlus className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-base font-bold text-foreground leading-tight">{referrals.filter(r => r.status === 'new').length}</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">Novos</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-warning/[0.06] border border-warning/15">
-            <span className="text-lg font-bold text-warning">{referrals.filter(r => r.status === 'contacted').length}</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-medium">Contatados</span>
+          <div className="bank-card p-3 flex items-center gap-2.5">
+            <div className="icon-circle-warning h-9 w-9 shrink-0">
+              <Bell className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-base font-bold text-foreground leading-tight">{referrals.filter(r => r.status === 'contacted').length}</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">Contatados</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-success/[0.06] border border-success/15">
-            <span className="text-lg font-bold text-success">{referrals.filter(r => r.status === 'converted').length}</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-medium">Conv.</span>
+          <div className="bank-card p-3 flex items-center gap-2.5">
+            <div className="icon-circle-success h-9 w-9 shrink-0">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-base font-bold text-foreground leading-tight">{referrals.filter(r => r.status === 'converted').length}</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">Conv.</span>
+            </div>
           </div>
         </motion.div>
 
