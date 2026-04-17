@@ -32,27 +32,26 @@ const fadeUp = {
 };
 
 function StatCard({ icon: Icon, label, value, sub, color, index }: { icon: typeof Users; label: string; value: string | number; sub: string; color: string; index: number }) {
-  const colorMap: Record<string, string> = {
-    primary: 'text-primary bg-primary/10 border-primary/20',
-    success: 'text-success bg-success/10 border-success/20',
-    info: 'text-info bg-info/10 border-info/20',
-    warning: 'text-warning bg-warning/10 border-warning/20',
+  const circleClassMap: Record<string, string> = {
+    primary: 'icon-circle-primary',
+    success: 'icon-circle-success',
+    info: 'icon-circle-info',
+    warning: 'icon-circle-warning',
   };
-  const c = colorMap[color] || colorMap.primary;
-  const textColor = c.split(' ')[0];
+  const circleClass = circleClassMap[color] || circleClassMap.primary;
 
   return (
     <motion.div custom={index} variants={fadeUp} initial="hidden" animate="show">
-      <Card className="glass-card hover-lift group overflow-hidden relative">
+      <Card className="bank-card hover-lift group overflow-hidden relative">
         <CardContent className="p-5">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-              <p className={cn("text-3xl font-bold tracking-tight", textColor)}>{value}</p>
-              <p className="text-[11px] text-muted-foreground">{sub}</p>
+          <div className="flex items-center gap-4">
+            <div className={cn(circleClass, "h-14 w-14 transition-transform duration-300 group-hover:scale-110")}>
+              <Icon className="h-6 w-6" />
             </div>
-            <div className={cn("p-2.5 rounded-xl border transition-colors", c, "group-hover:scale-110 transition-transform duration-300")}>
-              <Icon className="h-5 w-5" />
+            <div className="min-w-0 space-y-0.5">
+              <p className="text-xs font-medium text-muted-foreground tracking-wide truncate">{label}</p>
+              <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{sub}</p>
             </div>
           </div>
         </CardContent>
