@@ -198,8 +198,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <button
                       key={item.path}
                       className={cn(
-                        "nav-item w-full flex items-center gap-3 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
-                        collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5" : "px-3 py-2.5",
+                        "nav-item w-full flex items-center gap-2.5 text-[13px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
+                        collapsed ? "lg:justify-center lg:px-0 lg:py-2 px-2.5 py-2" : "px-2.5 py-2",
                         isChildActive && "text-sidebar-primary"
                       )}
                       onClick={() => {
@@ -285,8 +285,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <button
                     key={item.path}
                     className={cn(
-                      "nav-item w-full flex items-center gap-3 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
-                      collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5" : "px-3 py-2.5",
+                      "nav-item w-full flex items-center gap-2.5 text-[13px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
+                      collapsed ? "lg:justify-center lg:px-0 lg:py-2 px-2.5 py-2" : "px-2.5 py-2",
                       isActive && "nav-item-active text-sidebar-primary bg-sidebar-accent"
                     )}
                     onClick={() => {
@@ -329,14 +329,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <button
                     onClick={toggleTheme}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-colors duration-200",
+                      "w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-colors duration-200",
                       collapsed && "lg:justify-center lg:px-0"
                     )}
                   >
                     {theme === 'dark' ? (
-                      <Sun className="h-[18px] w-[18px] shrink-0" />
+                      <Sun className="h-[17px] w-[17px] shrink-0" />
                     ) : (
-                      <Moon className="h-[18px] w-[18px] shrink-0" />
+                      <Moon className="h-[17px] w-[17px] shrink-0" />
                     )}
                     <span className={cn("truncate", collapsed && "lg:hidden")}>
                       {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
