@@ -460,8 +460,8 @@ export default function Ranking() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <div className="flex items-center gap-4">
-            <div className="lavender-glow p-3 rounded-2xl">
-              <Trophy className="h-7 w-7 text-primary" />
+            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
+              <Trophy className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-3xl font-display font-bold">
