@@ -79,22 +79,34 @@ export function ViewAsSelector({ collapsed = false }: { collapsed?: boolean }) {
           <SelectItem value="__self__">
             <span className="font-medium">Minha visão</span>
           </SelectItem>
-          {teamMembers.map((member) => (
-            <SelectItem key={member.profile.id} value={member.profile.id}>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-5 w-5">
-                  <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
-                    {getInitials(member.profile.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="truncate">{member.profile.name}</span>
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  {getRoleIcon(member.role)}
-                  {getRoleLabel(member.role)}
-                </span>
-              </div>
-            </SelectItem>
-          ))}
+
+          {(['owner', 'admin', 'barber'] as AppRole[]).map((roleKey) => {
+            const group = teamMembers.filter(m => m.role === roleKey);
+            if (group.length === 0) return null;
+            const groupLabel = roleKey === 'owner' ? 'Donos' : roleKey === 'admin' ? 'Administradores' : 'Colaboradores';
+
+            return (
+              <SelectGroup key={roleKey}>
+                <SelectSeparator />
+                <SelectLabel className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
+                  {getRoleIcon(roleKey)}
+                  {groupLabel}
+                </SelectLabel>
+                {group.map((member) => (
+                  <SelectItem key={member.profile.id} value={member.profile.id}>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-5 w-5">
+                        <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
+                          {getInitials(member.profile.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{member.profile.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            );
+          })}
         </SelectContent>
       </Select>
     </div>
