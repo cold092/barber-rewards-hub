@@ -62,7 +62,12 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
       const roleMap = new Map(roles.map(r => [r.user_id, r.role as AppRole]));
 
       const members: TeamMember[] = profiles
-        .filter(p => p.user_id !== user.id) // exclude self
+        .filter(p => {
+          if (p.user_id === user.id) return false; // exclude self
+          const r = roleMap.get(p.user_id);
+          // exclude clients (and any user without a team role)
+          return r === 'owner' || r === 'admin' || r === 'barber';
+        })
         .map(p => ({
           profile: p as Profile,
           role: roleMap.get(p.user_id) || 'barber' as AppRole,
