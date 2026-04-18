@@ -44,12 +44,24 @@ export function GlobalFilterBar({ tagOptions = [] }: GlobalFilterBarProps) {
 
   useEffect(() => {
     if (!isAdmin) return;
-    supabase
-      .from('profiles')
-      .select('id, name')
-      .then(({ data }) => {
-        if (data) setCollaborators(data.map(p => ({ id: p.id, name: p.name })));
+    (async () => {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name, user_id');
+      if (!profiles) return;
+
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      const roleMap = new Map((roles || []).map(r => [r.user_id, r.role]));
+      const teamOnly = profiles.filter(p => {
+        const r = roleMap.get(p.user_id);
+        return r === 'owner' || r === 'admin' || r === 'barber';
       });
+
+      setCollaborators(teamOnly.map(p => ({ id: p.id, name: p.name })));
+    })();
   }, [isAdmin]);
 
   const activeCount = activeTags.length + activeStatuses.length + (activeCollaborator ? 1 : 0);
