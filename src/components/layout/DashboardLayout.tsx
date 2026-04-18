@@ -156,17 +156,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={cn("p-4 pb-3", collapsed && "lg:px-3")}>
-            <div className="flex items-center gap-3">
+          <div className={cn("p-3 pb-2", collapsed && "lg:px-2.5")}>
+            <div className="flex items-center gap-2.5">
               <div className={cn(
-                "shrink-0 rounded-xl lavender-gradient lavender-glow flex items-center justify-center transition-all",
-                collapsed ? "w-10 h-10 lg:w-11 lg:h-11" : "w-10 h-10"
+                "shrink-0 rounded-lg lavender-gradient lavender-glow flex items-center justify-center transition-all",
+                collapsed ? "w-9 h-9 lg:w-10 lg:h-10" : "w-9 h-9"
               )}>
-                <Scissors className="w-5 h-5 text-primary-foreground" />
+                <Scissors className="w-[18px] h-[18px] text-primary-foreground" />
               </div>
               <div className={cn("min-w-0 transition-opacity duration-200", collapsed && "lg:hidden")}>
-                <h1 className="font-display font-bold lavender-text text-lg leading-tight">Growth Game</h1>
-                <p className="text-[11px] text-muted-foreground/60 font-medium tracking-wide uppercase">Sistema de Crescimento</p>
+                <h1 className="font-display font-bold lavender-text text-base leading-tight">Growth Game</h1>
+                <p className="text-[10px] text-muted-foreground/60 font-medium tracking-wide uppercase">Sistema de Crescimento</p>
               </div>
             </div>
           </div>
@@ -175,9 +175,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="hidden lg:flex px-3 mb-1">
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="w-full flex items-center justify-center p-1.5 rounded-lg text-muted-foreground/50 hover:text-foreground hover:bg-sidebar-accent/60 transition-colors"
+              className="w-full flex items-center justify-center p-1 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-sidebar-accent/60 transition-colors"
             >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform duration-300", collapsed && "rotate-180")} />
+              <ChevronLeft className={cn("h-3.5 w-3.5 transition-transform duration-300", collapsed && "rotate-180")} />
             </button>
           </div>
 
@@ -185,7 +185,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="mx-4 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
           {/* Navigation */}
-          <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-0.5">
+          <nav className="flex-1 min-h-0 overflow-y-auto px-2.5 py-3 space-y-0.5">
             <TooltipProvider delayDuration={0}>
               {filteredNavItems.map((item) => {
                 const isActive = location.pathname === item.path;
