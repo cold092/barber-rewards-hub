@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Tag, X, Filter, Users, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Tag, X, Filter, Users, ChevronDown, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,56 +126,53 @@ export function GlobalFilterBar({ tagOptions = [] }: GlobalFilterBarProps) {
         {isAdmin && collaborators.length > 0 && (
           <>
             <div className="w-px h-5 bg-border/40" />
-            <div className="relative">
-              <button
-                className={cn(
-                  "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md border transition-all",
-                  activeCollaborator
-                    ? "bg-primary/15 text-primary border-primary/30"
-                    : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
-                )}
-                onClick={() => setShowCollaborators(!showCollaborators)}
+            <Popover open={showCollaborators} onOpenChange={setShowCollaborators}>
+              <PopoverTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md border transition-all",
+                    activeCollaborator
+                      ? "bg-primary/15 text-primary border-primary/30"
+                      : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
+                  )}
+                >
+                  <Users className="h-3 w-3" />
+                  {activeCollaborator
+                    ? collaborators.find(c => c.id === activeCollaborator)?.name || 'Colaborador'
+                    : 'Colaborador'}
+                  <ChevronDown className={cn("h-3 w-3 transition-transform", showCollaborators && "rotate-180")} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                sideOffset={6}
+                className="w-[200px] p-1 max-h-[260px] overflow-y-auto z-[60]"
               >
-                <Users className="h-3 w-3" />
-                {activeCollaborator
-                  ? collaborators.find(c => c.id === activeCollaborator)?.name || 'Colaborador'
-                  : 'Colaborador'}
-                <ChevronDown className={cn("h-3 w-3 transition-transform", showCollaborators && "rotate-180")} />
-              </button>
-
-              <AnimatePresence>
-                {showCollaborators && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="absolute top-full left-0 mt-1 z-50 bg-popover border border-border/40 rounded-lg shadow-xl p-1 min-w-[180px] max-h-[200px] overflow-y-auto"
+                <button
+                  className={cn(
+                    "w-full flex items-center justify-between text-left text-xs px-3 py-1.5 rounded-md transition-colors",
+                    !activeCollaborator ? "bg-primary/10 text-primary" : "hover:bg-secondary/50 text-foreground"
+                  )}
+                  onClick={() => { setActiveCollaborator(null); setShowCollaborators(false); }}
+                >
+                  <span>Todos</span>
+                  {!activeCollaborator && <Check className="h-3 w-3" />}
+                </button>
+                {collaborators.map(c => (
+                  <button
+                    key={c.id}
+                    className={cn(
+                      "w-full flex items-center justify-between text-left text-xs px-3 py-1.5 rounded-md transition-colors",
+                      activeCollaborator === c.id ? "bg-primary/10 text-primary" : "hover:bg-secondary/50 text-foreground"
+                    )}
+                    onClick={() => { setActiveCollaborator(c.id); setShowCollaborators(false); }}
                   >
-                    <button
-                      className={cn(
-                        "w-full text-left text-xs px-3 py-1.5 rounded-md transition-colors",
-                        !activeCollaborator ? "bg-primary/10 text-primary" : "hover:bg-secondary/50 text-foreground"
-                      )}
-                      onClick={() => { setActiveCollaborator(null); setShowCollaborators(false); }}
-                    >
-                      Todos
-                    </button>
-                    {collaborators.map(c => (
-                      <button
-                        key={c.id}
-                        className={cn(
-                          "w-full text-left text-xs px-3 py-1.5 rounded-md transition-colors",
-                          activeCollaborator === c.id ? "bg-primary/10 text-primary" : "hover:bg-secondary/50 text-foreground"
-                        )}
-                        onClick={() => { setActiveCollaborator(c.id); setShowCollaborators(false); }}
-                      >
-                        {c.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    <span className="truncate">{c.name}</span>
+                    {activeCollaborator === c.id && <Check className="h-3 w-3 shrink-0" />}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           </>
         )}
 
