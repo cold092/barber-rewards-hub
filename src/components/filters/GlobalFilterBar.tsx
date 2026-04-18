@@ -73,10 +73,10 @@ export function GlobalFilterBar({ tagOptions = [] }: GlobalFilterBarProps) {
       exit={{ opacity: 0, height: 0 }}
       className="overflow-hidden"
     >
-      <div className="flex flex-wrap items-center gap-2 px-4 lg:px-8 py-2.5 bg-secondary/20 border-b border-border/20 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-1.5 px-4 lg:px-6 py-2 bg-secondary/30 border-b border-border/40 backdrop-blur-sm">
         <div className="flex items-center gap-1.5 mr-1">
-          <Filter className="h-3.5 w-3.5 text-primary" />
-          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Filtros</span>
+          <Filter className="h-3 w-3 text-primary" />
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Filtros</span>
           {activeCount > 0 && (
             <Badge className="h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground rounded-full">
               {activeCount}
