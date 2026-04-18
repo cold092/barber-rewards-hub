@@ -1,10 +1,11 @@
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from '@/components/ui/select';
 import { Eye, X, Crown, Shield, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { AppRole } from '@/types/database';
 
 export function ViewAsSelector({ collapsed = false }: { collapsed?: boolean }) {
   const { isAdmin } = useAuth();
