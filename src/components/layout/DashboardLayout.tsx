@@ -477,7 +477,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
 
         {/* Desktop filter toggle bar */}
-        <div className="hidden lg:flex items-center justify-end px-8 pt-4 pb-0">
+        <div className="hidden lg:flex items-center justify-end px-6 pt-3 pb-0">
           <Button
             variant="ghost"
             size="sm"
@@ -500,7 +500,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {showGlobalFilter && <GlobalFilterBar />}
         </AnimatePresence>
 
-        <div className="p-4 lg:px-8 lg:pb-8 lg:pt-4 max-w-[1600px]">
+        <div className="p-3 lg:px-6 lg:pb-6 lg:pt-3 max-w-[1600px]">
           <PageTransition>
             {children}
           </PageTransition>
