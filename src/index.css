@@ -301,26 +301,26 @@
   }
   .gold-glow { box-shadow: var(--shadow-blue); }
   .glass-card {
-    @apply bg-card rounded-2xl border border-border/50;
+    @apply bg-card rounded-xl border border-border/60;
     box-shadow: var(--shadow-card);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
   }
   .glass-card-hover {
     @apply glass-card;
   }
   .glass-card-hover:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
   }
   .stat-card {
-    @apply bank-card p-5;
+    @apply bank-card p-4;
   }
   .stat-card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
   }
   .elegant-border {
-    @apply border border-border/50 rounded-2xl bg-card;
+    @apply border border-border/60 rounded-xl bg-card;
   }
   .card-gradient {
     background: var(--gradient-card);
