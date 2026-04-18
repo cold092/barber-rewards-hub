@@ -163,12 +163,12 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     @apply font-bold tracking-tight;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.022em;
   }
 
-  h1 { @apply text-2xl lg:text-3xl; }
-  h2 { @apply text-xl lg:text-2xl; }
-  h3 { @apply text-lg lg:text-xl; }
+  h1 { @apply text-[22px] lg:text-[26px] leading-tight; }
+  h2 { @apply text-lg lg:text-xl leading-tight; }
+  h3 { @apply text-base lg:text-lg leading-snug; }
 
   *:focus-visible {
     @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
@@ -183,9 +183,9 @@
 @layer components {
   /* BankDash-style card (white, soft shadow, rounded) */
   .bank-card {
-    @apply bg-card rounded-2xl border border-border/50;
+    @apply bg-card rounded-xl border border-border/60;
     box-shadow: var(--shadow-card);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
   }
 
   .bank-card-hover {
@@ -193,8 +193,9 @@
   }
 
   .bank-card-hover:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: hsl(var(--border));
+    transform: translateY(-1px);
   }
 
   /* Featured blue gradient card (like balance card in BankDash) */
