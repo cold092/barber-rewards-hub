@@ -156,17 +156,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={cn("p-4 pb-3", collapsed && "lg:px-3")}>
-            <div className="flex items-center gap-3">
+          <div className={cn("p-3 pb-2", collapsed && "lg:px-2.5")}>
+            <div className="flex items-center gap-2.5">
               <div className={cn(
-                "shrink-0 rounded-xl lavender-gradient lavender-glow flex items-center justify-center transition-all",
-                collapsed ? "w-10 h-10 lg:w-11 lg:h-11" : "w-10 h-10"
+                "shrink-0 rounded-lg lavender-gradient lavender-glow flex items-center justify-center transition-all",
+                collapsed ? "w-9 h-9 lg:w-10 lg:h-10" : "w-9 h-9"
               )}>
-                <Scissors className="w-5 h-5 text-primary-foreground" />
+                <Scissors className="w-[18px] h-[18px] text-primary-foreground" />
               </div>
               <div className={cn("min-w-0 transition-opacity duration-200", collapsed && "lg:hidden")}>
-                <h1 className="font-display font-bold lavender-text text-lg leading-tight">Growth Game</h1>
-                <p className="text-[11px] text-muted-foreground/60 font-medium tracking-wide uppercase">Sistema de Crescimento</p>
+                <h1 className="font-display font-bold lavender-text text-base leading-tight">Growth Game</h1>
+                <p className="text-[10px] text-muted-foreground/60 font-medium tracking-wide uppercase">Sistema de Crescimento</p>
               </div>
             </div>
           </div>
@@ -175,9 +175,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="hidden lg:flex px-3 mb-1">
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="w-full flex items-center justify-center p-1.5 rounded-lg text-muted-foreground/50 hover:text-foreground hover:bg-sidebar-accent/60 transition-colors"
+              className="w-full flex items-center justify-center p-1 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-sidebar-accent/60 transition-colors"
             >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform duration-300", collapsed && "rotate-180")} />
+              <ChevronLeft className={cn("h-3.5 w-3.5 transition-transform duration-300", collapsed && "rotate-180")} />
             </button>
           </div>
 
@@ -185,7 +185,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="mx-4 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
           {/* Navigation */}
-          <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-0.5">
+          <nav className="flex-1 min-h-0 overflow-y-auto px-2.5 py-3 space-y-0.5">
             <TooltipProvider delayDuration={0}>
               {filteredNavItems.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -198,8 +198,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <button
                       key={item.path}
                       className={cn(
-                        "nav-item w-full flex items-center gap-3 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
-                        collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5" : "px-3 py-2.5",
+                        "nav-item w-full flex items-center gap-2.5 text-[13px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
+                        collapsed ? "lg:justify-center lg:px-0 lg:py-2 px-2.5 py-2" : "px-2.5 py-2",
                         isChildActive && "text-sidebar-primary"
                       )}
                       onClick={() => {
@@ -285,8 +285,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <button
                     key={item.path}
                     className={cn(
-                      "nav-item w-full flex items-center gap-3 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
-                      collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5" : "px-3 py-2.5",
+                      "nav-item w-full flex items-center gap-2.5 text-[13px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200",
+                      collapsed ? "lg:justify-center lg:px-0 lg:py-2 px-2.5 py-2" : "px-2.5 py-2",
                       isActive && "nav-item-active text-sidebar-primary bg-sidebar-accent"
                     )}
                     onClick={() => {
@@ -329,14 +329,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <button
                     onClick={toggleTheme}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-colors duration-200",
+                      "w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-colors duration-200",
                       collapsed && "lg:justify-center lg:px-0"
                     )}
                   >
                     {theme === 'dark' ? (
-                      <Sun className="h-[18px] w-[18px] shrink-0" />
+                      <Sun className="h-[17px] w-[17px] shrink-0" />
                     ) : (
-                      <Moon className="h-[18px] w-[18px] shrink-0" />
+                      <Moon className="h-[17px] w-[17px] shrink-0" />
                     )}
                     <span className={cn("truncate", collapsed && "lg:hidden")}>
                       {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
@@ -477,7 +477,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
 
         {/* Desktop filter toggle bar */}
-        <div className="hidden lg:flex items-center justify-end px-8 pt-4 pb-0">
+        <div className="hidden lg:flex items-center justify-end px-6 pt-3 pb-0">
           <Button
             variant="ghost"
             size="sm"
@@ -500,7 +500,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {showGlobalFilter && <GlobalFilterBar />}
         </AnimatePresence>
 
-        <div className="p-4 lg:px-8 lg:pb-8 lg:pt-4 max-w-[1600px]">
+        <div className="p-3 lg:px-6 lg:pb-6 lg:pt-3 max-w-[1600px]">
           <PageTransition>
             {children}
           </PageTransition>

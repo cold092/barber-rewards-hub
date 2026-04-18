@@ -63,10 +63,10 @@ export function KanbanCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group p-3 rounded-lg bg-card border border-border/50 hover:border-primary/40 transition-all cursor-pointer shadow-sm",
-        isDragging && "opacity-50 shadow-lg ring-2 ring-primary",
-        isOverdue && "border-destructive/50 bg-destructive/8",
-        isDueToday && "border-warning/50 bg-warning/8"
+        "group p-2.5 rounded-lg bg-card border border-border/60 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer",
+        isDragging && "opacity-50 shadow-md ring-2 ring-primary",
+        isOverdue && "border-destructive/50 bg-destructive/[0.06]",
+        isDueToday && "border-warning/50 bg-warning/[0.06]"
       )}
     >
       <div className="flex items-start gap-1.5">
