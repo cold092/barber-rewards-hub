@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Tag, X, Filter, Users, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Tag, X, Filter, Users, ChevronDown, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { supabase } from '@/integrations/supabase/client';
