@@ -1009,7 +1009,7 @@ export default function Leads() {
         {/* Kanban View */}
         {viewMode === 'kanban' && (
           <KanbanBoard
-            referrals={searchFilteredReferrals.filter(r => !isClientReferral(r))}
+            referrals={searchFilteredReferrals.filter(r => r.status !== 'client')}
             onStatusChange={handleStatusChange}
             onColumnChange={handleColumnChange}
             onOpenDetails={openDetailsDialog}
