@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPlus, Filter, Trophy, Tag, X } from 'lucide-react';
+import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPlus, Filter, Trophy, Tag, X, CalendarIcon, UserCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { getAllBarbers, getAllReferrals } from '@/services/referralService';
@@ -18,30 +20,19 @@ import ConversionTrendChart from '@/components/dashboard/ConversionTrendChart';
 import BarberPerformanceChart from '@/components/dashboard/BarberPerformanceChart';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { format, startOfDay, endOfDay, startOfMonth, subDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 type ReportType = 'all' | 'leads' | 'clients' | 'converted';
-type ReportRange = 'all' | '7d' | '30d' | 'month';
 type ReportBarber = 'all' | string;
 
 const isClientReferral = (referral: Referral) => referral.is_client || referral.status === 'converted';
 
-const isWithinRange = (dateString: string, range: ReportRange) => {
-  if (range === 'all') return true;
+const isWithinDateRange = (dateString: string, from: Date | undefined, to: Date | undefined) => {
+  if (!from && !to) return true;
   const date = new Date(dateString);
-  const now = new Date();
-  if (range === '7d') {
-    const cutoff = new Date(now);
-    cutoff.setDate(now.getDate() - 7);
-    return date >= cutoff;
-  }
-  if (range === '30d') {
-    const cutoff = new Date(now);
-    cutoff.setDate(now.getDate() - 30);
-    return date >= cutoff;
-  }
-  if (range === 'month') {
-    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-  }
+  if (from && date < startOfDay(from)) return false;
+  if (to && date > endOfDay(to)) return false;
   return true;
 };
 
