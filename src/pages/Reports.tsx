@@ -61,9 +61,18 @@ export default function Reports() {
   const [barbers, setBarbers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [reportType, setReportType] = useState<ReportType>('all');
-  const [reportRange, setReportRange] = useState<ReportRange>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [reportBarber, setReportBarber] = useState<ReportBarber>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const applyPreset = (preset: '7d' | '30d' | 'month' | 'all') => {
+    const now = new Date();
+    if (preset === 'all') { setDateFrom(undefined); setDateTo(undefined); return; }
+    if (preset === '7d') { setDateFrom(subDays(now, 7)); setDateTo(now); return; }
+    if (preset === '30d') { setDateFrom(subDays(now, 30)); setDateTo(now); return; }
+    if (preset === 'month') { setDateFrom(startOfMonth(now)); setDateTo(now); return; }
+  };
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -93,7 +102,7 @@ export default function Reports() {
   }, [isAdmin]);
 
   const filteredReferrals = useMemo(() => {
-    let filtered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
+    let filtered = referrals.filter((referral) => isWithinDateRange(referral.created_at, dateFrom, dateTo));
     // Apply global filters
     if (globalStatuses.length > 0) {
       filtered = filtered.filter(r => globalStatuses.includes(r.status));
