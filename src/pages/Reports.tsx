@@ -603,6 +603,111 @@ export default function Reports() {
             </div>
           </div>
         </motion.div>
+
+        {/* Desempenho por Colaborador (Cadastrados vs Convertidos) */}
+        <motion.div variants={fadeUp}>
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <div className="px-6 pt-5 pb-4 border-b border-border/30 flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-info/20 to-info/5 border border-info/20">
+                <UserCheck className="h-4 w-4 text-info" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display font-semibold text-sm text-foreground">Desempenho por Colaborador</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Quantos leads cada colaborador cadastrou e converteu no período selecionado
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 h-8 text-xs border-border/40 hover:border-primary/40 hover:bg-primary/5"
+                onClick={handleExportPerformanceCSV}
+                disabled={collaboratorPerformance.length === 0}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Exportar CSV
+              </Button>
+            </div>
+            <div className="p-5">
+              {collaboratorPerformance.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8 text-sm">
+                  Nenhum colaborador com indicações no período selecionado
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border/30">
+                        <th className="text-left py-2.5 px-3 font-medium">#</th>
+                        <th className="text-left py-2.5 px-3 font-medium">Colaborador</th>
+                        <th className="text-right py-2.5 px-3 font-medium">Cadastrados</th>
+                        <th className="text-right py-2.5 px-3 font-medium">Convertidos</th>
+                        <th className="text-right py-2.5 px-3 font-medium">Taxa</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {collaboratorPerformance.map((c, index) => {
+                        const rate = c.registered > 0 ? Math.round((c.converted / c.registered) * 100) : 0;
+                        return (
+                          <tr
+                            key={c.id}
+                            className="border-b border-border/10 hover:bg-secondary/20 transition-colors"
+                          >
+                            <td className="py-2.5 px-3 text-muted-foreground tabular-nums">{index + 1}</td>
+                            <td className="py-2.5 px-3 font-medium text-foreground">{c.name}</td>
+                            <td className="py-2.5 px-3 text-right tabular-nums font-semibold text-info">
+                              {c.registered}
+                            </td>
+                            <td className="py-2.5 px-3 text-right tabular-nums font-semibold text-success">
+                              {c.converted}
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "tabular-nums text-[11px]",
+                                  rate >= 50
+                                    ? "bg-success/15 text-success border-success/25"
+                                    : rate >= 25
+                                    ? "bg-warning/15 text-warning border-warning/25"
+                                    : "bg-muted text-muted-foreground border-border/30"
+                                )}
+                              >
+                                {rate}%
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      <tr className="bg-secondary/30 font-semibold">
+                        <td className="py-2.5 px-3" />
+                        <td className="py-2.5 px-3 text-foreground">Total</td>
+                        <td className="py-2.5 px-3 text-right tabular-nums text-info">
+                          {collaboratorPerformance.reduce((s, c) => s + c.registered, 0)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right tabular-nums text-success">
+                          {collaboratorPerformance.reduce((s, c) => s + c.converted, 0)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {(() => {
+                            const reg = collaboratorPerformance.reduce((s, c) => s + c.registered, 0);
+                            const conv = collaboratorPerformance.reduce((s, c) => s + c.converted, 0);
+                            const r = reg > 0 ? Math.round((conv / reg) * 100) : 0;
+                            return (
+                              <Badge variant="outline" className="bg-primary/15 text-primary border-primary/25 tabular-nums text-[11px]">
+                                {r}%
+                              </Badge>
+                            );
+                          })()}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
     </DashboardLayout>
   );
