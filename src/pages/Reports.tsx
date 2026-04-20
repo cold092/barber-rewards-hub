@@ -239,7 +239,22 @@ export default function Reports() {
     URL.revokeObjectURL(link.href);
   };
 
-  if (!isAdmin) {
+  const handleExportPerformanceCSV = () => {
+    if (collaboratorPerformance.length === 0) return;
+    const rows = [['Colaborador', 'Cadastrados', 'Convertidos', 'Taxa de Conversão']];
+    collaboratorPerformance.forEach((c) => {
+      const rate = c.registered > 0 ? Math.round((c.converted / c.registered) * 100) : 0;
+      rows.push([c.name, String(c.registered), String(c.converted), `${rate}%`]);
+    });
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `desempenho-colaboradores-${dateStamp}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
