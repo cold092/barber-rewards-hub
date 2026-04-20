@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPlus, Filter, Trophy, Tag, X } from 'lucide-react';
+import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPlus, Filter, Trophy, Tag, X, CalendarIcon, UserCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalFilter } from '@/contexts/GlobalFilterContext';
 import { getAllBarbers, getAllReferrals } from '@/services/referralService';
@@ -18,30 +20,19 @@ import ConversionTrendChart from '@/components/dashboard/ConversionTrendChart';
 import BarberPerformanceChart from '@/components/dashboard/BarberPerformanceChart';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { format, startOfDay, endOfDay, startOfMonth, subDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 type ReportType = 'all' | 'leads' | 'clients' | 'converted';
-type ReportRange = 'all' | '7d' | '30d' | 'month';
 type ReportBarber = 'all' | string;
 
 const isClientReferral = (referral: Referral) => referral.is_client || referral.status === 'converted';
 
-const isWithinRange = (dateString: string, range: ReportRange) => {
-  if (range === 'all') return true;
+const isWithinDateRange = (dateString: string, from: Date | undefined, to: Date | undefined) => {
+  if (!from && !to) return true;
   const date = new Date(dateString);
-  const now = new Date();
-  if (range === '7d') {
-    const cutoff = new Date(now);
-    cutoff.setDate(now.getDate() - 7);
-    return date >= cutoff;
-  }
-  if (range === '30d') {
-    const cutoff = new Date(now);
-    cutoff.setDate(now.getDate() - 30);
-    return date >= cutoff;
-  }
-  if (range === 'month') {
-    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-  }
+  if (from && date < startOfDay(from)) return false;
+  if (to && date > endOfDay(to)) return false;
   return true;
 };
 
@@ -70,9 +61,18 @@ export default function Reports() {
   const [barbers, setBarbers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [reportType, setReportType] = useState<ReportType>('all');
-  const [reportRange, setReportRange] = useState<ReportRange>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [reportBarber, setReportBarber] = useState<ReportBarber>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const applyPreset = (preset: '7d' | '30d' | 'month' | 'all') => {
+    const now = new Date();
+    if (preset === 'all') { setDateFrom(undefined); setDateTo(undefined); return; }
+    if (preset === '7d') { setDateFrom(subDays(now, 7)); setDateTo(now); return; }
+    if (preset === '30d') { setDateFrom(subDays(now, 30)); setDateTo(now); return; }
+    if (preset === 'month') { setDateFrom(startOfMonth(now)); setDateTo(now); return; }
+  };
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -102,7 +102,7 @@ export default function Reports() {
   }, [isAdmin]);
 
   const filteredReferrals = useMemo(() => {
-    let filtered = referrals.filter((referral) => isWithinRange(referral.created_at, reportRange));
+    let filtered = referrals.filter((referral) => isWithinDateRange(referral.created_at, dateFrom, dateTo));
     // Apply global filters
     if (globalStatuses.length > 0) {
       filtered = filtered.filter(r => globalStatuses.includes(r.status));
@@ -131,7 +131,18 @@ export default function Reports() {
       default:
         return filtered;
     }
-  }, [referrals, reportBarber, reportRange, reportType, selectedTags, globalStatuses, globalTags, globalCollaborator]);
+  }, [referrals, reportBarber, dateFrom, dateTo, reportType, selectedTags, globalStatuses, globalTags, globalCollaborator]);
+
+  // Derive legacy range key for ConversionTrendChart based on selected date window
+  const trendRange: 'all' | '7d' | '30d' | 'month' = useMemo(() => {
+    if (!dateFrom && !dateTo) return 'all';
+    if (dateFrom && dateTo) {
+      const diffDays = Math.round((dateTo.getTime() - dateFrom.getTime()) / 86400000);
+      if (diffDays <= 7) return '7d';
+      if (diffDays <= 30) return '30d';
+    }
+    return 'month';
+  }, [dateFrom, dateTo]);
 
   const totals = useMemo(() => ({
     total: filteredReferrals.length,
@@ -173,6 +184,21 @@ export default function Reports() {
       .sort((a, b) => b.revenue - a.revenue);
   }, [barbers, filteredReferrals]);
 
+  // Performance by collaborator: leads registered vs converted (regardless of revenue)
+  const collaboratorPerformance = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; registered: number; converted: number }>();
+    barbers.forEach((b) => map.set(b.id, { id: b.id, name: b.name, registered: 0, converted: 0 }));
+    filteredReferrals.forEach((r) => {
+      const entry = map.get(r.referrer_id);
+      if (!entry) return;
+      entry.registered += 1;
+      if (r.status === 'converted') entry.converted += 1;
+    });
+    return Array.from(map.values())
+      .filter((b) => b.registered > 0)
+      .sort((a, b) => b.registered - a.registered);
+  }, [barbers, filteredReferrals]);
+
   const conversionRate = useMemo(() => {
     if (totals.total === 0) return 0;
     return Math.round((totals.converted / totals.total) * 100);
@@ -209,6 +235,23 @@ export default function Reports() {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `relatorio-${dateStamp}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const handleExportPerformanceCSV = () => {
+    if (collaboratorPerformance.length === 0) return;
+    const rows = [['Colaborador', 'Cadastrados', 'Convertidos', 'Taxa de Conversão']];
+    collaboratorPerformance.forEach((c) => {
+      const rate = c.registered > 0 ? Math.round((c.converted / c.registered) * 100) : 0;
+      rows.push([c.name, String(c.registered), String(c.converted), `${rate}%`]);
+    });
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `desempenho-colaboradores-${dateStamp}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   };
@@ -283,17 +326,54 @@ export default function Reports() {
                   <SelectItem value="converted">Convertidos</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={reportRange} onValueChange={(v) => setReportRange(v as ReportRange)}>
-                <SelectTrigger className="h-9 text-sm bg-secondary/30 border-border/30">
-                  <SelectValue placeholder="Período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todo o período</SelectItem>
-                  <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                  <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                  <SelectItem value="month">Este mês</SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 justify-start text-left font-normal text-sm bg-secondary/30 border-border/30",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy", { locale: ptBR }) : <span>Data inicial</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 justify-start text-left font-normal text-sm bg-secondary/30 border-border/30",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy", { locale: ptBR }) : <span>Data final</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
               <Select value={reportBarber} onValueChange={(v) => setReportBarber(v as ReportBarber)}>
                 <SelectTrigger className="h-9 text-sm bg-secondary/30 border-border/30">
                   <SelectValue placeholder="Colaborador" />
@@ -305,6 +385,33 @@ export default function Reports() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-1">Atalhos:</span>
+              {[
+                { key: 'all', label: 'Tudo' },
+                { key: '7d', label: '7 dias' },
+                { key: '30d', label: '30 dias' },
+                { key: 'month', label: 'Este mês' },
+              ].map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => applyPreset(p.key as 'all' | '7d' | '30d' | 'month')}
+                  className="text-[11px] px-2.5 py-1 rounded-md border border-border/40 bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
+              {(dateFrom || dateTo) && (
+                <button
+                  type="button"
+                  onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}
+                  className="ml-1 flex items-center gap-1 text-[11px] px-2 py-1 rounded-md text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3 w-3" /> Limpar datas
+                </button>
+              )}
             </div>
             {allTags.length > 0 && (
               <div className="mt-3 pt-3 border-t border-border/20">
@@ -413,7 +520,7 @@ export default function Reports() {
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <ConversionTrendChart referrals={filteredReferrals} range={reportRange} />
+          <ConversionTrendChart referrals={filteredReferrals} range={trendRange} />
         </motion.div>
 
         <motion.div variants={fadeUp}>
@@ -491,6 +598,111 @@ export default function Reports() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Desempenho por Colaborador (Cadastrados vs Convertidos) */}
+        <motion.div variants={fadeUp}>
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <div className="px-6 pt-5 pb-4 border-b border-border/30 flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-info/20 to-info/5 border border-info/20">
+                <UserCheck className="h-4 w-4 text-info" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display font-semibold text-sm text-foreground">Desempenho por Colaborador</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Quantos leads cada colaborador cadastrou e converteu no período selecionado
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 h-8 text-xs border-border/40 hover:border-primary/40 hover:bg-primary/5"
+                onClick={handleExportPerformanceCSV}
+                disabled={collaboratorPerformance.length === 0}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Exportar CSV
+              </Button>
+            </div>
+            <div className="p-5">
+              {collaboratorPerformance.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8 text-sm">
+                  Nenhum colaborador com indicações no período selecionado
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border/30">
+                        <th className="text-left py-2.5 px-3 font-medium">#</th>
+                        <th className="text-left py-2.5 px-3 font-medium">Colaborador</th>
+                        <th className="text-right py-2.5 px-3 font-medium">Cadastrados</th>
+                        <th className="text-right py-2.5 px-3 font-medium">Convertidos</th>
+                        <th className="text-right py-2.5 px-3 font-medium">Taxa</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {collaboratorPerformance.map((c, index) => {
+                        const rate = c.registered > 0 ? Math.round((c.converted / c.registered) * 100) : 0;
+                        return (
+                          <tr
+                            key={c.id}
+                            className="border-b border-border/10 hover:bg-secondary/20 transition-colors"
+                          >
+                            <td className="py-2.5 px-3 text-muted-foreground tabular-nums">{index + 1}</td>
+                            <td className="py-2.5 px-3 font-medium text-foreground">{c.name}</td>
+                            <td className="py-2.5 px-3 text-right tabular-nums font-semibold text-info">
+                              {c.registered}
+                            </td>
+                            <td className="py-2.5 px-3 text-right tabular-nums font-semibold text-success">
+                              {c.converted}
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "tabular-nums text-[11px]",
+                                  rate >= 50
+                                    ? "bg-success/15 text-success border-success/25"
+                                    : rate >= 25
+                                    ? "bg-warning/15 text-warning border-warning/25"
+                                    : "bg-muted text-muted-foreground border-border/30"
+                                )}
+                              >
+                                {rate}%
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      <tr className="bg-secondary/30 font-semibold">
+                        <td className="py-2.5 px-3" />
+                        <td className="py-2.5 px-3 text-foreground">Total</td>
+                        <td className="py-2.5 px-3 text-right tabular-nums text-info">
+                          {collaboratorPerformance.reduce((s, c) => s + c.registered, 0)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right tabular-nums text-success">
+                          {collaboratorPerformance.reduce((s, c) => s + c.converted, 0)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {(() => {
+                            const reg = collaboratorPerformance.reduce((s, c) => s + c.registered, 0);
+                            const conv = collaboratorPerformance.reduce((s, c) => s + c.converted, 0);
+                            const r = reg > 0 ? Math.round((conv / reg) * 100) : 0;
+                            return (
+                              <Badge variant="outline" className="bg-primary/15 text-primary border-primary/25 tabular-nums text-[11px]">
+                                {r}%
+                              </Badge>
+                            );
+                          })()}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
