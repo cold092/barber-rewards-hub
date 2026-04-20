@@ -386,6 +386,33 @@ export default function Reports() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-1">Atalhos:</span>
+              {[
+                { key: 'all', label: 'Tudo' },
+                { key: '7d', label: '7 dias' },
+                { key: '30d', label: '30 dias' },
+                { key: 'month', label: 'Este mês' },
+              ].map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => applyPreset(p.key as 'all' | '7d' | '30d' | 'month')}
+                  className="text-[11px] px-2.5 py-1 rounded-md border border-border/40 bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
+              {(dateFrom || dateTo) && (
+                <button
+                  type="button"
+                  onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}
+                  className="ml-1 flex items-center gap-1 text-[11px] px-2 py-1 rounded-md text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3 w-3" /> Limpar datas
+                </button>
+              )}
+            </div>
             {allTags.length > 0 && (
               <div className="mt-3 pt-3 border-t border-border/20">
                 <div className="flex items-center gap-2 mb-2">
