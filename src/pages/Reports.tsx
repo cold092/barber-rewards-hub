@@ -196,7 +196,7 @@ export default function Reports() {
       const entry = map.get(creatorId);
       if (!entry) return;
       entry.registered += 1;
-      if (r.status === 'converted') entry.converted += 1;
+      if (r.status === 'converted' || r.status === 'client' || r.is_client) entry.converted += 1;
     });
     return Array.from(map.values())
       .filter((b) => b.registered > 0)
