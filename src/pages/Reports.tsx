@@ -184,6 +184,21 @@ export default function Reports() {
       .sort((a, b) => b.revenue - a.revenue);
   }, [barbers, filteredReferrals]);
 
+  // Performance by collaborator: leads registered vs converted (regardless of revenue)
+  const collaboratorPerformance = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; registered: number; converted: number }>();
+    barbers.forEach((b) => map.set(b.id, { id: b.id, name: b.name, registered: 0, converted: 0 }));
+    filteredReferrals.forEach((r) => {
+      const entry = map.get(r.referrer_id);
+      if (!entry) return;
+      entry.registered += 1;
+      if (r.status === 'converted') entry.converted += 1;
+    });
+    return Array.from(map.values())
+      .filter((b) => b.registered > 0)
+      .sort((a, b) => b.registered - a.registered);
+  }, [barbers, filteredReferrals]);
+
   const conversionRate = useMemo(() => {
     if (totals.total === 0) return 0;
     return Math.round((totals.converted / totals.total) * 100);
