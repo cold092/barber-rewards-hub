@@ -184,19 +184,16 @@ export default function Reports() {
       .sort((a, b) => b.revenue - a.revenue);
   }, [barbers, filteredReferrals]);
 
-  // Performance by collaborator: leads registered (cadastrados pelo colaborador no sistema)
-  // vs converted (leads cadastrados por ele que viraram cliente).
-  // Usa created_by_id (quem registrou) — não referrer_id (indicador), que pode ser um cliente.
+  // Performance by collaborator: espelha "Receita por Colaborador"
+  // → usa referrer_id (indicador) e conta convertidos por status='converted'.
   const collaboratorPerformance = useMemo(() => {
     const map = new Map<string, { id: string; name: string; registered: number; converted: number }>();
     barbers.forEach((b) => map.set(b.id, { id: b.id, name: b.name, registered: 0, converted: 0 }));
     filteredReferrals.forEach((r) => {
-      const creatorId = r.created_by_id;
-      if (!creatorId) return;
-      const entry = map.get(creatorId);
+      const entry = map.get(r.referrer_id);
       if (!entry) return;
       entry.registered += 1;
-      if (r.status === 'converted' || r.status === 'client' || r.is_client) entry.converted += 1;
+      if (r.status === 'converted') entry.converted += 1;
     });
     return Array.from(map.values())
       .filter((b) => b.registered > 0)
