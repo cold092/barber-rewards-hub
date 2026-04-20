@@ -255,6 +255,8 @@ export default function Reports() {
     link.click();
     URL.revokeObjectURL(link.href);
   };
+
+  if (!isAdmin) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
