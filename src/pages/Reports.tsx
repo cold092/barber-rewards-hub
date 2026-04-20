@@ -461,7 +461,7 @@ export default function Reports() {
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <ConversionTrendChart referrals={filteredReferrals} range={reportRange} />
+          <ConversionTrendChart referrals={filteredReferrals} range={trendRange} />
         </motion.div>
 
         <motion.div variants={fadeUp}>
