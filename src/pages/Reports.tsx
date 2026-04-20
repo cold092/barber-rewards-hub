@@ -131,7 +131,18 @@ export default function Reports() {
       default:
         return filtered;
     }
-  }, [referrals, reportBarber, reportRange, reportType, selectedTags, globalStatuses, globalTags, globalCollaborator]);
+  }, [referrals, reportBarber, dateFrom, dateTo, reportType, selectedTags, globalStatuses, globalTags, globalCollaborator]);
+
+  // Derive legacy range key for ConversionTrendChart based on selected date window
+  const trendRange: 'all' | '7d' | '30d' | 'month' = useMemo(() => {
+    if (!dateFrom && !dateTo) return 'all';
+    if (dateFrom && dateTo) {
+      const diffDays = Math.round((dateTo.getTime() - dateFrom.getTime()) / 86400000);
+      if (diffDays <= 7) return '7d';
+      if (diffDays <= 30) return '30d';
+    }
+    return 'month';
+  }, [dateFrom, dateTo]);
 
   const totals = useMemo(() => ({
     total: filteredReferrals.length,
@@ -283,17 +294,54 @@ export default function Reports() {
                   <SelectItem value="converted">Convertidos</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={reportRange} onValueChange={(v) => setReportRange(v as ReportRange)}>
-                <SelectTrigger className="h-9 text-sm bg-secondary/30 border-border/30">
-                  <SelectValue placeholder="Período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todo o período</SelectItem>
-                  <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                  <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                  <SelectItem value="month">Este mês</SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 justify-start text-left font-normal text-sm bg-secondary/30 border-border/30",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy", { locale: ptBR }) : <span>Data inicial</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 justify-start text-left font-normal text-sm bg-secondary/30 border-border/30",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy", { locale: ptBR }) : <span>Data final</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                    locale={ptBR}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
               <Select value={reportBarber} onValueChange={(v) => setReportBarber(v as ReportBarber)}>
                 <SelectTrigger className="h-9 text-sm bg-secondary/30 border-border/30">
                   <SelectValue placeholder="Colaborador" />
