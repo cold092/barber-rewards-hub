@@ -100,6 +100,15 @@ export default function Clients() {
   const [loading, setLoading] = useState(true);
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+
+  // Keep selectedReferral in sync when referrals refresh
+  useEffect(() => {
+    if (!selectedReferral) return;
+    const fresh = referrals.find(r => r.id === selectedReferral.id);
+    if (fresh && fresh !== selectedReferral) {
+      setSelectedReferral(fresh);
+    }
+  }, [referrals, selectedReferral]);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [convertingReferral, setConvertingReferral] = useState<Referral | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('');
