@@ -57,15 +57,15 @@ export function KanbanColumn({
         borderColor: isOver ? undefined : `hsl(${color} / 0.35)`,
       }}
     >
-      {/* Column Header */}
+      {/* Column Header — compact */}
       <div
         className={cn(
-          "flex items-center justify-between px-4 py-3 rounded-t-xl",
+          "flex items-center justify-between px-3 py-2 rounded-t-xl",
           columnDragEnabled && "cursor-grab active:cursor-grabbing"
         )}
         style={{
-          background: `linear-gradient(135deg, hsl(${color} / 0.35), hsl(${color} / 0.15))`,
-          borderBottom: `1px solid hsl(${color} / 0.3)`,
+          background: `linear-gradient(135deg, hsl(${color} / 0.28), hsl(${color} / 0.10))`,
+          borderBottom: `1px solid hsl(${color} / 0.25)`,
         }}
         draggable={columnDragEnabled}
         onDragStart={onColumnDragStart}
@@ -77,26 +77,26 @@ export function KanbanColumn({
         onDrop={onColumnDrop}
         title={columnDragEnabled ? 'Clique e arraste a coluna para reordenar' : undefined}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 min-w-0">
           <div
-            className="w-1.5 h-5 rounded-full shadow-sm"
-            style={{ backgroundColor: `hsl(${color})`, boxShadow: `0 0 8px hsl(${color} / 0.5)` }}
+            className="w-1 h-4 rounded-full shrink-0"
+            style={{ backgroundColor: `hsl(${color})` }}
           />
-          <h3 className="font-display font-semibold text-sm text-foreground">{title}</h3>
+          <h3 className="font-display font-semibold text-[13px] text-foreground truncate">{title}</h3>
+          <span
+            className="text-[10px] font-bold tabular-nums px-1.5 py-px rounded-full shrink-0"
+            style={{
+              backgroundColor: `hsl(${color} / 0.22)`,
+              color: `hsl(${color})`,
+            }}
+          >
+            {count}
+          </span>
         </div>
-        <span
-          className="text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full"
-          style={{
-            backgroundColor: `hsl(${color} / 0.25)`,
-            color: `hsl(${color})`,
-          }}
-        >
-          {count}
-        </span>
       </div>
 
       {/* Cards */}
-      <div className="flex-1 space-y-2 overflow-y-auto p-3">
+      <div className="flex-1 space-y-1.5 overflow-y-auto p-2">
         {visibleItems}
         {hasMore && (
           <Button
