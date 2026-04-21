@@ -188,7 +188,7 @@ export function LeadDetailsDialog({
                 )} />
               </div>
 
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 pr-10">
                 <div className="flex items-center gap-2 flex-wrap">
                   <DialogTitle className="font-display text-xl leading-tight truncate">
                     {referral.lead_name}
@@ -196,6 +196,16 @@ export function LeadDetailsDialog({
                   <Badge variant="outline" className={cn('text-[10px] font-semibold h-5', statusConfig.color)}>
                     {statusConfig.label}
                   </Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 gap-1 text-[11px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    onClick={() => setEditDialogOpen(true)}
+                    title="Editar dados do lead"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Editar
+                  </Button>
                 </div>
                 <DialogDescription className="sr-only">Detalhes do lead</DialogDescription>
 
@@ -225,7 +235,7 @@ export function LeadDetailsDialog({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 w-8 p-0 shrink-0 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10"
+                className="hidden h-8 w-8 p-0 shrink-0 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10"
                 onClick={() => setEditDialogOpen(true)}
                 title="Editar dados do lead"
               >
