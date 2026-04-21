@@ -122,6 +122,15 @@ export default function Leads() {
   // Details dialog state
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+
+  // Keep selectedReferral in sync when the underlying list refreshes
+  useEffect(() => {
+    if (!selectedReferral) return;
+    const fresh = referrals.find(r => r.id === selectedReferral.id);
+    if (fresh && fresh !== selectedReferral) {
+      setSelectedReferral(fresh);
+    }
+  }, [referrals, selectedReferral]);
   
   // Conversion dialog state
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
