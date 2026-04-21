@@ -1,13 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
-import { 
-  Phone, 
-  MessageCircle, 
-  CheckCircle, 
-  Clock, 
-  ExternalLink,
+import { useState, useEffect } from 'react';
+import {
+  Phone,
+  MessageCircle,
+  CheckCircle,
+  Clock,
   Trash2,
   Save,
-  X,
   User,
   Pencil,
   CalendarDays,
@@ -15,14 +13,18 @@ import {
   FileText,
   CreditCard,
   Sparkles,
+  Info,
+  Bell,
+  History,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EditLeadDialog } from './EditLeadDialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { LeadTimeline } from './LeadTimeline';
@@ -31,6 +33,8 @@ import { updateLeadNotes } from '@/services/leadHistoryService';
 import { formatPhoneNumber } from '@/utils/whatsapp';
 import { getPlanById } from '@/config/plans';
 import { supabase } from '@/integrations/supabase/client';
+import { format, isPast, isToday } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type { Referral } from '@/types/database';
 
 interface LeadDetailsDialogProps {
@@ -49,10 +53,18 @@ interface LeadDetailsDialogProps {
   contactTagOptions: Array<{ value: string; label: string; className: string }>;
 }
 
+type TabKey = 'details' | 'followup' | 'timeline';
+
+const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+  { key: 'details', label: 'Detalhes', icon: Info },
+  { key: 'followup', label: 'Follow-up', icon: Bell },
+  { key: 'timeline', label: 'Histórico', icon: History },
+];
+
 const tabVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] as const } },
-  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } },
+  hidden: { opacity: 0, y: 6 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const } },
+  exit: { opacity: 0, y: -4, transition: { duration: 0.12 } },
 };
 
 export function LeadDetailsDialog({
@@ -72,19 +84,20 @@ export function LeadDetailsDialog({
 }: LeadDetailsDialogProps) {
   const [notes, setNotes] = useState(referral?.notes || '');
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState<TabKey>('details');
   const [localTags, setLocalTags] = useState<string[]>(referral?.tags || []);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [referringClientName, setReferringClientName] = useState<string | null>(null);
+  const [phoneCopied, setPhoneCopied] = useState(false);
 
   useEffect(() => {
     setLocalTags(referral?.tags || []);
     setNotes(referral?.notes || '');
     setEditingNotes(false);
+    setActiveTab('details');
   }, [referral?.id, referral?.tags, referral?.notes]);
 
-  // Fetch the referring client's name when referred_by_lead_id exists
   useEffect(() => {
     if (!referral?.referred_by_lead_id) {
       setReferringClientName(null);
@@ -114,6 +127,18 @@ export function LeadDetailsDialog({
     }
   };
 
+  const handleCopyPhone = async () => {
+    if (!referral) return;
+    try {
+      await navigator.clipboard.writeText(referral.lead_phone);
+      setPhoneCopied(true);
+      toast.success('Telefone copiado');
+      setTimeout(() => setPhoneCopied(false), 1600);
+    } catch {
+      toast.error('Não foi possível copiar');
+    }
+  };
+
   if (!referral) return null;
 
   const hasSavedNotes = !!(referral.notes && referral.notes.trim());
@@ -121,14 +146,14 @@ export function LeadDetailsDialog({
 
   const getStatusConfig = (item: Referral) => {
     if (item.is_client && item.status !== 'converted') {
-      return { label: 'Cliente', color: 'bg-success/15 text-success border-success/30' };
+      return { label: 'Cliente', color: 'bg-success/15 text-success border-success/30', dot: 'bg-success' };
     }
     switch (item.status) {
-      case 'new': return { label: 'Novo', color: 'bg-info/20 text-info border-info/30' };
-      case 'contacted': return { label: 'Contatado', color: 'bg-warning/20 text-warning border-warning/30' };
-      case 'client': return { label: 'Cliente', color: 'bg-success/15 text-success border-success/30' };
-      case 'converted': return { label: 'Convertido', color: 'bg-success/20 text-success border-success/30' };
-      default: return { label: item.status, color: '' };
+      case 'new': return { label: 'Novo', color: 'bg-info/15 text-info border-info/30', dot: 'bg-info' };
+      case 'contacted': return { label: 'Contatado', color: 'bg-warning/15 text-warning border-warning/30', dot: 'bg-warning' };
+      case 'client': return { label: 'Cliente', color: 'bg-success/15 text-success border-success/30', dot: 'bg-success' };
+      case 'converted': return { label: 'Convertido', color: 'bg-success/15 text-success border-success/30', dot: 'bg-success' };
+      default: return { label: item.status, color: '', dot: 'bg-muted-foreground' };
     }
   };
 
@@ -142,272 +167,319 @@ export function LeadDetailsDialog({
     .join('')
     .toUpperCase();
 
+  const followUpDate = referral.follow_up_date ? new Date(referral.follow_up_date) : null;
+  const followUpOverdue = followUpDate ? isPast(followUpDate) && !isToday(followUpDate) : false;
+  const followUpToday = followUpDate ? isToday(followUpDate) : false;
+
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden p-0 gap-0">
-        {/* Header with avatar */}
-        <DialogHeader className="px-6 pt-6 pb-5 border-b border-border/20 bg-gradient-to-b from-primary/[0.04] to-transparent">
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              <div className="w-12 h-12 rounded-2xl lavender-gradient flex items-center justify-center text-primary-foreground font-display font-semibold text-base shadow-lg shadow-primary/20">
-                {initials}
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-hidden p-0 gap-0 border-border/40">
+          {/* ── HEADER ── */}
+          <div className="relative px-6 pt-5 pb-4 border-b border-border/40 bg-gradient-to-br from-primary/[0.05] via-transparent to-accent/[0.04]">
+            <div className="flex items-start gap-3.5">
+              <div className="relative shrink-0">
+                <div className="w-14 h-14 rounded-2xl blue-gradient flex items-center justify-center text-primary-foreground font-display font-bold text-lg shadow-blue">
+                  {initials}
+                </div>
+                <span className={cn(
+                  "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-card",
+                  statusConfig.dot
+                )} />
               </div>
-              <div className={cn(
-                "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card",
-                referral.status === 'converted' || referral.is_client ? 'bg-success' :
-                referral.status === 'contacted' ? 'bg-warning' : 'bg-info'
-              )} />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DialogTitle className="font-display text-xl leading-tight truncate">
+                    {referral.lead_name}
+                  </DialogTitle>
+                  <Badge variant="outline" className={cn('text-[10px] font-semibold h-5', statusConfig.color)}>
+                    {statusConfig.label}
+                  </Badge>
+                </div>
+                <DialogDescription className="sr-only">Detalhes do lead</DialogDescription>
+
+                {/* Quick contact line */}
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleCopyPhone}
+                    className="inline-flex items-center gap-1.5 hover:text-primary transition-colors group"
+                    title="Copiar telefone"
+                  >
+                    <Phone className="h-3 w-3" />
+                    <span className="font-medium">{formatPhoneNumber(referral.lead_phone)}</span>
+                    {phoneCopied
+                      ? <Check className="h-3 w-3 text-success" />
+                      : <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                    }
+                  </button>
+                  <span className="text-border">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <UserCheck className="h-3 w-3" />
+                    {referral.referrer_name}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 shrink-0 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10"
+                onClick={() => setEditDialogOpen(true)}
+                title="Editar dados do lead"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
             </div>
 
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <DialogTitle className="font-display text-lg leading-tight">
-                  {referral.lead_name}
-                </DialogTitle>
-                <Badge variant="outline" className={cn('text-[10px] font-semibold', statusConfig.color)}>
-                  {statusConfig.label}
+            {/* Primary action bar */}
+            <div className="flex items-center gap-1.5 mt-4">
+              {referral.status !== 'converted' && (
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs rounded-lg bg-success text-success-foreground hover:bg-success/90 shadow-sm"
+                  onClick={() => onWhatsApp(referral)}
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  WhatsApp
+                </Button>
+              )}
+              {!referral.is_client && referral.status === 'new' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs rounded-lg border-warning/30 text-warning hover:bg-warning/10 hover:text-warning"
+                  onClick={() => onContact(referral)}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  Marcar Contatado
+                </Button>
+              )}
+              {referral.status !== 'converted' && (
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs rounded-lg blue-gradient text-primary-foreground font-medium blue-glow"
+                  onClick={() => onConvert(referral)}
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Converter Venda
+                </Button>
+              )}
+              {followUpDate && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "ml-auto h-7 gap-1 text-[10px] font-medium px-2",
+                    followUpOverdue ? "bg-destructive/10 text-destructive border-destructive/30" :
+                    followUpToday ? "bg-warning/10 text-warning border-warning/30" :
+                    "bg-muted text-muted-foreground border-border/40"
+                  )}
+                >
+                  <Bell className="h-3 w-3" />
+                  Follow-up {format(followUpDate, 'dd/MM', { locale: ptBR })}
                 </Badge>
-              </div>
-              <DialogDescription className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <Phone className="h-3 w-3" />
-                  {formatPhoneNumber(referral.lead_phone)}
-                </span>
-                <span className="text-border">•</span>
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <UserCheck className="h-3 w-3" />
-                  {referral.referrer_name}
-                </span>
-              </DialogDescription>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1.5 text-xs rounded-lg hover:bg-primary/10 hover:text-primary hover:border-primary/30"
-              onClick={() => setEditDialogOpen(true)}
-            >
-              <Pencil className="h-3 w-3" />
-              Editar
-            </Button>
-          </div>
-        </DialogHeader>
+          {/* ── BODY: 2-column layout (sidebar stats + main content) ── */}
+          <div className="flex flex-col md:flex-row overflow-hidden" style={{ maxHeight: 'calc(92vh - 220px)' }}>
+            {/* Sidebar stats */}
+            <aside className="md:w-[200px] shrink-0 border-b md:border-b-0 md:border-r border-border/40 bg-secondary/20 p-4 space-y-2.5 overflow-y-auto">
+              <StatRow icon={Sparkles} label="Pontos" value={String(referral.lead_points)} accent />
+              <StatRow icon={CalendarDays} label="Entrada" value={new Date(referral.created_at).toLocaleDateString('pt-BR')} />
+              {referral.is_client && referral.client_since && (
+                <StatRow icon={CheckCircle} label="Cliente desde" value={new Date(referral.client_since).toLocaleDateString('pt-BR')} success />
+              )}
+              {plan && (
+                <StatRow icon={CreditCard} label="Plano" value={plan.label} success />
+              )}
+              {referringClientName && (
+                <div className="rounded-lg p-2.5 bg-success/[0.07] border border-success/20">
+                  <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wider font-bold text-success/80">
+                    <User className="h-2.5 w-2.5" />
+                    Indicado pelo cliente
+                  </div>
+                  <p className="text-[12px] font-semibold text-foreground mt-1 truncate">{referringClientName}</p>
+                </div>
+              )}
+            </aside>
 
-        {/* Scrollable body */}
-        <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="px-6 py-4">
-            <TabsList className="grid w-full grid-cols-3 bg-secondary/30 h-9 p-0.5 rounded-xl">
-              <TabsTrigger value="details" className="text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-sm">Detalhes</TabsTrigger>
-              <TabsTrigger value="followup" className="text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-sm">Follow-up</TabsTrigger>
-              <TabsTrigger value="timeline" className="text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-sm">Histórico</TabsTrigger>
-            </TabsList>
-
-            <AnimatePresence mode="wait">
-              <TabsContent value="details" className="mt-4" asChild forceMount={activeTab === 'details' ? true : undefined}>
-                {activeTab === 'details' ? (
-                  <motion.div key="details" variants={tabVariants} initial="hidden" animate="visible" exit="exit" className="space-y-5">
-                    {/* Referrer cards */}
-                    <div className="space-y-2.5">
-                      {referringClientName && (
-                        <div className="flex items-center gap-3 p-3.5 rounded-xl bg-success/[0.06] border border-success/15">
-                          <div className="w-9 h-9 rounded-lg bg-success/20 flex items-center justify-center shadow-sm shrink-0">
-                            <User className="h-4 w-4 text-success" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Indicado pelo cliente</p>
-                            <p className="font-semibold text-sm truncate">{referringClientName}</p>
-                          </div>
-                        </div>
+            {/* Main content */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Custom tabs */}
+              <div className="flex items-center gap-1 px-4 pt-3 border-b border-border/30">
+                {TABS.map(({ key, label, icon: Icon }) => {
+                  const active = activeTab === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setActiveTab(key)}
+                      className={cn(
+                        "relative inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors",
+                        active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                       )}
-                      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-primary/[0.06] border border-primary/15">
-                        <div className="w-9 h-9 rounded-lg lavender-gradient flex items-center justify-center shadow-sm shadow-primary/20 shrink-0">
-                          <UserCheck className="h-4 w-4 text-primary-foreground" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Colaborador responsável</p>
-                          <p className="font-semibold text-sm truncate">{referral.referrer_name}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Info cards */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <InfoCard icon={CalendarDays} label="Entrada" value={new Date(referral.created_at).toLocaleDateString('pt-BR')} />
-                      {referral.is_client && referral.client_since && (
-                        <InfoCard icon={CheckCircle} label="Cliente desde" value={new Date(referral.client_since).toLocaleDateString('pt-BR')} accent />
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                      {active && (
+                        <motion.span
+                          layoutId="lead-tab-indicator"
+                          className="absolute -bottom-px left-0 right-0 h-0.5 bg-primary rounded-full"
+                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        />
                       )}
-                      {plan && (
-                        <InfoCard icon={CreditCard} label="Plano" value={plan.label} accent />
-                      )}
-                      <InfoCard icon={Sparkles} label="Pontos" value={String(referral.lead_points)} />
-                    </div>
+                    </button>
+                  );
+                })}
+              </div>
 
-                    {/* Tags */}
-                    <div className="space-y-2.5">
-                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Etiquetas</label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {contactTagOptions.map((option) => {
-                          const isSelected = localTags.includes(option.value);
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => {
-                                const newTags = isSelected
-                                  ? localTags.filter(t => t !== option.value)
-                                  : [...localTags, option.value];
-                                setLocalTags(newTags);
-                                onTagChange(referral, newTags.join(','));
-                              }}
-                              className={cn(
-                                "px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all duration-200",
-                                isSelected
-                                  ? option.className + " ring-1 ring-primary/20 shadow-sm scale-[1.02]"
-                                  : "bg-secondary/20 text-muted-foreground/60 border-border/20 hover:border-primary/30 hover:bg-secondary/40 hover:text-muted-foreground"
-                              )}
+              <div className="flex-1 overflow-y-auto p-4">
+                <AnimatePresence mode="wait">
+                  {activeTab === 'details' && (
+                    <motion.div key="details" variants={tabVariants} initial="hidden" animate="visible" exit="exit" className="space-y-5">
+                      {/* Tags */}
+                      <section className="space-y-2">
+                        <SectionLabel>Etiquetas</SectionLabel>
+                        <div className="flex flex-wrap gap-1.5">
+                          {contactTagOptions.length === 0 && (
+                            <p className="text-xs text-muted-foreground italic">Nenhuma etiqueta configurada</p>
+                          )}
+                          {contactTagOptions.map((option) => {
+                            const isSelected = localTags.includes(option.value);
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  const newTags = isSelected
+                                    ? localTags.filter(t => t !== option.value)
+                                    : [...localTags, option.value];
+                                  setLocalTags(newTags);
+                                  onTagChange(referral, newTags.join(','));
+                                }}
+                                className={cn(
+                                  "px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all",
+                                  isSelected
+                                    ? option.className + " ring-1 ring-primary/20 shadow-sm"
+                                    : "bg-secondary/30 text-muted-foreground border-border/40 hover:border-primary/30 hover:text-foreground"
+                                )}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </section>
+
+                      {/* Notes */}
+                      <section className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <SectionLabel icon={FileText}>Observações</SectionLabel>
+                          {hasSavedNotes && !editingNotes && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-muted-foreground hover:text-primary gap-1 rounded-md"
+                              onClick={() => setEditingNotes(true)}
                             >
-                              {option.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                              <Pencil className="h-3 w-3" />
+                              Editar
+                            </Button>
+                          )}
+                        </div>
 
-                    {/* Notes */}
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                          <FileText className="h-3 w-3" />
-                          Observações
-                        </label>
-                        {hasSavedNotes && !editingNotes && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2.5 text-[11px] text-muted-foreground hover:text-primary gap-1 rounded-lg"
+                        {hasSavedNotes && !editingNotes ? (
+                          <div
+                            className="rounded-lg bg-secondary/30 border border-border/40 p-3 text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed cursor-text hover:border-primary/30 transition-colors"
                             onClick={() => setEditingNotes(true)}
                           >
-                            <Pencil className="h-3 w-3" />
-                            Editar
-                          </Button>
-                        )}
-                      </div>
-
-                      {hasSavedNotes && !editingNotes ? (
-                        <div
-                          className="rounded-xl bg-secondary/15 border border-border/15 p-3.5 text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed cursor-pointer hover:bg-secondary/25 transition-all duration-200"
-                          onClick={() => setEditingNotes(true)}
-                        >
-                          {referral.notes}
-                        </div>
-                      ) : (
-                        <div className="space-y-2.5">
-                          <Textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Adicione observações sobre este lead..."
-                            className="min-h-[80px] bg-secondary/10 border-border/20 resize-none text-sm rounded-xl focus:border-primary/40"
-                            autoFocus={editingNotes}
-                          />
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              className="gap-1.5 h-7 text-xs rounded-lg lavender-gradient text-primary-foreground"
-                              onClick={handleSaveNotes}
-                              disabled={saving || !notesChanged}
-                            >
-                              <Save className="h-3 w-3" />
-                              {saving ? 'Salvando...' : 'Salvar'}
-                            </Button>
-                            {editingNotes && hasSavedNotes && (
+                            {referral.notes}
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={notes}
+                              onChange={(e) => setNotes(e.target.value)}
+                              placeholder="Adicione observações sobre este lead..."
+                              className="min-h-[88px] bg-card border-border/50 resize-none text-sm rounded-lg focus:border-primary/40"
+                              autoFocus={editingNotes}
+                            />
+                            <div className="flex items-center gap-2">
                               <Button
                                 size="sm"
-                                variant="ghost"
-                                className="h-7 text-xs text-muted-foreground rounded-lg"
-                                onClick={() => {
-                                  setNotes(referral.notes || '');
-                                  setEditingNotes(false);
-                                }}
+                                className="gap-1.5 h-7 text-xs rounded-md blue-gradient text-primary-foreground"
+                                onClick={handleSaveNotes}
+                                disabled={saving || !notesChanged}
                               >
-                                Cancelar
+                                <Save className="h-3 w-3" />
+                                {saving ? 'Salvando...' : 'Salvar'}
                               </Button>
-                            )}
+                              {editingNotes && hasSavedNotes && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs text-muted-foreground rounded-md"
+                                  onClick={() => {
+                                    setNotes(referral.notes || '');
+                                    setEditingNotes(false);
+                                  }}
+                                >
+                                  Cancelar
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </section>
+                    </motion.div>
+                  )}
 
-                    {/* Quick actions */}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-border/15">
-                      {isAdmin && referral.status !== 'converted' && (
-                        <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs rounded-lg border-border/30 hover:border-success/40 hover:bg-success/10 hover:text-success" onClick={() => onWhatsApp(referral)}>
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          WhatsApp
-                          <ExternalLink className="h-2.5 w-2.5 opacity-40" />
-                        </Button>
-                      )}
-                      {!referral.is_client && referral.status === 'new' && (
-                        <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs rounded-lg border-border/30 hover:border-warning/40 hover:bg-warning/10 hover:text-warning" onClick={() => onContact(referral)}>
-                          <Clock className="h-3.5 w-3.5" />
-                          Marcar Contatado
-                        </Button>
-                      )}
-                      {referral.status !== 'converted' && (
-                        <Button size="sm" className="gap-1.5 h-8 text-xs rounded-lg lavender-gradient text-primary-foreground font-medium shadow-md shadow-primary/20" onClick={() => onConvert(referral)}>
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          Converter Venda
-                        </Button>
-                      )}
-                    </div>
-                  </motion.div>
-                ) : null}
-              </TabsContent>
+                  {activeTab === 'followup' && (
+                    <motion.div key="followup" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+                      <FollowUpPicker referral={referral} userId={userId} userName={userName} onUpdate={onUpdate} />
+                    </motion.div>
+                  )}
 
-              <TabsContent value="followup" className="mt-4" asChild forceMount={activeTab === 'followup' ? true : undefined}>
-                {activeTab === 'followup' ? (
-                  <motion.div key="followup" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
-                    <FollowUpPicker referral={referral} userId={userId} userName={userName} onUpdate={onUpdate} />
-                  </motion.div>
-                ) : null}
-              </TabsContent>
+                  {activeTab === 'timeline' && (
+                    <motion.div key="timeline" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+                      <LeadTimeline referralId={referral.id} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
 
-              <TabsContent value="timeline" className="mt-4" asChild forceMount={activeTab === 'timeline' ? true : undefined}>
-                {activeTab === 'timeline' ? (
-                  <motion.div key="timeline" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
-                    <LeadTimeline referralId={referral.id} />
-                  </motion.div>
-                ) : null}
-              </TabsContent>
-            </AnimatePresence>
-          </Tabs>
-        </div>
-
-        {/* Footer */}
-        <DialogFooter className="px-6 py-3.5 border-t border-border/15 flex-row justify-between bg-card/50">
-          {isAdmin ? (
+          {/* ── FOOTER ── */}
+          <div className="px-6 py-3 border-t border-border/40 flex items-center justify-between bg-card/60">
+            {isAdmin ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
+                onClick={() => {
+                  onDelete(referral);
+                  onOpenChange(false);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Excluir
+              </Button>
+            ) : <span />}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="gap-1.5 text-xs text-destructive/50 hover:text-destructive hover:bg-destructive/10 rounded-lg"
-              onClick={() => {
-                onDelete(referral);
-                onOpenChange(false);
-              }}
+              onClick={() => onOpenChange(false)}
+              className="text-xs px-5 rounded-md border-border/50"
             >
-              <Trash2 className="h-3.5 w-3.5" />
-              Excluir
+              Fechar
             </Button>
-          ) : <span />}
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="gap-1.5 text-xs px-5 rounded-lg border-border/30">
-            Fechar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {referral && (
         <EditLeadDialog
@@ -427,19 +499,42 @@ export function LeadDetailsDialog({
   );
 }
 
-function InfoCard({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: string; accent?: boolean }) {
+function SectionLabel({ children, icon: Icon }: { children: React.ReactNode; icon?: React.ElementType }) {
   return (
-    <div className={cn(
-      "rounded-xl border p-3 space-y-1 transition-colors",
-      accent
-        ? "bg-primary/[0.06] border-primary/15"
-        : "bg-secondary/15 border-border/15"
-    )}>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5">
-        <Icon className={cn("h-3 w-3", accent && "text-primary")} />
-        {label}
-      </p>
-      <p className="text-sm font-semibold truncate">{value}</p>
+    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+      {Icon && <Icon className="h-3 w-3" />}
+      {children}
+    </p>
+  );
+}
+
+function StatRow({
+  icon: Icon,
+  label,
+  value,
+  accent,
+  success,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  accent?: boolean;
+  success?: boolean;
+}) {
+  const tone = success
+    ? 'bg-success/10 text-success'
+    : accent
+      ? 'bg-primary/10 text-primary'
+      : 'bg-muted text-muted-foreground';
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-card/60 transition-colors">
+      <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", tone)}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/70">{label}</p>
+        <p className="text-[13px] font-semibold text-foreground truncate">{value}</p>
+      </div>
     </div>
   );
 }
