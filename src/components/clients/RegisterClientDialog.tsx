@@ -56,10 +56,10 @@ export function RegisterClientDialog({ open, onOpenChange, onClientCreated }: Re
 
     setLoading(true);
 
-    // Check for duplicate phone
+    // Check for duplicate phone within the current organization (per-unit)
     const duplicate = await checkDuplicatePhone(phone.trim());
     if (duplicate.exists) {
-      toast.error(`Este número já está cadastrado como ${duplicate.type}: ${duplicate.name}`);
+      toast.error(`Este número já está cadastrado nesta unidade como ${duplicate.type}: ${duplicate.name}`);
       setLoading(false);
       return;
     }
