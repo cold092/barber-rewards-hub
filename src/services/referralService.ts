@@ -46,20 +46,39 @@ const stripCreatedByFields = <T extends Record<string, unknown>>(payload: T): T 
 
 /**
  * Check if a phone number is already registered in referrals
- * Returns the matching referral name if found, null otherwise
+ * Scope is ALWAYS the caller's organization (multi-tenant): the same phone
+ * may legitimately exist in different units/organizations.
+ * Returns the matching referral name if found, null otherwise.
  */
 export async function checkDuplicatePhone(phone: string): Promise<{ exists: boolean; name?: string; type?: string }> {
   const normalized = phone.replace(/\D/g, '');
   if (normalized.length < 8) return { exists: false };
 
+  // Resolve current user's organization to make the scope explicit
+  // (RLS already enforces it, but being explicit avoids surprises if policies change).
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData?.user?.id;
+  if (!userId) return { exists: false };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const orgId = profile?.organization_id;
+  if (!orgId) return { exists: false };
+
   const { data: referrals } = await supabase
     .from('referrals')
-    .select('lead_name, lead_phone, is_client, status');
+    .select('lead_name, lead_phone, is_client, status')
+    .eq('organization_id', orgId);
 
   if (!referrals) return { exists: false };
 
   const match = referrals.find(r => {
-    const refPhone = r.lead_phone.replace(/\D/g, '');
+    const refPhone = (r.lead_phone || '').replace(/\D/g, '');
+    if (!refPhone) return false;
     return refPhone === normalized || refPhone.endsWith(normalized) || normalized.endsWith(refPhone);
   });
 
