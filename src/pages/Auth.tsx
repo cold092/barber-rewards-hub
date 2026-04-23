@@ -127,7 +127,7 @@ export default function Auth() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-[1100px] grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative"
+        className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative lg:h-[640px] grid lg:block"
       >
         {/* ============= LEFT: FORM PANEL ============= */}
         <div className="relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col">
