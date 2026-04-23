@@ -355,7 +355,7 @@ export default function Auth() {
               Cada indicação é um corte certeiro no crescimento.
             </p>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );
