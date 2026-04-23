@@ -306,20 +306,47 @@ export default function Auth() {
         </div>
 
         {/* ============= RIGHT: ILLUSTRATION PANEL ============= */}
-        <div className="hidden lg:block relative bg-gradient-to-br from-[hsl(260_40%_92%)] to-[hsl(265_50%_85%)] dark:from-[hsl(260_30%_18%)] dark:to-[hsl(265_40%_12%)] overflow-hidden">
-          <img
+        <div className="hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden">
+          <motion.img
             src={authIllustration}
-            alt="Ilustração de barbeiro com tesouras e ferramentas"
+            alt="Ilustração abstrata com elementos de barbearia e CRM"
             width={1024}
             height={1024}
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover"
+            animate={{ scale: [1, 1.03, 1] }}
+            transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
           />
-          {/* Subtle vignette for depth */}
-          <div
+
+          {/* Floating accent shapes */}
+          <motion.div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-tr from-background/20 via-transparent to-transparent pointer-events-none"
+            className="absolute top-[12%] right-[10%] w-3 h-3 rounded-full bg-white/70 shadow-[0_0_18px_hsl(0_0%_100%/0.6)]"
+            animate={{ y: [0, -10, 0], opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />
+          <motion.div
+            aria-hidden
+            className="absolute bottom-[18%] left-[12%] w-2 h-2 rounded-full bg-[hsl(280_85%_70%)]/90 shadow-[0_0_14px_hsl(280_85%_70%/0.7)]"
+            animate={{ y: [0, 8, 0], opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+          />
+          <motion.div
+            aria-hidden
+            className="absolute top-[55%] right-[18%] w-1.5 h-1.5 rounded-full bg-white/60"
+            animate={{ y: [0, -6, 0], opacity: [0.4, 0.9, 0.4] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
+          />
+
+          {/* Bottom tagline overlay */}
+          <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/50 to-transparent">
+            <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/60 mb-2">
+              Growth Game · CRM
+            </p>
+            <p className="text-white font-display font-semibold text-[18px] leading-snug max-w-[280px]">
+              Cada indicação é um corte certeiro no crescimento.
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>
