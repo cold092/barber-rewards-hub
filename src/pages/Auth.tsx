@@ -317,43 +317,71 @@ export default function Auth() {
           layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
-            'hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden',
+            'hidden lg:block relative bg-gradient-to-br from-[hsl(222_30%_8%)] to-[hsl(230_45%_12%)] overflow-visible z-20',
             mode === 'login' ? 'lg:order-2' : 'lg:order-1'
           )}
         >
-          <motion.img
-            src={authIllustration}
-            alt="Ilustração abstrata com elementos de barbearia e CRM"
-            width={1024}
-            height={1024}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover"
-            animate={{ scale: [1, 1.03, 1] }}
-            transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
-          />
+          {/* Inner clip container so the image stays in panel but decorations can overflow */}
+          <div className="absolute inset-0 overflow-hidden">
+            <motion.img
+              src={authIllustration}
+              alt="Ilustração abstrata com elementos de barbearia e CRM"
+              width={1024}
+              height={1024}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
+              animate={{ scale: [1, 1.03, 1] }}
+              transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </div>
 
-          {/* Floating accent shapes */}
+          {/* Decorative blob bleeding into the form side (no pointer events so inputs stay clickable) */}
           <motion.div
             aria-hidden
-            className="absolute top-[12%] right-[10%] w-3 h-3 rounded-full bg-white/70 shadow-[0_0_18px_hsl(0_0%_100%/0.6)]"
+            className={cn(
+              'absolute top-[15%] w-32 h-32 rounded-full bg-primary/40 blur-2xl pointer-events-none',
+              mode === 'login' ? '-left-16' : '-right-16'
+            )}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          />
+
+          {/* Floating shape that crosses the divider (decorative ring) */}
+          <motion.div
+            aria-hidden
+            className={cn(
+              'absolute top-[40%] w-20 h-20 rounded-full border-2 border-accent/60 pointer-events-none',
+              mode === 'login' ? '-left-10' : '-right-10'
+            )}
+            animate={{ rotate: 360, y: [0, -8, 0] }}
+            transition={{
+              rotate: { duration: 24, repeat: Infinity, ease: 'linear' },
+              y: { duration: 5, repeat: Infinity, ease: 'easeInOut' },
+            }}
+          />
+
+          {/* Floating accent dots */}
+          <motion.div
+            aria-hidden
+            className="absolute top-[12%] right-[10%] w-3 h-3 rounded-full bg-white/70 shadow-[0_0_18px_hsl(0_0%_100%/0.6)] pointer-events-none"
             animate={{ y: [0, -10, 0], opacity: [0.7, 1, 0.7] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.div
             aria-hidden
-            className="absolute bottom-[18%] left-[12%] w-2 h-2 rounded-full bg-[hsl(280_85%_70%)]/90 shadow-[0_0_14px_hsl(280_85%_70%/0.7)]"
+            className="absolute bottom-[18%] left-[12%] w-2 h-2 rounded-full bg-accent shadow-[0_0_14px_hsl(var(--accent)/0.7)] pointer-events-none"
             animate={{ y: [0, 8, 0], opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
           />
           <motion.div
             aria-hidden
-            className="absolute top-[55%] right-[18%] w-1.5 h-1.5 rounded-full bg-white/60"
+            className="absolute top-[55%] right-[18%] w-1.5 h-1.5 rounded-full bg-white/60 pointer-events-none"
             animate={{ y: [0, -6, 0], opacity: [0.4, 0.9, 0.4] }}
             transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
           />
 
           {/* Bottom tagline overlay */}
-          <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/50 to-transparent">
+          <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/50 to-transparent z-10">
             <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/60 mb-2">
               Growth Game · CRM
             </p>
