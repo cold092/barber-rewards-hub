@@ -127,10 +127,14 @@ export default function Auth() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-[1100px] grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative"
+        className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative lg:h-[640px] grid lg:block"
       >
         {/* ============= LEFT: FORM PANEL ============= */}
-        <div className="relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col">
+        <motion.div
+          animate={{ x: mode === 'login' ? '0%' : '100%' }}
+          transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+          className="relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col lg:absolute lg:inset-y-0 lg:left-0 lg:w-1/2 z-10"
+        >
           {/* Decorative blobs */}
           <div
             aria-hidden
@@ -303,10 +307,14 @@ export default function Auth() {
               Sou cliente →
             </a>
           </div>
-        </div>
+        </motion.div>
 
         {/* ============= RIGHT: ILLUSTRATION PANEL ============= */}
-        <div className="hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden">
+        <motion.div
+          animate={{ x: mode === 'login' ? '0%' : '-100%' }}
+          transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+          className="hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2"
+        >
           <motion.img
             src={authIllustration}
             alt="Ilustração abstrata com elementos de barbearia e CRM"
@@ -347,7 +355,7 @@ export default function Auth() {
               Cada indicação é um corte certeiro no crescimento.
             </p>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );
