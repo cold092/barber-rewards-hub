@@ -127,13 +127,16 @@ export default function Auth() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative lg:min-h-[640px] grid lg:block"
+        className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative grid lg:grid-cols-2 lg:min-h-[640px]"
       >
-        {/* ============= LEFT: FORM PANEL ============= */}
+        {/* ============= FORM PANEL ============= */}
         <motion.div
-          animate={{ x: mode === 'login' ? '0%' : '100%' }}
+          layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
-          className="relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col lg:absolute lg:inset-y-0 lg:left-0 lg:w-1/2 z-10"
+          className={cn(
+            'relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-10',
+            mode === 'login' ? 'lg:order-1' : 'lg:order-2'
+          )}
         >
           {/* Decorative blobs */}
           <div
@@ -309,11 +312,14 @@ export default function Auth() {
           </div>
         </motion.div>
 
-        {/* ============= RIGHT: ILLUSTRATION PANEL ============= */}
+        {/* ============= ILLUSTRATION PANEL ============= */}
         <motion.div
-          animate={{ x: mode === 'login' ? '0%' : '-100%' }}
+          layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
-          className="hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2"
+          className={cn(
+            'hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden',
+            mode === 'login' ? 'lg:order-2' : 'lg:order-1'
+          )}
         >
           <motion.img
             src={authIllustration}
