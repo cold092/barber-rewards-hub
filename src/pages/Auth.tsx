@@ -127,14 +127,14 @@ export default function Auth() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative grid lg:grid-cols-2 lg:min-h-[640px]"
+        className="w-full max-w-[1100px] rounded-3xl border border-border/50 shadow-2xl shadow-primary/10 bg-card relative grid lg:grid-cols-2 lg:min-h-[640px] overflow-hidden"
       >
         {/* ============= FORM PANEL ============= */}
         <motion.div
           layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
-            'relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-10',
+            'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-10 overflow-hidden',
             mode === 'login' ? 'lg:order-1' : 'lg:order-2'
           )}
         >
@@ -145,7 +145,7 @@ export default function Auth() {
           />
           <div
             aria-hidden
-            className="absolute -bottom-32 -right-20 w-80 h-80 rounded-full bg-[hsl(280_85%_60%)]/30 blur-3xl pointer-events-none"
+            className="absolute -bottom-32 -right-20 w-80 h-80 rounded-full bg-accent/30 blur-3xl pointer-events-none"
           />
 
           {/* Brand */}
