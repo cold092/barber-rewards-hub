@@ -127,7 +127,7 @@ export default function Auth() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative lg:h-[640px] grid lg:block"
+        className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative lg:min-h-[640px] grid lg:block"
       >
         {/* ============= LEFT: FORM PANEL ============= */}
         <motion.div
