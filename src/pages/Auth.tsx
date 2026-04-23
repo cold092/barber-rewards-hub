@@ -193,10 +193,10 @@ export default function Auth() {
               className="relative grid grid-cols-2 p-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 max-w-[280px]"
             >
               <motion.div
-                layout
+                aria-hidden
+                className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-white shadow-lg"
+                animate={{ x: mode === 'login' ? '0%' : '100%' }}
                 transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                className="absolute inset-y-1 w-[calc(50%-4px)] rounded-full bg-white shadow-lg"
-                style={{ left: mode === 'login' ? 4 : 'calc(50% + 0px)' }}
               />
               {(['login', 'signup'] as const).map((m) => (
                 <button
