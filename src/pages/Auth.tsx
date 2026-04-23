@@ -312,11 +312,14 @@ export default function Auth() {
           </div>
         </motion.div>
 
-        {/* ============= RIGHT: ILLUSTRATION PANEL ============= */}
+        {/* ============= ILLUSTRATION PANEL ============= */}
         <motion.div
-          animate={{ x: mode === 'login' ? '0%' : '-100%' }}
+          layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
-          className="hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2"
+          className={cn(
+            'hidden lg:block relative bg-gradient-to-br from-[hsl(263_55%_18%)] to-[hsl(265_60%_10%)] overflow-hidden',
+            mode === 'login' ? 'lg:order-2' : 'lg:order-1'
+          )}
         >
           <motion.img
             src={authIllustration}
