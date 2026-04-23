@@ -130,7 +130,11 @@ export default function Auth() {
         className="w-full max-w-[1100px] rounded-3xl overflow-hidden border border-border/50 shadow-2xl shadow-primary/10 bg-card relative lg:h-[640px] grid lg:block"
       >
         {/* ============= LEFT: FORM PANEL ============= */}
-        <div className="relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col">
+        <motion.div
+          animate={{ x: mode === 'login' ? '0%' : '100%' }}
+          transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+          className="relative bg-gradient-to-br from-primary via-primary to-[hsl(263_70%_45%)] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col lg:absolute lg:inset-y-0 lg:left-0 lg:w-1/2 z-10"
+        >
           {/* Decorative blobs */}
           <div
             aria-hidden
