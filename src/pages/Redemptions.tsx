@@ -340,20 +340,13 @@ export default function Redemptions() {
     <DashboardLayout>
       <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
-              <Gift className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
-                <span className="lavender-text">Resgates</span>
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Escolha prêmios do catálogo ou solicite resgates personalizados
-              </p>
-            </div>
-          </div>
+        <PageHeader
+          icon={Gift}
+          title="Resgates"
+          gradientTitle
+          subtitle="Escolha prêmios do catálogo ou solicite resgates personalizados"
+        />
+        <div className="flex items-center justify-end">
           <div className="flex gap-2">
             <Button
               variant="outline"

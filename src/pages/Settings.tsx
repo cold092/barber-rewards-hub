@@ -214,19 +214,12 @@ export default function SettingsPage() {
     <DashboardLayout>
       <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
-            <SettingsIcon className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">
-              <span className="lavender-text">Configurações</span>
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Tags, planos, mensagens e colunas do CRM
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          icon={SettingsIcon}
+          title="Configurações"
+          gradientTitle
+          subtitle="Tags, planos, mensagens e colunas do CRM"
+        />
 
         <Tabs defaultValue="general" className="space-y-6" onValueChange={() => {}}>
           <TabsList className="glass-card p-1 h-auto gap-1 flex-wrap">

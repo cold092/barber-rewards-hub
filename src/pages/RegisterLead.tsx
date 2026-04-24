@@ -152,19 +152,11 @@ export default function RegisterLead() {
       <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-xl mx-auto">
         {/* Header */}
         <motion.div variants={fadeUp} className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl lavender-gradient shadow-lg shadow-primary/20">
-              <UserPlus className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold">
-                Novo <span className="lavender-text">Lead</span>
-              </h1>
-              <p className="text-muted-foreground/60 text-xs">
-                Registre uma nova indicação e ganhe pontos
-              </p>
-            </div>
-          </div>
+          <PageHeader
+            icon={UserPlus}
+            title="Novo Lead"
+            subtitle="Registre uma nova indicação e ganhe pontos"
+          />
         </motion.div>
 
         {/* Points badge */}

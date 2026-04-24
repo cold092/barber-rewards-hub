@@ -458,21 +458,12 @@ export default function Ranking() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
-              <Trophy className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-display font-bold">
-                <span className="lavender-gradient bg-clip-text text-transparent">Ranking</span>
-              </h1>
-              <p className="text-muted-foreground text-sm mt-0.5">
-                Classificação baseada em pontos históricos (lifetime)
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          icon={Trophy}
+          title="Ranking"
+          gradientTitle
+          subtitle="Classificação baseada em pontos históricos (lifetime)"
+        />
 
         {/* Podium */}
         {barberRanking.length >= 3 && (
