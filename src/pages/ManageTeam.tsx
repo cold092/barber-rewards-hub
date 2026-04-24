@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -155,12 +156,11 @@ export default function ManageTeam() {
       <motion.div variants={stagger} initial="hidden" animate="visible" className="space-y-8">
         {/* Header */}
         <motion.div variants={fadeUp}>
-          <h1 className="text-3xl font-display font-bold">
-            Gerenciar <span className="gold-text">Equipe</span>
-          </h1>
-          <p className="text-muted-foreground/70 mt-1 text-sm">
-            Cadastre e gerencie os membros da equipe
-          </p>
+          <PageHeader
+            icon={Users}
+            title="Gerenciar Equipe"
+            subtitle="Cadastre e gerencie os membros da equipe"
+          />
         </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-2">

@@ -25,6 +25,7 @@ import PlanDistributionChart from '@/components/dashboard/PlanDistributionChart'
 import type { Referral, Profile } from '@/types/database';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -134,52 +135,17 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Hero Header — Auth-inspired navy with glows */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="hero-navy relative p-6 sm:p-8"
-        >
-          {/* Decorative glows */}
-          <motion.div
-            aria-hidden
-            className="glow-blob glow-blob-primary w-48 h-48 -top-12 -left-12"
-            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.6, 0.4] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            aria-hidden
-            className="glow-blob glow-blob-accent w-56 h-56 -bottom-16 -right-10"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-[0.04] pointer-events-none"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-              backgroundSize: '24px 24px',
-            }}
-          />
-
-          <div className="relative flex items-center gap-4">
-            <div className="p-3 rounded-2xl glass-on-dark">
-              <LayoutDashboard className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-white">
-                Olá, <span className="display-gradient">{profile?.name?.split(' ')[0]}</span>
-              </h1>
-              <p className="text-sm text-white/70 mt-0.5">
-                {isAdmin
-                  ? 'Gerencie leads e acompanhe a performance da equipe'
-                  : 'Cadastre indicações e acompanhe seus pontos'}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        {/* Hero Header — standardized via PageHeader component */}
+        <PageHeader
+          icon={LayoutDashboard}
+          title={`Olá, ${profile?.name?.split(' ')[0] || ''}`}
+          gradientTitle
+          subtitle={
+            isAdmin
+              ? 'Gerencie leads e acompanhe a performance da equipe'
+              : 'Cadastre indicações e acompanhe seus pontos'
+          }
+        />
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

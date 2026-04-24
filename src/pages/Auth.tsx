@@ -21,6 +21,7 @@ import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import authIllustration from '@/assets/auth-illustration.jpg';
+import { Logo } from '@/components/Logo';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -122,12 +123,12 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground flex items-center justify-center p-4 lg:p-8">
+    <div className="min-h-screen w-full bg-background text-foreground">
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-[1100px] rounded-3xl border border-border/50 shadow-2xl shadow-primary/10 bg-card relative grid lg:grid-cols-2 lg:min-h-[640px] overflow-hidden"
+        className="w-full min-h-screen relative grid lg:grid-cols-2 overflow-hidden"
       >
         {/* ============= FORM PANEL ============= */}
         <motion.div
@@ -150,8 +151,8 @@ export default function Auth() {
 
           {/* Brand */}
           <div className="relative flex items-center gap-2.5 mb-10">
-            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-              <Scissors className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center p-1">
+              <Logo size={28} />
             </div>
             <span className="font-display font-semibold text-sm tracking-tight text-white">
               Growth Game

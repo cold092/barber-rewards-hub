@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, BarChart3, Users, CheckCircle, DollarSign, TrendingUp, UserPlus, Filter, Trophy, Tag, X, CalendarIcon, UserCheck } from 'lucide-react';
@@ -285,27 +286,25 @@ export default function Reports() {
         initial="hidden"
         animate="show"
       >
-        {/* Header + Actions */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl lavender-gradient lavender-glow">
-              <BarChart3 className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold text-foreground">Relatórios</h1>
-              <p className="text-sm text-muted-foreground">Analise o desempenho das indicações</p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 self-start border-border/40 hover:border-primary/40 hover:bg-primary/5"
-            onClick={handleExportCSV}
-            disabled={filteredReferrals.length === 0}
-          >
-            <Download className="h-4 w-4" />
-            Exportar CSV
-          </Button>
+        {/* Header */}
+        <motion.div variants={fadeUp}>
+          <PageHeader
+            icon={BarChart3}
+            title="Relatórios"
+            subtitle="Analise o desempenho das indicações"
+            actions={
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/40"
+                onClick={handleExportCSV}
+                disabled={filteredReferrals.length === 0}
+              >
+                <Download className="h-4 w-4" />
+                Exportar CSV
+              </Button>
+            }
+          />
         </motion.div>
 
         {/* Filters Strip */}

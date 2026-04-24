@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,19 +108,11 @@ export default function RegisterClient() {
       <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-xl mx-auto">
         {/* Header */}
         <motion.div variants={fadeUp} className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/20">
-              <UserCheck className="h-5 w-5 text-emerald-500" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold">
-                Novo <span className="text-emerald-500">Cliente</span>
-              </h1>
-              <p className="text-muted-foreground/60 text-xs">
-                Cadastre um cliente fidelizado no sistema
-              </p>
-            </div>
-          </div>
+          <PageHeader
+            icon={UserCheck}
+            title="Novo Cliente"
+            subtitle="Cadastre um cliente fidelizado no sistema"
+          />
         </motion.div>
 
         {/* Premium Badge */}
