@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/Logo';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -113,11 +114,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar/90 backdrop-blur-xl border-b border-sidebar-border/50 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg lavender-gradient flex items-center justify-center shadow-sm">
-              <Scissors className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold lavender-text text-sm">Growth Game</span>
+          <div className="flex items-center gap-2.5">
+            <Logo size={32} glow />
+            <span className="font-display font-bold display-gradient text-sm">Growth Game</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -158,14 +157,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Logo */}
           <div className={cn("p-3 pb-2", collapsed && "lg:px-2.5")}>
             <div className="flex items-center gap-2.5">
-              <div className={cn(
-                "shrink-0 rounded-lg lavender-gradient lavender-glow flex items-center justify-center transition-all",
-                collapsed ? "w-9 h-9 lg:w-10 lg:h-10" : "w-9 h-9"
-              )}>
-                <Scissors className="w-[18px] h-[18px] text-primary-foreground" />
-              </div>
+              <Logo size={collapsed ? 38 : 36} glow />
               <div className={cn("min-w-0 transition-opacity duration-200", collapsed && "lg:hidden")}>
-                <h1 className="font-display font-bold lavender-text text-base leading-tight">Growth Game</h1>
+                <h1 className="font-display font-bold display-gradient text-base leading-tight">Growth Game</h1>
                 <p className="text-[10px] text-muted-foreground/60 font-medium tracking-wide uppercase">Sistema de Crescimento</p>
               </div>
             </div>
