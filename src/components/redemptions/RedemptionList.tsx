@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Gift, MessageSquare } from 'lucide-react';
+import { Gift, MessageSquare, User, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { type Redemption } from '@/services/redemptionService';
@@ -48,15 +48,18 @@ export default function RedemptionList({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2, delay: i * 0.03 }}
-              className="glass-card rounded-xl p-4 border border-border/30 hover:border-border/50 transition-colors"
+              className="bank-card rounded-xl p-4 hover-lift"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0 space-y-1">
                   {showUser && (
-                    <p className="text-xs font-semibold text-primary">
-                      {r.referral_id ? (clientNames[r.referral_id] || 'Cliente') : (profileNames[r.profile_id] || 'Usuário')}
-                      {r.referral_id && <span className="text-muted-foreground font-normal ml-1">(Cliente)</span>}
-                    </p>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                      <div className={cn('h-6 w-6 rounded-full flex items-center justify-center', r.referral_id ? 'bg-info/10 text-info' : 'bg-primary/10 text-primary')}>
+                        {r.referral_id ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                      </div>
+                      <span>{r.referral_id ? (clientNames[r.referral_id] || 'Cliente') : (profileNames[r.profile_id] || 'Usuário')}</span>
+                      {r.referral_id && <span className="text-muted-foreground font-normal">Cliente</span>}
+                    </div>
                   )}
                   <p className="text-sm font-medium">{r.description}</p>
                   <div className="flex items-center gap-3 flex-wrap">
@@ -71,7 +74,7 @@ export default function RedemptionList({
                     {r.approved_by && ` • ${r.status === 'approved' ? 'Aprovado' : 'Rejeitado'} por ${profileNames[r.approved_by] || 'Admin'}`}
                   </p>
                   {r.admin_note && (
-                    <div className="flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-secondary/40 border border-border/20">
+                    <div className="flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-secondary/40 border border-border/40">
                       <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
                       <p className="text-xs text-muted-foreground">{r.admin_note}</p>
                     </div>
