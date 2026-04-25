@@ -314,6 +314,14 @@ export default function ClientPortal() {
           {/* Rewards Catalog */}
           <TabsContent value="rewards" className="mt-4">
             <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full justify-center gap-2 border-primary/30 hover:bg-primary/10"
+                onClick={() => setCustomDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Solicitar resgate personalizado
+              </Button>
               {rewards.length === 0 ? (
                 <p className="text-center text-muted-foreground text-sm py-8">Nenhum prêmio disponível no momento</p>
               ) : (
@@ -539,6 +547,53 @@ export default function ClientPortal() {
               >
                 {redeeming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                 Confirmar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Custom Redemption Dialog */}
+        <Dialog open={customDialogOpen} onOpenChange={setCustomDialogOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <Gift className="h-5 w-5 text-primary" />
+                Resgate personalizado
+              </DialogTitle>
+              <DialogDescription>Informe o que deseja resgatar e quantos pontos quer usar.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Textarea
+                  value={customDescription}
+                  onChange={(e) => setCustomDescription(e.target.value)}
+                  placeholder="Ex: desconto no próximo atendimento"
+                  className="min-h-[80px] resize-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pontos</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={customPoints}
+                  onChange={(e) => setCustomPoints(e.target.value)}
+                  placeholder="Ex: 100"
+                />
+              </div>
+              <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 text-sm flex justify-between">
+                <span className="text-muted-foreground">Saldo disponível</span>
+                <span className="font-bold text-primary">{balance} pts</span>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setCustomDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button size="sm" disabled={redeeming} onClick={handleCustomRedeem} className="gap-1.5">
+                {redeeming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Enviar solicitação
               </Button>
             </div>
           </DialogContent>
