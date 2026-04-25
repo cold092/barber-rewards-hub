@@ -150,10 +150,10 @@ export default function Redemptions() {
       }
       setSubmitting(true);
       const result = await createClientRedemption({
-        organization_id: profile?.organization_id || '',
         referral_id: selectedClientId,
-        description: desc,
-        points: pts,
+        reward_id: useCustom ? null : selectedRewardId,
+        custom_description: useCustom ? desc : null,
+        custom_points: useCustom ? pts : null,
       });
       if (result.success) {
         toast.success('Resgate do cliente registrado!');
@@ -170,11 +170,9 @@ export default function Redemptions() {
       }
       setSubmitting(true);
       const result = await createRedemption({
-        organization_id: profile?.organization_id || '',
-        profile_id: profile?.id || '',
-        user_id: user?.id || '',
-        description: desc,
-        points: pts,
+        reward_id: useCustom ? null : selectedRewardId,
+        custom_description: useCustom ? desc : null,
+        custom_points: useCustom ? pts : null,
       });
       if (result.success) {
         toast.success('Solicitação de resgate enviada!');
@@ -541,11 +539,9 @@ export default function Redemptions() {
                         </div>
                       </SelectItem>
                     ))}
-                    {isAdmin && (
-                      <SelectItem value="__custom__">
-                        <span className="text-muted-foreground">✏️ Resgate personalizado</span>
-                      </SelectItem>
-                    )}
+                    <SelectItem value="__custom__">
+                      <span className="text-muted-foreground">✏️ Resgate personalizado</span>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

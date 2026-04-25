@@ -8,6 +8,8 @@ export interface Redemption {
   profile_id: string;
   user_id: string;
   referral_id: string | null;
+  reward_id: string | null;
+  request_type: 'catalog' | 'custom';
   description: string;
   points: number;
   status: RedemptionStatus;
@@ -31,21 +33,15 @@ export async function getRedemptions(): Promise<Redemption[]> {
 }
 
 export async function createRedemption(params: {
-  organization_id: string;
-  profile_id: string;
-  user_id: string;
-  description: string;
-  points: number;
+  reward_id?: string | null;
+  custom_description?: string | null;
+  custom_points?: number | null;
 }): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
-    .from('redemptions')
-    .insert({
-      organization_id: params.organization_id,
-      profile_id: params.profile_id,
-      user_id: params.user_id,
-      description: params.description,
-      points: params.points,
-    } as any);
+  const { error } = await supabase.rpc('create_redemption_request' as any, {
+    _reward_id: params.reward_id || null,
+    _custom_description: params.custom_description || null,
+    _custom_points: params.custom_points || null,
+  });
 
   if (error) {
     console.error('Error creating redemption:', error);
@@ -95,21 +91,17 @@ export async function rejectRedemption(redemptionId: string, adminNote?: string)
 }
 
 export async function createClientRedemption(params: {
-  organization_id: string;
   referral_id: string;
-  description: string;
-  points: number;
+  reward_id?: string | null;
+  custom_description?: string | null;
+  custom_points?: number | null;
 }): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
-    .from('redemptions')
-    .insert({
-      organization_id: params.organization_id,
-      referral_id: params.referral_id,
-      profile_id: '00000000-0000-0000-0000-000000000000',
-      user_id: '00000000-0000-0000-0000-000000000000',
-      description: params.description,
-      points: params.points,
-    } as any);
+  const { error } = await supabase.rpc('create_client_redemption_request' as any, {
+    _referral_id: params.referral_id,
+    _reward_id: params.reward_id || null,
+    _custom_description: params.custom_description || null,
+    _custom_points: params.custom_points || null,
+  });
 
   if (error) {
     console.error('Error creating client redemption:', error);

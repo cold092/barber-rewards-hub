@@ -306,6 +306,8 @@ export type Database = {
           points: number
           profile_id: string
           referral_id: string | null
+          request_type: string
+          reward_id: string | null
           status: Database["public"]["Enums"]["redemption_status"]
           updated_at: string
           user_id: string
@@ -320,6 +322,8 @@ export type Database = {
           points: number
           profile_id: string
           referral_id?: string | null
+          request_type?: string
+          reward_id?: string | null
           status?: Database["public"]["Enums"]["redemption_status"]
           updated_at?: string
           user_id: string
@@ -334,6 +338,8 @@ export type Database = {
           points?: number
           profile_id?: string
           referral_id?: string | null
+          request_type?: string
+          reward_id?: string | null
           status?: Database["public"]["Enums"]["redemption_status"]
           updated_at?: string
           user_id?: string
@@ -351,6 +357,13 @@ export type Database = {
             columns: ["referral_id"]
             isOneToOne: false
             referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "reward_catalog"
             referencedColumns: ["id"]
           },
         ]
@@ -521,6 +534,23 @@ export type Database = {
       approve_redemption: {
         Args: { _admin_note?: string; _redemption_id: string }
         Returns: undefined
+      }
+      create_client_redemption_request: {
+        Args: {
+          _custom_description?: string
+          _custom_points?: number
+          _referral_id: string
+          _reward_id?: string
+        }
+        Returns: string
+      }
+      create_redemption_request: {
+        Args: {
+          _custom_description?: string
+          _custom_points?: number
+          _reward_id?: string
+        }
+        Returns: string
       }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
