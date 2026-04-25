@@ -31,6 +31,8 @@ interface ClientReferral {
   lead_points: number;
   status: string;
   is_client: boolean;
+  converted_plan_id: string | null;
+  created_at: string;
 }
 
 interface RewardItem {
@@ -78,7 +80,7 @@ export default function ClientPortal() {
         const [refResult, redResult, rewardResult] = await Promise.all([
           supabase
             .from('referrals')
-            .select('id, lead_name, lead_phone, lead_points, status, is_client')
+            .select('id, lead_name, lead_phone, lead_points, status, is_client, converted_plan_id, created_at')
             .eq('referred_by_lead_id', myRef.id)
             .order('created_at', { ascending: false }),
           supabase
@@ -238,6 +240,11 @@ export default function ClientPortal() {
   const balance = referral.lead_points;
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
   const historyRedemptions = redemptions.filter(r => r.status !== 'pending');
+  const convertedReferrals = myReferrals.filter((ref) => ref.is_client || ref.status === 'converted').length;
+  const referralPointsGenerated = myReferrals.reduce((sum, ref) => {
+    const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
+    return sum + REFERRAL_BONUS_POINTS + (plan ? plan.points : 0);
+  }, 0);
 
   const statusBadge = (status: string) => {
     switch (status) {
