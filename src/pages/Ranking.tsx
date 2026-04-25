@@ -319,12 +319,8 @@ export default function Ranking() {
         <p className="text-muted-foreground text-center py-8">Nenhum participante no ranking ainda</p>
       ) : (
         data.map((profile, index) => (
-          <motion.div
+          <div
             key={profile.id}
-            custom={index}
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
             className={cn(
               'p-4 rounded-xl transition-all cursor-pointer',
               isHighlighted(profile.id)
@@ -377,7 +373,7 @@ export default function Ranking() {
                 />
               )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         ))
       )}
     </div>
@@ -389,12 +385,8 @@ export default function Ranking() {
         <p className="text-muted-foreground text-center py-8">Nenhum cliente no ranking ainda</p>
       ) : (
         data.map((entry, index) => (
-          <motion.div
+          <div
             key={entry.clientId}
-            custom={index}
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
             className={cn(
               'p-4 rounded-xl transition-all cursor-pointer',
               index === 0
@@ -449,7 +441,7 @@ export default function Ranking() {
                 />
               )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         ))
       )}
     </div>
