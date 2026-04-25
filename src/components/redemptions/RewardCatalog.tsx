@@ -138,7 +138,7 @@ export default function RewardCatalog({ items, walletBalance, onRedeem, onRefres
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <AnimatePresence mode="popLayout">
           {displayItems.map((item, i) => {
             const canAfford = walletBalance >= item.points_cost;
@@ -152,13 +152,13 @@ export default function RewardCatalog({ items, walletBalance, onRedeem, onRefres
                 transition={{ duration: 0.2, delay: i * 0.04 }}
               >
                 <Card className={cn(
-                  'glass-card border-border/30 hover:border-primary/30 transition-all group overflow-hidden',
+                  'bank-card hover-lift border-border/60 hover:border-primary/30 transition-all group overflow-hidden',
                   !item.active && 'opacity-50'
                 )}>
-                  <CardContent className="p-4 space-y-3">
+                  <CardContent className="p-5 space-y-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
+                        <div className="icon-circle-primary h-10 w-10 shrink-0">
                           <Gift className="h-4 w-4 text-primary" />
                         </div>
                         <div className="min-w-0">
@@ -217,7 +217,7 @@ export default function RewardCatalog({ items, walletBalance, onRedeem, onRefres
                             className={cn(
                               'gap-1.5 text-xs h-8',
                               canAfford
-                                ? 'lavender-gradient lavender-glow text-primary-foreground hover:opacity-90'
+                                ? 'btn-bank'
                                 : 'bg-muted text-muted-foreground cursor-not-allowed'
                             )}
                             disabled={!canAfford}
