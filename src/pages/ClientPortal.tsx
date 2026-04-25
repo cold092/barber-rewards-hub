@@ -401,6 +401,27 @@ export default function ClientPortal() {
           {/* My Referrals */}
           <TabsContent value="referrals" className="mt-4">
             <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <Card className="border-border/30 bg-card/60">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-bold text-primary">{myReferrals.length}</p>
+                    <p className="text-[10px] text-muted-foreground">Indicados</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/30 bg-card/60">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-bold text-success">{convertedReferrals}</p>
+                    <p className="text-[10px] text-muted-foreground">Clientes</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/30 bg-card/60">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-bold text-primary">{referralPointsGenerated}</p>
+                    <p className="text-[10px] text-muted-foreground">Pontos gerados</p>
+                  </CardContent>
+                </Card>
+              </div>
+
               {/* Refer Friend Button */}
               <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>
                 <DialogTrigger asChild>
@@ -467,7 +488,9 @@ export default function ClientPortal() {
                   <p className="text-xs text-muted-foreground mt-1">Indique amigos e ganhe pontos!</p>
                 </div>
               ) : (
-                myReferrals.map((ref) => (
+                myReferrals.map((ref) => {
+                  const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
+                  return (
                   <Card key={ref.id} className="border-border/30">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -482,22 +505,39 @@ export default function ClientPortal() {
                               <UserPlus className="h-4 w-4 text-info" />
                             )}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p className="font-semibold text-sm">{ref.lead_name}</p>
-                            <Badge variant="outline" className={cn(
-                              'text-[10px] mt-1',
-                              ref.is_client
-                                ? 'bg-success/10 text-success border-success/30'
-                                : 'bg-info/10 text-info border-info/30'
-                            )}>
-                              {ref.is_client ? 'Convertido' : ref.status === 'contacted' ? 'Em contato' : 'Novo'}
-                            </Badge>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              <Badge variant="outline" className={cn(
+                                'text-[10px]',
+                                ref.is_client
+                                  ? 'bg-success/10 text-success border-success/30'
+                                  : ref.status === 'contacted'
+                                    ? 'bg-warning/10 text-warning border-warning/30'
+                                    : 'bg-info/10 text-info border-info/30'
+                              )}>
+                                {ref.is_client ? 'Cliente' : ref.status === 'contacted' ? 'Em contato' : 'Lead'}
+                              </Badge>
+                              {plan && (
+                                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/25">
+                                  {plan.label}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {new Date(ref.created_at).toLocaleDateString('pt-BR')}
+                            </p>
                           </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-primary">+{REFERRAL_BONUS_POINTS + (plan ? plan.points : 0)}</p>
+                          <p className="text-[10px] text-muted-foreground">pts</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))
+                  );
+                })
               )}
             </div>
           </TabsContent>
