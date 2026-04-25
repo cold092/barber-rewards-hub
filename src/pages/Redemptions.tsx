@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Gift, Plus, CheckCircle, XCircle, Clock, Coins,
-  History, Send, MessageSquare, ShoppingBag, Users,
+  History, Send, MessageSquare, ShoppingBag, Users, Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -316,6 +316,7 @@ export default function Redemptions() {
   const myRedemptions = redemptions.filter(r => r.user_id === user?.id && !r.referral_id);
   const clientRedemptions = redemptions.filter(r => !!r.referral_id);
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
+  const approvedRedemptions = redemptions.filter(r => r.status === 'approved');
   const allSorted = [...redemptions].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   // Merge profile + client names for the list component
@@ -337,60 +338,60 @@ export default function Redemptions() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
-        {/* Header */}
+      <div className="space-y-8 animate-fade-in">
         <PageHeader
           icon={Gift}
           title="Resgates"
           gradientTitle
           subtitle="Escolha prêmios do catálogo ou solicite resgates personalizados"
+          actions={
+            <>
+              <Button
+                variant="outline"
+                className="gap-2 border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+                onClick={() => { setRedeemMode('client'); setSelectedRewardId(''); setUseCustom(false); setSelectedClientId(''); setShowNewDialog(true); }}
+              >
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Cliente</span>
+              </Button>
+              <Button
+                className="gap-2 btn-bank"
+                onClick={() => { setRedeemMode('self'); setSelectedRewardId(''); setUseCustom(false); setShowNewDialog(true); }}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Novo resgate</span>
+              </Button>
+            </>
+          }
         />
-        <div className="flex items-center justify-end">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="gap-2 border-primary/30 hover:bg-primary/10"
-              onClick={() => { setRedeemMode('client'); setSelectedRewardId(''); setUseCustom(false); setSelectedClientId(''); setShowNewDialog(true); }}
-            >
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Resgate Cliente</span>
-            </Button>
-            <Button
-              className="gap-2 lavender-gradient lavender-glow text-primary-foreground hover:opacity-90 transition-opacity"
-              onClick={() => { setRedeemMode('self'); setSelectedRewardId(''); setUseCustom(false); setShowNewDialog(true); }}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Resgate Livre</span>
-            </Button>
-          </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { icon: Wallet, label: 'Saldo disponível', value: `${profile?.wallet_balance || 0} pts`, sub: `${profile?.lifetime_points || 0} pontos lifetime`, className: 'icon-circle-primary' },
+            { icon: Clock, label: 'Pendentes', value: pendingRedemptions.length, sub: 'Aguardando aprovação', className: 'icon-circle-warning' },
+            { icon: CheckCircle, label: 'Aprovados', value: approvedRedemptions.length, sub: 'Resgates concluídos', className: 'icon-circle-success' },
+            { icon: Users, label: 'Clientes', value: clientRedemptions.length, sub: 'Solicitações de clientes', className: 'icon-circle-info' },
+          ].map((stat, index) => (
+            <motion.div key={stat.label} custom={index} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04, duration: 0.3 }}>
+              <Card className="bank-card hover-lift">
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className={cn(stat.className, 'h-12 w-12')}>
+                    <stat.icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-muted-foreground truncate">{stat.label}</p>
+                    <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{stat.sub}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Balance Card */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <Card className="glass-card border-primary/20 overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                    <Coins className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Seu saldo disponível</p>
-                    <p className="text-3xl font-bold text-primary">{profile?.wallet_balance || 0} <span className="text-base font-medium text-muted-foreground">pts</span></p>
-                  </div>
-                </div>
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs text-muted-foreground">Pontos totais (lifetime)</p>
-                  <p className="text-lg font-semibold text-foreground">{profile?.lifetime_points || 0} pts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* Tabs */}
-        <Tabs defaultValue="catalog">
-          <TabsList className="glass-card p-1 h-auto gap-1 flex-wrap">
+        <Tabs defaultValue="catalog" className="space-y-4">
+          <TabsList className="bank-card p-1 h-auto gap-1 flex w-full flex-wrap lg:w-auto">
             <TabsTrigger value="catalog" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5">
               <ShoppingBag className="h-4 w-4" />
               Catálogo
