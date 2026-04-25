@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Crown, ChevronDown, UserPlus, ArrowRightLeft, Star, Gift, Wallet } from 'lucide-react';
+import { Trophy, Medal, Crown, ChevronDown, UserPlus, ArrowRightLeft, Star, Gift, Wallet, Users, CheckCircle } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
@@ -252,6 +252,10 @@ export default function Ranking() {
 
   const isHighlighted = (profileId: string) =>
     isViewingAs && effectiveProfile?.id === profileId;
+  const topBarber = barberRanking[0];
+  const topClient = clientRanking[0];
+  const totalBarberPoints = barberRanking.reduce((sum, profile) => sum + Number(profile.lifetime_points || 0), 0);
+  const totalClientIndications = clientRanking.reduce((sum, entry) => sum + entry.referralCount, 0);
 
   const BreakdownList = ({ items, isLoading }: { items?: PointBreakdownItem[]; isLoading: boolean }) => (
     <motion.div
@@ -322,12 +326,12 @@ export default function Ranking() {
           <div
             key={profile.id}
             className={cn(
-              'p-4 rounded-xl transition-all cursor-pointer',
+              'p-4 rounded-xl transition-all cursor-pointer hover-lift',
               isHighlighted(profile.id)
                 ? 'bg-warning/10 border-2 border-warning/40 ring-1 ring-warning/20'
                 : index === 0
-                  ? 'bg-primary/8 border border-primary/20'
-                  : 'bg-secondary/30 border border-border/30',
+                  ? 'bg-primary/10 border border-primary/25'
+                  : 'bg-card border border-border/60',
               expandedId === profile.id && 'border-primary/30'
             )}
             onClick={() => toggleBreakdown(profile.id)}
@@ -388,10 +392,10 @@ export default function Ranking() {
           <div
             key={entry.clientId}
             className={cn(
-              'p-4 rounded-xl transition-all cursor-pointer',
+              'p-4 rounded-xl transition-all cursor-pointer hover-lift',
               index === 0
-                ? 'bg-primary/8 border border-primary/20'
-                : 'bg-secondary/30 border border-border/30',
+                ? 'bg-primary/10 border border-primary/25'
+                : 'bg-card border border-border/60',
               expandedClientId === entry.clientId && 'border-primary/30'
             )}
             onClick={() => toggleClientBreakdown(entry.clientId)}
