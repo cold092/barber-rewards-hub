@@ -453,8 +453,7 @@ export default function Ranking() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-8">
         <PageHeader
           icon={Trophy}
           title="Ranking"
@@ -462,11 +461,33 @@ export default function Ranking() {
           subtitle="Classificação baseada em pontos históricos (lifetime)"
         />
 
-        {/* Podium */}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { icon: Crown, label: 'Top colaborador', value: topBarber?.name || '—', sub: `${topBarber?.lifetime_points || 0} pts`, className: 'icon-circle-primary' },
+            { icon: Users, label: 'Colaboradores', value: barberRanking.length, sub: `${totalBarberPoints} pontos no total`, className: 'icon-circle-info' },
+            { icon: Star, label: 'Top cliente', value: topClient?.clientName || '—', sub: `${topClient?.points || 0} pts resgatáveis`, className: 'icon-circle-success' },
+            { icon: CheckCircle, label: 'Indicações de clientes', value: totalClientIndications, sub: 'Leads gerados por clientes', className: 'icon-circle-warning' },
+          ].map((stat, index) => (
+            <motion.div key={stat.label} custom={index} variants={fadeUp} initial="hidden" animate="show">
+              <Card className="bank-card hover-lift">
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className={cn(stat.className, 'h-12 w-12')}>
+                    <stat.icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-muted-foreground truncate">{stat.label}</p>
+                    <p className="text-lg font-bold text-foreground tracking-tight truncate">{stat.value}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{stat.sub}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
         {barberRanking.length >= 3 && (
           <motion.div custom={1} variants={fadeUp} initial="hidden" animate="show" className="grid grid-cols-3 gap-3">
-            {/* 2nd */}
-            <Card className="glass-card border-border/30 mt-8 hover-lift">
+            <Card className="bank-card mt-8 hover-lift">
               <CardContent className="p-4 text-center">
                 <div className="w-12 h-12 mx-auto rounded-xl bg-slate-400 flex items-center justify-center mb-3">
                   <Medal className="h-6 w-6 text-slate-900" />
@@ -477,8 +498,7 @@ export default function Ranking() {
               </CardContent>
             </Card>
 
-            {/* 1st */}
-            <Card className="glass-card border-primary/30 animate-pulse-gold hover-lift">
+            <Card className="bank-card border-primary/30 shimmer hover-lift">
               <CardContent className="p-4 text-center">
                 <div className="w-14 h-14 mx-auto rounded-xl gold-gradient flex items-center justify-center mb-3">
                   <Crown className="h-7 w-7 text-primary-foreground" />
@@ -489,8 +509,7 @@ export default function Ranking() {
               </CardContent>
             </Card>
 
-            {/* 3rd */}
-            <Card className="glass-card border-border/30 mt-12 hover-lift">
+            <Card className="bank-card mt-12 hover-lift">
               <CardContent className="p-4 text-center">
                 <div className="w-11 h-11 mx-auto rounded-xl bg-amber-700 flex items-center justify-center mb-3">
                   <Medal className="h-5 w-5 text-amber-100" />
@@ -503,10 +522,9 @@ export default function Ranking() {
           </motion.div>
         )}
 
-        {/* Tabs */}
         <motion.div custom={2} variants={fadeUp} initial="hidden" animate="show">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="glass-card p-1 h-auto gap-1 max-w-md w-full grid grid-cols-2">
+            <TabsList className="bank-card p-1 h-auto gap-1 max-w-md w-full grid grid-cols-2">
               <TabsTrigger
                 value="barbers"
                 className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg text-sm"
@@ -527,8 +545,8 @@ export default function Ranking() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="glass-card border-border/50 mt-4 overflow-hidden">
-                  <CardHeader className="border-b border-border/30 bg-secondary/20">
+                <Card className="bank-card mt-4 overflow-hidden">
+                  <CardHeader className="border-b border-border/60 bg-secondary/30">
                     <CardTitle className="flex items-center gap-2 font-display text-base">
                       <Trophy className="h-5 w-5 text-primary" />
                       Ranking de Colaboradores
@@ -547,8 +565,8 @@ export default function Ranking() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="glass-card border-border/50 mt-4 overflow-hidden">
-                  <CardHeader className="border-b border-border/30 bg-secondary/20">
+                <Card className="bank-card mt-4 overflow-hidden">
+                  <CardHeader className="border-b border-border/60 bg-secondary/30">
                     <CardTitle className="flex items-center gap-2 font-display text-base">
                       <Trophy className="h-5 w-5 text-primary" />
                       Ranking de Indicações (Clientes)
