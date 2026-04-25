@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -21,7 +22,7 @@ import { getPlanById } from '@/config/plans';
 import { registerLeadByLead } from '@/services/referralService';
 import { isValidPhone } from '@/utils/whatsapp';
 import { REFERRAL_BONUS_POINTS } from '@/config/plans';
-import type { Redemption } from '@/services/redemptionService';
+import { createClientRedemption, type Redemption } from '@/services/redemptionService';
 
 interface ClientReferral {
   id: string;
@@ -49,6 +50,9 @@ export default function ClientPortal() {
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
   const [confirmReward, setConfirmReward] = useState<RewardItem | null>(null);
+  const [customDialogOpen, setCustomDialogOpen] = useState(false);
+  const [customDescription, setCustomDescription] = useState('');
+  const [customPoints, setCustomPoints] = useState('');
   const [referralDialogOpen, setReferralDialogOpen] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
   const [newFriendPhone, setNewFriendPhone] = useState('');
@@ -108,21 +112,53 @@ export default function ClientPortal() {
 
     setRedeeming(true);
     try {
-      const { error } = await supabase.from('redemptions').insert({
-        organization_id: referral.organization_id,
-        profile_id: referral.referrer_id,
-        user_id: user.id,
+      const result = await createClientRedemption({
         referral_id: referral.id,
-        description: reward.name,
-        points: reward.points_cost,
-      } as any);
-
-      if (error) throw error;
+        reward_id: reward.id,
+      });
+      if (!result.success) throw new Error(result.error);
       toast.success('Solicitação de resgate enviada! Aguarde aprovação.');
       loadData();
     } catch (err) {
       console.error('Redeem error:', err);
       toast.error('Erro ao solicitar resgate');
+    }
+    setRedeeming(false);
+  };
+
+  const handleCustomRedeem = async () => {
+    if (!referral) return;
+    const description = customDescription.trim();
+    const points = parseInt(customPoints, 10);
+
+    if (!description || description.length < 3) {
+      toast.error('Descreva o resgate desejado');
+      return;
+    }
+    if (!points || points <= 0) {
+      toast.error('Informe uma quantidade válida de pontos');
+      return;
+    }
+    if (points > referral.lead_points) {
+      toast.error('Saldo insuficiente para este resgate');
+      return;
+    }
+
+    setRedeeming(true);
+    const result = await createClientRedemption({
+      referral_id: referral.id,
+      custom_description: description,
+      custom_points: points,
+    });
+
+    if (result.success) {
+      toast.success('Solicitação personalizada enviada! Aguarde aprovação.');
+      setCustomDescription('');
+      setCustomPoints('');
+      setCustomDialogOpen(false);
+      loadData();
+    } else {
+      toast.error(result.error || 'Erro ao solicitar resgate');
     }
     setRedeeming(false);
   };
