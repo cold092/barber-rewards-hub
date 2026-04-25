@@ -39,6 +39,7 @@ import {
 import { ViewAsSelector } from './ViewAsSelector';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
+import { AppBreadcrumbs } from './AppBreadcrumbs';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -470,13 +471,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         )}
 
-        {/* Desktop filter toggle bar */}
-        <div className="hidden lg:flex items-center justify-end px-6 pt-3 pb-0">
+        {/* Breadcrumbs and desktop filter toggle bar */}
+        <div className="flex items-center justify-between gap-3 px-3 pt-3 pb-0 lg:px-6">
+          <AppBreadcrumbs />
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 text-xs font-medium relative",
+              "hidden lg:inline-flex h-7 gap-1.5 text-xs font-medium relative",
               (showGlobalFilter || hasActiveFilters) && "text-primary"
             )}
             onClick={() => setShowGlobalFilter(!showGlobalFilter)}
