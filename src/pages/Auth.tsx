@@ -136,7 +136,7 @@ export default function Auth() {
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
             'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-10 overflow-hidden',
-            mode === 'login' ? 'lg:order-1' : 'lg:order-2'
+            mode === 'login' ? 'lg:order-1 lg:pr-28 xl:pr-32' : 'lg:order-2 lg:pl-28 xl:pl-32'
           )}
         >
           {/* Decorative blobs */}
@@ -318,12 +318,19 @@ export default function Auth() {
           layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
-            'hidden lg:block relative bg-gradient-to-br from-[hsl(222_30%_8%)] to-[hsl(230_45%_12%)] overflow-visible z-20',
+            'hidden lg:block relative bg-gradient-to-br from-[hsl(var(--sidebar))] to-[hsl(var(--background))] overflow-visible z-20',
             mode === 'login' ? 'lg:order-2' : 'lg:order-1'
           )}
         >
-          {/* Inner clip container so the image stays in panel but decorations can overflow */}
-          <div className="absolute inset-0 overflow-hidden">
+          {/* Inner clip container overlaps the form edge while keeping inputs clickable */}
+          <div
+            className={cn(
+              'absolute inset-y-0 w-[calc(100%+96px)] overflow-hidden pointer-events-none shadow-2xl shadow-primary/20',
+              mode === 'login'
+                ? '-left-24 rounded-l-[2rem]'
+                : '-right-24 rounded-r-[2rem]'
+            )}
+          >
             <motion.img
               src={authIllustration}
               alt="Ilustração abstrata com elementos de barbearia e CRM"
@@ -333,6 +340,13 @@ export default function Auth() {
               className="absolute inset-0 w-full h-full object-cover"
               animate={{ scale: [1, 1.03, 1] }}
               transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div
+              aria-hidden
+              className={cn(
+                'absolute inset-y-0 w-28 bg-gradient-to-r from-primary/45 via-primary/15 to-transparent backdrop-blur-[1px]',
+                mode === 'login' ? 'left-0' : 'right-0 rotate-180'
+              )}
             />
           </div>
 
