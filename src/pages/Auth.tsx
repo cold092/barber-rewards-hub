@@ -135,8 +135,8 @@ export default function Auth() {
           layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
-            'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-30 overflow-hidden lg:overflow-visible',
-            mode === 'login' ? 'lg:order-1 lg:pr-24 xl:pr-28' : 'lg:order-2 lg:pl-24 xl:pl-28'
+            'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-10 overflow-hidden',
+            mode === 'login' ? 'lg:order-1' : 'lg:order-2'
           )}
         >
           {/* Decorative blobs */}
@@ -318,11 +318,11 @@ export default function Auth() {
           layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
-            'hidden lg:block relative bg-gradient-to-br from-[hsl(var(--sidebar))] to-[hsl(var(--background))] overflow-visible z-10',
+            'hidden lg:block relative bg-gradient-to-br from-[hsl(222_30%_8%)] to-[hsl(230_45%_12%)] overflow-visible z-20',
             mode === 'login' ? 'lg:order-2' : 'lg:order-1'
           )}
         >
-          {/* Inner clip container so the main image stays inside the illustration panel */}
+          {/* Inner clip container so the image stays in panel but decorations can overflow */}
           <div className="absolute inset-0 overflow-hidden">
             <motion.img
               src={authIllustration}
@@ -334,25 +334,7 @@ export default function Auth() {
               animate={{ scale: [1, 1.03, 1] }}
               transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <div
-              aria-hidden
-              className={cn(
-                'absolute inset-y-0 w-32 bg-gradient-to-r from-primary/35 via-primary/10 to-transparent pointer-events-none',
-                mode === 'login' ? 'left-0' : 'right-0 rotate-180'
-              )}
-            />
           </div>
-
-          {/* Subtle professional organic edge */}
-          <div
-            aria-hidden
-            className={cn(
-              'absolute top-0 h-full w-32 bg-sidebar pointer-events-none shadow-2xl shadow-background/25',
-              mode === 'login'
-                ? '-left-16 [clip-path:ellipse(60%_48%_at_100%_50%)]'
-                : '-right-16 [clip-path:ellipse(60%_48%_at_0%_50%)]'
-            )}
-          />
 
           {/* Decorative blob bleeding into the form side (no pointer events so inputs stay clickable) */}
           <motion.div
