@@ -336,22 +336,20 @@ export default function Auth() {
             />
           </div>
 
-          {/* Small illustration slice crossing the divider, not the full panel */}
+          {/* Dark organic spot crossing only the top of the divider */}
           <motion.div
             aria-hidden
             className={cn(
-              'absolute top-[23%] h-52 w-36 overflow-hidden rounded-2xl border border-white/15 shadow-2xl shadow-primary/25 pointer-events-none',
-              mode === 'login' ? '-left-16' : '-right-16'
+              'absolute top-12 h-64 w-72 overflow-hidden bg-sidebar/95 border border-white/10 shadow-2xl shadow-background/50 pointer-events-none',
+              '[border-radius:42%_58%_48%_52%/56%_42%_58%_44%]',
+              mode === 'login' ? '-left-36' : '-right-36'
             )}
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{ y: [0, -6, 0], rotate: mode === 'login' ? [-3, 2, -3] : [3, -2, 3] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <img
-              src={authIllustration}
-              alt=""
-              className="h-full w-full object-cover scale-125"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-transparent to-background/45" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-sidebar/90 to-background" />
+            <div className="absolute left-12 top-10 h-28 w-32 rounded-full bg-primary/20 blur-2xl" />
+            <div className="absolute right-8 bottom-8 h-20 w-24 rounded-full bg-accent/15 blur-xl" />
           </motion.div>
 
           {/* Decorative blob bleeding into the form side (no pointer events so inputs stay clickable) */}
