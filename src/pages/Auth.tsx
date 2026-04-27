@@ -135,10 +135,27 @@ export default function Auth() {
           layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
-            'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-10 overflow-hidden',
+            'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-30 overflow-hidden lg:overflow-visible',
             mode === 'login' ? 'lg:order-1' : 'lg:order-2'
           )}
         >
+          {/* Organic overlap edge inspired by the reference */}
+          <motion.div
+            aria-hidden
+            className={cn(
+              'hidden lg:block absolute top-[12%] h-[76%] w-48 bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] pointer-events-none shadow-2xl shadow-primary/25',
+              '[border-radius:42%_58%_54%_46%/32%_48%_52%_68%]',
+              mode === 'login' ? '-right-24' : '-left-24 scale-x-[-1]'
+            )}
+            animate={{ scale: [1, 1.015, 1] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <div className="absolute top-8 right-10 h-24 w-24 rounded-full bg-white/10" />
+            <div className="absolute bottom-16 left-7 h-32 w-32 rounded-full bg-background/10" />
+            <div className="absolute top-1/2 right-8 h-12 w-12 -translate-y-1/2 rounded-full border-8 border-white/15" />
+            <div className="absolute bottom-8 right-16 h-4 w-4 rounded-full bg-white/20" />
+          </motion.div>
+
           {/* Decorative blobs */}
           <div
             aria-hidden
@@ -318,7 +335,7 @@ export default function Auth() {
           layout
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
-            'hidden lg:block relative bg-gradient-to-br from-[hsl(var(--sidebar))] to-[hsl(var(--background))] overflow-visible z-20',
+            'hidden lg:block relative bg-gradient-to-br from-[hsl(var(--sidebar))] to-[hsl(var(--background))] overflow-visible z-10',
             mode === 'login' ? 'lg:order-2' : 'lg:order-1'
           )}
         >
@@ -335,22 +352,6 @@ export default function Auth() {
               transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
           </div>
-
-          {/* Dark organic spot crossing only the top of the divider */}
-          <motion.div
-            aria-hidden
-            className={cn(
-              'absolute top-12 h-64 w-72 overflow-hidden bg-sidebar/95 border border-white/10 shadow-2xl shadow-background/50 pointer-events-none',
-              '[border-radius:42%_58%_48%_52%/56%_42%_58%_44%]',
-              mode === 'login' ? '-left-36' : '-right-36'
-            )}
-            animate={{ y: [0, -6, 0], rotate: mode === 'login' ? [-3, 2, -3] : [3, -2, 3] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-sidebar/90 to-background" />
-            <div className="absolute left-12 top-10 h-28 w-32 rounded-full bg-primary/20 blur-2xl" />
-            <div className="absolute right-8 bottom-8 h-20 w-24 rounded-full bg-accent/15 blur-xl" />
-          </motion.div>
 
           {/* Decorative blob bleeding into the form side (no pointer events so inputs stay clickable) */}
           <motion.div
