@@ -143,17 +143,17 @@ export default function Auth() {
           <motion.div
             aria-hidden
             className={cn(
-              'hidden lg:block absolute top-[12%] h-[76%] w-48 bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] pointer-events-none shadow-2xl shadow-primary/25',
-              '[border-radius:42%_58%_54%_46%/32%_48%_52%_68%]',
-              mode === 'login' ? '-right-24' : '-left-24 scale-x-[-1]'
+              'hidden lg:block absolute top-[7%] h-[86%] w-40 bg-gradient-to-br from-sidebar via-background to-sidebar pointer-events-none shadow-2xl shadow-background/40 border border-white/10',
+              '[border-radius:48%_52%_50%_50%/22%_42%_58%_78%]',
+              mode === 'login' ? '-right-20' : '-left-20 scale-x-[-1]'
             )}
-            animate={{ scale: [1, 1.015, 1] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{ scale: [1, 1.01, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <div className="absolute top-8 right-10 h-24 w-24 rounded-full bg-white/10" />
-            <div className="absolute bottom-16 left-7 h-32 w-32 rounded-full bg-background/10" />
-            <div className="absolute top-1/2 right-8 h-12 w-12 -translate-y-1/2 rounded-full border-8 border-white/15" />
-            <div className="absolute bottom-8 right-16 h-4 w-4 rounded-full bg-white/20" />
+            <div className="absolute top-12 right-8 h-20 w-20 rounded-full bg-primary/15 blur-sm" />
+            <div className="absolute bottom-20 left-6 h-28 w-28 rounded-full bg-primary/10 blur-md" />
+            <div className="absolute top-1/2 right-6 h-10 w-10 -translate-y-1/2 rounded-full border-[6px] border-primary/25" />
+            <div className="absolute bottom-10 right-12 h-3.5 w-3.5 rounded-full bg-primary/35" />
           </motion.div>
 
           {/* Decorative blobs */}
