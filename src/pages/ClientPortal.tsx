@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Wallet, Gift, Users, LogOut, Trophy, Clock, CheckCircle2,
-  XCircle, Star, UserPlus, Loader2, Phone, User, Plus,
+  XCircle, Star, UserPlus, Loader2, Phone, User, Plus, ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -34,6 +35,8 @@ interface ClientReferral {
   converted_plan_id: string | null;
   created_at: string;
 }
+
+type ReferralStatusFilter = 'all' | 'new' | 'contacted' | 'converted';
 
 interface RewardItem {
   id: string;
@@ -59,6 +62,7 @@ export default function ClientPortal() {
   const [newFriendName, setNewFriendName] = useState('');
   const [newFriendPhone, setNewFriendPhone] = useState('');
   const [submittingReferral, setSubmittingReferral] = useState(false);
+  const [referralStatusFilter, setReferralStatusFilter] = useState<ReferralStatusFilter>('all');
   useEffect(() => {
     if (user) loadData();
   }, [user]);
