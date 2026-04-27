@@ -427,6 +427,18 @@ export default function ClientPortal() {
           {/* My Referrals */}
           <TabsContent value="referrals" className="mt-4">
             <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="font-display text-base font-semibold display-gradient">Minhas indicações</h2>
+                      <p className="text-xs text-muted-foreground">Clientes e leads indicados por você</p>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5 text-xs border-primary/30 hover:bg-primary/10">
+                      <Link to="/ranking">
+                        Ranking <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+
               <div className="grid grid-cols-3 gap-2">
                 <Card className="border-border/30 bg-card/60">
                   <CardContent className="p-3 text-center">
@@ -507,14 +519,38 @@ export default function ClientPortal() {
                 </DialogContent>
               </Dialog>
 
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {statusFilterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setReferralStatusFilter(option.value)}
+                      className={cn(
+                        'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                        referralStatusFilter === option.value
+                          ? 'border-primary/40 bg-primary/15 text-primary'
+                          : 'border-border/40 bg-card/60 text-muted-foreground hover:bg-secondary/70 hover:text-foreground'
+                      )}
+                    >
+                      {option.label} <span className="ml-1 text-[10px] opacity-70">{option.count}</span>
+                    </button>
+                  ))}
+                </div>
+
               {myReferrals.length === 0 ? (
                 <div className="text-center py-8">
                   <UserPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">Você ainda não fez nenhuma indicação</p>
                   <p className="text-xs text-muted-foreground mt-1">Indique amigos e ganhe pontos!</p>
                 </div>
+                ) : filteredReferrals.length === 0 ? (
+                  <div className="text-center py-8 rounded-xl border border-border/30 bg-card/40">
+                    <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhuma indicação neste status</p>
+                    <p className="text-xs text-muted-foreground mt-1">Troque o filtro para ver outros registros.</p>
+                  </div>
               ) : (
-                myReferrals.map((ref) => {
+                  filteredReferrals.map((ref) => {
                   const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
                   return (
                   <Card key={ref.id} className="border-border/30">
