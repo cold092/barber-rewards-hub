@@ -570,16 +570,7 @@ export default function ClientPortal() {
                           <div className="min-w-0">
                             <p className="font-semibold text-sm">{ref.lead_name}</p>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                              <Badge variant="outline" className={cn(
-                                'text-[10px]',
-                                ref.is_client
-                                  ? 'bg-success/10 text-success border-success/30'
-                                  : ref.status === 'contacted'
-                                    ? 'bg-warning/10 text-warning border-warning/30'
-                                    : 'bg-info/10 text-info border-info/30'
-                              )}>
-                                {ref.is_client ? 'Cliente' : ref.status === 'contacted' ? 'Em contato' : 'Lead'}
-                              </Badge>
+                              {referralStatusBadge(ref)}
                               {plan && (
                                 <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/25">
                                   {plan.label}
