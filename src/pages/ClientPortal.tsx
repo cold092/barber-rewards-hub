@@ -249,6 +249,17 @@ export default function ClientPortal() {
     const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
     return sum + REFERRAL_BONUS_POINTS + (plan ? plan.points : 0);
   }, 0);
+  const statusFilterOptions: Array<{ value: ReferralStatusFilter; label: string; count: number }> = [
+    { value: 'all', label: 'Todos', count: myReferrals.length },
+    { value: 'new', label: 'Novos', count: myReferrals.filter((ref) => ref.status === 'new' && !ref.is_client).length },
+    { value: 'contacted', label: 'Em contato', count: myReferrals.filter((ref) => ref.status === 'contacted' && !ref.is_client).length },
+    { value: 'converted', label: 'Convertidos', count: myReferrals.filter((ref) => ref.status === 'converted' || ref.is_client).length },
+  ];
+  const filteredReferrals = myReferrals.filter((ref) => {
+    if (referralStatusFilter === 'all') return true;
+    if (referralStatusFilter === 'converted') return ref.status === 'converted' || ref.is_client;
+    return ref.status === referralStatusFilter && !ref.is_client;
+  });
 
   const statusBadge = (status: string) => {
     switch (status) {
@@ -259,6 +270,17 @@ export default function ClientPortal() {
       default:
         return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-[10px]"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
     }
+  };
+
+  const referralStatusBadge = (ref: ClientReferral) => {
+    const isConverted = ref.is_client || ref.status === 'converted';
+    if (isConverted) {
+      return <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/30">Convertido</Badge>;
+    }
+    if (ref.status === 'contacted') {
+      return <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning border-warning/30">Em contato</Badge>;
+    }
+    return <Badge variant="outline" className="text-[10px] bg-info/10 text-info border-info/30">Novo</Badge>;
   };
 
   return (
