@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Wallet, Gift, Users, LogOut, Trophy, Clock, CheckCircle2,
-  XCircle, Star, UserPlus, Loader2, Phone, User, Plus,
+  XCircle, Star, UserPlus, Loader2, Phone, User, Plus, ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -34,6 +35,8 @@ interface ClientReferral {
   converted_plan_id: string | null;
   created_at: string;
 }
+
+type ReferralStatusFilter = 'all' | 'new' | 'contacted' | 'converted';
 
 interface RewardItem {
   id: string;
@@ -59,6 +62,7 @@ export default function ClientPortal() {
   const [newFriendName, setNewFriendName] = useState('');
   const [newFriendPhone, setNewFriendPhone] = useState('');
   const [submittingReferral, setSubmittingReferral] = useState(false);
+  const [referralStatusFilter, setReferralStatusFilter] = useState<ReferralStatusFilter>('all');
   useEffect(() => {
     if (user) loadData();
   }, [user]);
@@ -245,6 +249,17 @@ export default function ClientPortal() {
     const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
     return sum + REFERRAL_BONUS_POINTS + (plan ? plan.points : 0);
   }, 0);
+  const statusFilterOptions: Array<{ value: ReferralStatusFilter; label: string; count: number }> = [
+    { value: 'all', label: 'Todos', count: myReferrals.length },
+    { value: 'new', label: 'Novos', count: myReferrals.filter((ref) => ref.status === 'new' && !ref.is_client).length },
+    { value: 'contacted', label: 'Em contato', count: myReferrals.filter((ref) => ref.status === 'contacted' && !ref.is_client).length },
+    { value: 'converted', label: 'Convertidos', count: myReferrals.filter((ref) => ref.status === 'converted' || ref.is_client).length },
+  ];
+  const filteredReferrals = myReferrals.filter((ref) => {
+    if (referralStatusFilter === 'all') return true;
+    if (referralStatusFilter === 'converted') return ref.status === 'converted' || ref.is_client;
+    return ref.status === referralStatusFilter && !ref.is_client;
+  });
 
   const statusBadge = (status: string) => {
     switch (status) {
@@ -255,6 +270,17 @@ export default function ClientPortal() {
       default:
         return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-[10px]"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
     }
+  };
+
+  const referralStatusBadge = (ref: ClientReferral) => {
+    const isConverted = ref.is_client || ref.status === 'converted';
+    if (isConverted) {
+      return <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/30">Convertido</Badge>;
+    }
+    if (ref.status === 'contacted') {
+      return <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning border-warning/30">Em contato</Badge>;
+    }
+    return <Badge variant="outline" className="text-[10px] bg-info/10 text-info border-info/30">Novo</Badge>;
   };
 
   return (
@@ -401,6 +427,18 @@ export default function ClientPortal() {
           {/* My Referrals */}
           <TabsContent value="referrals" className="mt-4">
             <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="font-display text-base font-semibold display-gradient">Minhas indicações</h2>
+                      <p className="text-xs text-muted-foreground">Clientes e leads indicados por você</p>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5 text-xs border-primary/30 hover:bg-primary/10">
+                      <Link to="/ranking">
+                        Ranking <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+
               <div className="grid grid-cols-3 gap-2">
                 <Card className="border-border/30 bg-card/60">
                   <CardContent className="p-3 text-center">
@@ -481,14 +519,38 @@ export default function ClientPortal() {
                 </DialogContent>
               </Dialog>
 
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {statusFilterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setReferralStatusFilter(option.value)}
+                      className={cn(
+                        'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                        referralStatusFilter === option.value
+                          ? 'border-primary/40 bg-primary/15 text-primary'
+                          : 'border-border/40 bg-card/60 text-muted-foreground hover:bg-secondary/70 hover:text-foreground'
+                      )}
+                    >
+                      {option.label} <span className="ml-1 text-[10px] opacity-70">{option.count}</span>
+                    </button>
+                  ))}
+                </div>
+
               {myReferrals.length === 0 ? (
                 <div className="text-center py-8">
                   <UserPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">Você ainda não fez nenhuma indicação</p>
                   <p className="text-xs text-muted-foreground mt-1">Indique amigos e ganhe pontos!</p>
                 </div>
+                ) : filteredReferrals.length === 0 ? (
+                  <div className="text-center py-8 rounded-xl border border-border/30 bg-card/40">
+                    <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhuma indicação neste status</p>
+                    <p className="text-xs text-muted-foreground mt-1">Troque o filtro para ver outros registros.</p>
+                  </div>
               ) : (
-                myReferrals.map((ref) => {
+                  filteredReferrals.map((ref) => {
                   const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
                   return (
                   <Card key={ref.id} className="border-border/30">
@@ -508,16 +570,7 @@ export default function ClientPortal() {
                           <div className="min-w-0">
                             <p className="font-semibold text-sm">{ref.lead_name}</p>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                              <Badge variant="outline" className={cn(
-                                'text-[10px]',
-                                ref.is_client
-                                  ? 'bg-success/10 text-success border-success/30'
-                                  : ref.status === 'contacted'
-                                    ? 'bg-warning/10 text-warning border-warning/30'
-                                    : 'bg-info/10 text-info border-info/30'
-                              )}>
-                                {ref.is_client ? 'Cliente' : ref.status === 'contacted' ? 'Em contato' : 'Lead'}
-                              </Badge>
+                              {referralStatusBadge(ref)}
                               {plan && (
                                 <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/25">
                                   {plan.label}
