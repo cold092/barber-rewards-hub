@@ -136,26 +136,9 @@ export default function Auth() {
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
             'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-30 overflow-hidden lg:overflow-visible',
-            mode === 'login' ? 'lg:order-1' : 'lg:order-2'
+            mode === 'login' ? 'lg:order-1 lg:pr-24 xl:pr-28' : 'lg:order-2 lg:pl-24 xl:pl-28'
           )}
         >
-          {/* Organic overlap edge inspired by the reference */}
-          <motion.div
-            aria-hidden
-            className={cn(
-              'hidden lg:block absolute top-[7%] h-[86%] w-40 bg-gradient-to-br from-sidebar via-background to-sidebar pointer-events-none shadow-2xl shadow-background/40 border border-white/10',
-              '[border-radius:48%_52%_50%_50%/22%_42%_58%_78%]',
-              mode === 'login' ? '-right-20' : '-left-20 scale-x-[-1]'
-            )}
-            animate={{ scale: [1, 1.01, 1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <div className="absolute top-12 right-8 h-20 w-20 rounded-full bg-primary/15 blur-sm" />
-            <div className="absolute bottom-20 left-6 h-28 w-28 rounded-full bg-primary/10 blur-md" />
-            <div className="absolute top-1/2 right-6 h-10 w-10 -translate-y-1/2 rounded-full border-[6px] border-primary/25" />
-            <div className="absolute bottom-10 right-12 h-3.5 w-3.5 rounded-full bg-primary/35" />
-          </motion.div>
-
           {/* Decorative blobs */}
           <div
             aria-hidden
@@ -351,7 +334,25 @@ export default function Auth() {
               animate={{ scale: [1, 1.03, 1] }}
               transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
+            <div
+              aria-hidden
+              className={cn(
+                'absolute inset-y-0 w-32 bg-gradient-to-r from-primary/35 via-primary/10 to-transparent pointer-events-none',
+                mode === 'login' ? 'left-0' : 'right-0 rotate-180'
+              )}
+            />
           </div>
+
+          {/* Subtle professional organic edge */}
+          <div
+            aria-hidden
+            className={cn(
+              'absolute top-0 h-full w-32 bg-sidebar pointer-events-none shadow-2xl shadow-background/25',
+              mode === 'login'
+                ? '-left-16 [clip-path:ellipse(60%_48%_at_100%_50%)]'
+                : '-right-16 [clip-path:ellipse(60%_48%_at_0%_50%)]'
+            )}
+          />
 
           {/* Decorative blob bleeding into the form side (no pointer events so inputs stay clickable) */}
           <motion.div
