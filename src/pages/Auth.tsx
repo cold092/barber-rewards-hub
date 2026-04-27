@@ -334,7 +334,25 @@ export default function Auth() {
               animate={{ scale: [1, 1.03, 1] }}
               transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
+            <div
+              aria-hidden
+              className={cn(
+                'absolute inset-y-0 w-32 bg-gradient-to-r from-primary/35 via-primary/10 to-transparent pointer-events-none',
+                mode === 'login' ? 'left-0' : 'right-0 rotate-180'
+              )}
+            />
           </div>
+
+          {/* Subtle professional organic edge */}
+          <div
+            aria-hidden
+            className={cn(
+              'absolute top-0 h-full w-32 bg-sidebar pointer-events-none shadow-2xl shadow-background/25',
+              mode === 'login'
+                ? '-left-16 [clip-path:ellipse(60%_48%_at_100%_50%)]'
+                : '-right-16 [clip-path:ellipse(60%_48%_at_0%_50%)]'
+            )}
+          />
 
           {/* Decorative blob bleeding into the form side (no pointer events so inputs stay clickable) */}
           <motion.div
