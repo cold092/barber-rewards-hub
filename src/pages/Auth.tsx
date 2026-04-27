@@ -136,26 +136,9 @@ export default function Auth() {
           transition={{ type: 'spring', stiffness: 180, damping: 26 }}
           className={cn(
             'relative bg-gradient-to-br from-primary via-primary to-[hsl(var(--primary-glow))] text-primary-foreground p-8 sm:p-10 lg:p-12 flex flex-col z-30 overflow-hidden lg:overflow-visible',
-            mode === 'login' ? 'lg:order-1' : 'lg:order-2'
+            mode === 'login' ? 'lg:order-1 lg:pr-24 xl:pr-28' : 'lg:order-2 lg:pl-24 xl:pl-28'
           )}
         >
-          {/* Organic overlap edge inspired by the reference */}
-          <motion.div
-            aria-hidden
-            className={cn(
-              'hidden lg:block absolute top-[7%] h-[86%] w-40 bg-gradient-to-br from-sidebar via-background to-sidebar pointer-events-none shadow-2xl shadow-background/40 border border-white/10',
-              '[border-radius:48%_52%_50%_50%/22%_42%_58%_78%]',
-              mode === 'login' ? '-right-20' : '-left-20 scale-x-[-1]'
-            )}
-            animate={{ scale: [1, 1.01, 1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <div className="absolute top-12 right-8 h-20 w-20 rounded-full bg-primary/15 blur-sm" />
-            <div className="absolute bottom-20 left-6 h-28 w-28 rounded-full bg-primary/10 blur-md" />
-            <div className="absolute top-1/2 right-6 h-10 w-10 -translate-y-1/2 rounded-full border-[6px] border-primary/25" />
-            <div className="absolute bottom-10 right-12 h-3.5 w-3.5 rounded-full bg-primary/35" />
-          </motion.div>
-
           {/* Decorative blobs */}
           <div
             aria-hidden
