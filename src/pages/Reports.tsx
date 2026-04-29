@@ -30,6 +30,10 @@ type RevenueMonth = 'current' | 'previous' | 'last3' | 'all';
 
 const isClientReferral = (referral: Referral) => referral.is_client || referral.status === 'converted';
 
+const getConversionEventDate = (referral: Referral) => {
+  return referral.status === 'converted' && referral.client_since ? referral.client_since : null;
+};
+
 const isWithinDateRange = (dateString: string, from: Date | undefined, to: Date | undefined) => {
   if (!from && !to) return true;
   const date = new Date(dateString);
@@ -201,12 +205,18 @@ export default function Reports() {
   const monthlyRevenueReferrals = useMemo(() => {
     const range = getRevenueMonthRange(revenueMonth);
     return referrals.filter((referral) => {
+      const conversionDate = getConversionEventDate(referral);
       if (reportBarber !== 'all' && referral.referrer_id !== reportBarber) return false;
+      if (globalStatuses.length > 0 && !globalStatuses.includes(referral.status)) return false;
+      if (globalTags.length > 0 && !(referral.tags || []).some(t => globalTags.includes(t))) return false;
+      if (globalCollaborator && referral.referrer_id !== globalCollaborator) return false;
+      if (selectedTags.length > 0 && !selectedTags.some(tag => referral.tags?.includes(tag))) return false;
       return referral.status === 'converted'
         && !!referral.converted_plan_id
-        && isWithinDateRange(referral.client_since || referral.updated_at || referral.created_at, range.from, range.to);
+        && !!conversionDate
+        && isWithinDateRange(conversionDate, range.from, range.to);
     });
-  }, [referrals, reportBarber, revenueMonth]);
+  }, [referrals, reportBarber, revenueMonth, selectedTags, globalStatuses, globalTags, globalCollaborator]);
 
   const monthlyRevenueTotal = useMemo(() => monthlyRevenueReferrals.reduce((sum, referral) => {
     const plan = getPlanById(referral.converted_plan_id || '');
