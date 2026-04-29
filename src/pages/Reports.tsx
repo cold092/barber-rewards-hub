@@ -198,6 +198,21 @@ export default function Reports() {
       .sort((a, b) => b.revenue - a.revenue);
   }, [barbers, filteredReferrals]);
 
+  const monthlyRevenueReferrals = useMemo(() => {
+    const range = getRevenueMonthRange(revenueMonth);
+    return referrals.filter((referral) => {
+      if (reportBarber !== 'all' && referral.referrer_id !== reportBarber) return false;
+      return referral.status === 'converted'
+        && !!referral.converted_plan_id
+        && isWithinDateRange(referral.client_since || referral.updated_at || referral.created_at, range.from, range.to);
+    });
+  }, [referrals, reportBarber, revenueMonth]);
+
+  const monthlyRevenueTotal = useMemo(() => monthlyRevenueReferrals.reduce((sum, referral) => {
+    const plan = getPlanById(referral.converted_plan_id || '');
+    return sum + (plan?.price || 0);
+  }, 0), [monthlyRevenueReferrals]);
+
   // Performance by collaborator: espelha "Receita por Colaborador"
   // → usa referrer_id (indicador) e conta convertidos por status='converted'.
   const collaboratorPerformance = useMemo(() => {
