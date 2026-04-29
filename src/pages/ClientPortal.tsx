@@ -15,6 +15,7 @@ import {
 import {
   Wallet, Gift, Users, LogOut, Trophy, Clock, CheckCircle2,
   XCircle, Star, UserPlus, Loader2, Phone, User, Plus, ArrowRight,
+  ShieldCheck, CalendarDays,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -24,6 +25,7 @@ import { registerLeadByLead } from '@/services/referralService';
 import { isValidPhone } from '@/utils/whatsapp';
 import { REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { createClientRedemption, type Redemption } from '@/services/redemptionService';
+import { getMilestoneProgress, getPointsValidity } from '@/lib/clientMilestones';
 
 interface ClientReferral {
   id: string;
@@ -245,6 +247,11 @@ export default function ClientPortal() {
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
   const historyRedemptions = redemptions.filter(r => r.status !== 'pending');
   const convertedReferrals = myReferrals.filter((ref) => ref.is_client || ref.status === 'converted').length;
+  const milestoneProgress = getMilestoneProgress(convertedReferrals);
+  const firstPointDate = myReferrals.length > 0
+    ? [...myReferrals].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0]?.created_at
+    : balance > 0 ? referral.created_at : null;
+  const pointsValidity = getPointsValidity(firstPointDate);
   const referralPointsGenerated = myReferrals.reduce((sum, ref) => {
     const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
     return sum + REFERRAL_BONUS_POINTS + (plan ? plan.points : 0);
