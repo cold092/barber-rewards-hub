@@ -478,6 +478,26 @@ export default function Reports() {
                 </div>
               </div>
             )}
+            <div className="mt-3 pt-3 border-t border-border/20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-3.5 w-3.5 text-success" />
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Faturamento por convertidos</p>
+                  <p className="text-sm font-bold text-success">{formatCurrencyBRL(monthlyRevenueTotal)} · {monthlyRevenueReferrals.length} conversões</p>
+                </div>
+              </div>
+              <Select value={revenueMonth} onValueChange={(v) => setRevenueMonth(v as RevenueMonth)}>
+                <SelectTrigger className="h-9 text-sm bg-secondary/30 border-border/30 sm:w-[180px]">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current">Mês atual</SelectItem>
+                  <SelectItem value="previous">Mês anterior</SelectItem>
+                  <SelectItem value="last3">Últimos 3 meses</SelectItem>
+                  <SelectItem value="all">Todo período</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </motion.div>
 
