@@ -15,6 +15,7 @@ import {
 import {
   Wallet, Gift, Users, LogOut, Trophy, Clock, CheckCircle2,
   XCircle, Star, UserPlus, Loader2, Phone, User, Plus, ArrowRight,
+  ShieldCheck, CalendarDays,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -24,6 +25,7 @@ import { registerLeadByLead } from '@/services/referralService';
 import { isValidPhone } from '@/utils/whatsapp';
 import { REFERRAL_BONUS_POINTS } from '@/config/plans';
 import { createClientRedemption, type Redemption } from '@/services/redemptionService';
+import { getMilestoneProgress, getPointsValidity } from '@/lib/clientMilestones';
 
 interface ClientReferral {
   id: string;
@@ -245,6 +247,11 @@ export default function ClientPortal() {
   const pendingRedemptions = redemptions.filter(r => r.status === 'pending');
   const historyRedemptions = redemptions.filter(r => r.status !== 'pending');
   const convertedReferrals = myReferrals.filter((ref) => ref.is_client || ref.status === 'converted').length;
+  const milestoneProgress = getMilestoneProgress(convertedReferrals);
+  const firstPointDate = myReferrals.length > 0
+    ? [...myReferrals].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0]?.created_at
+    : balance > 0 ? referral.created_at : null;
+  const pointsValidity = getPointsValidity(firstPointDate);
   const referralPointsGenerated = myReferrals.reduce((sum, ref) => {
     const plan = ref.converted_plan_id ? getPlanById(ref.converted_plan_id) : null;
     return sum + REFERRAL_BONUS_POINTS + (plan ? plan.points : 0);
@@ -329,6 +336,50 @@ export default function ClientPortal() {
             </CardContent>
           </Card>
         </motion.div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Card className="border-border/30 bg-card/70">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Patente</p>
+                    <p className="font-display text-base font-semibold">{milestoneProgress.current.label}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className={cn('text-[10px]', milestoneProgress.current.className)}>
+                  {convertedReferrals} convertidos
+                </Badge>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${milestoneProgress.percentage}%` }} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {milestoneProgress.next
+                  ? `${milestoneProgress.remaining} conversão(ões) para ${milestoneProgress.next.label}`
+                  : 'Patente máxima alcançada'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/30 bg-card/70">
+            <CardContent className="p-4 flex items-center gap-3 h-full">
+              <div className="p-2 rounded-lg bg-warning/10">
+                <CalendarDays className="h-4 w-4 text-warning" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Validade dos pontos</p>
+                <p className="font-semibold text-sm">{pointsValidity.label}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Contagem iniciada no primeiro ponto; campanhas podem ter regras próprias.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Tabs */}
         <Tabs defaultValue="rewards" className="w-full">
@@ -459,6 +510,18 @@ export default function ClientPortal() {
                   </CardContent>
                 </Card>
               </div>
+
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="p-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Milestone atual</p>
+                    <p className="text-sm font-semibold">{milestoneProgress.current.label}</p>
+                  </div>
+                  <Badge variant="outline" className={cn('text-[10px]', milestoneProgress.current.className)}>
+                    {milestoneProgress.next ? `${milestoneProgress.remaining} até ${milestoneProgress.next.label}` : 'Máximo'}
+                  </Badge>
+                </CardContent>
+              </Card>
 
               {/* Refer Friend Button */}
               <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>

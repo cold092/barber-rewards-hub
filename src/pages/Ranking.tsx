@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Crown, ChevronDown, UserPlus, ArrowRightLeft, Star, Gift, Wallet, Users, CheckCircle } from 'lucide-react';
+import { Trophy, Medal, Crown, ChevronDown, UserPlus, ArrowRightLeft, Star, Gift, Wallet, Users, CheckCircle, ShieldCheck } from 'lucide-react';
 import { getClientReferralRanking, getRanking, type ClientRankingEntry } from '@/services/referralService';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { getPlanById } from '@/config/plans';
 import type { Profile, Referral } from '@/types/database';
+import { getMilestoneProgress } from '@/lib/clientMilestones';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -38,6 +40,7 @@ export default function Ranking() {
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const [clientBreakdowns, setClientBreakdowns] = useState<Record<string, PointBreakdownItem[]>>({});
   const [loadingClientBreakdown, setLoadingClientBreakdown] = useState<string | null>(null);
+  const [clientConversionCounts, setClientConversionCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function loadRankings() {
@@ -48,6 +51,17 @@ export default function Ranking() {
       ]);
       setBarberRanking(barbersResult.data);
       setClientRanking(clientsResult.data);
+      if (clientsResult.data.length > 0) {
+        const counts = await Promise.all(clientsResult.data.map(async (entry) => {
+          const { count } = await supabase
+            .from('referrals')
+            .select('id', { count: 'exact', head: true })
+            .eq('referred_by_lead_id', entry.clientId)
+            .or('is_client.eq.true,status.eq.converted');
+          return [entry.clientId, count || 0] as const;
+        }));
+        setClientConversionCounts(Object.fromEntries(counts));
+      }
       setLoading(false);
     }
     loadRankings();
@@ -388,7 +402,10 @@ export default function Ranking() {
       {data.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">Nenhum cliente no ranking ainda</p>
       ) : (
-        data.map((entry, index) => (
+        data.map((entry, index) => {
+          const conversions = clientConversionCounts[entry.clientId] || 0;
+          const milestone = getMilestoneProgress(conversions).current;
+          return (
           <div
             key={entry.clientId}
             className={cn(
@@ -420,6 +437,9 @@ export default function Ranking() {
                       <Wallet className="h-3 w-3" />
                       {entry.points} pts resgatáveis
                     </p>
+                    <Badge variant="outline" className={cn('text-[10px] hidden sm:inline-flex', milestone.className)}>
+                      <ShieldCheck className="h-3 w-3 mr-1" />{milestone.label}
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -446,7 +466,8 @@ export default function Ranking() {
               )}
             </AnimatePresence>
           </div>
-        ))
+          );
+        })
       )}
     </div>
   );

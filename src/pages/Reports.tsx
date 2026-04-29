@@ -26,6 +26,7 @@ import { ptBR } from 'date-fns/locale';
 
 type ReportType = 'all' | 'leads' | 'clients' | 'converted';
 type ReportBarber = 'all' | string;
+type RevenueMonth = 'current' | 'previous' | 'last3' | 'all';
 
 const isClientReferral = (referral: Referral) => referral.is_client || referral.status === 'converted';
 
@@ -65,7 +66,19 @@ export default function Reports() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [reportBarber, setReportBarber] = useState<ReportBarber>('all');
+  const [revenueMonth, setRevenueMonth] = useState<RevenueMonth>('current');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const getRevenueMonthRange = (value: RevenueMonth) => {
+    const now = new Date();
+    if (value === 'all') return { from: undefined, to: undefined };
+    if (value === 'previous') {
+      const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return { from: previousMonth, to: new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0) };
+    }
+    if (value === 'last3') return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: now };
+    return { from: startOfMonth(now), to: now };
+  };
 
   const applyPreset = (preset: '7d' | '30d' | 'month' | 'all') => {
     const now = new Date();
@@ -184,6 +197,21 @@ export default function Reports() {
       .filter(b => b.total > 0)
       .sort((a, b) => b.revenue - a.revenue);
   }, [barbers, filteredReferrals]);
+
+  const monthlyRevenueReferrals = useMemo(() => {
+    const range = getRevenueMonthRange(revenueMonth);
+    return referrals.filter((referral) => {
+      if (reportBarber !== 'all' && referral.referrer_id !== reportBarber) return false;
+      return referral.status === 'converted'
+        && !!referral.converted_plan_id
+        && isWithinDateRange(referral.client_since || referral.updated_at || referral.created_at, range.from, range.to);
+    });
+  }, [referrals, reportBarber, revenueMonth]);
+
+  const monthlyRevenueTotal = useMemo(() => monthlyRevenueReferrals.reduce((sum, referral) => {
+    const plan = getPlanById(referral.converted_plan_id || '');
+    return sum + (plan?.price || 0);
+  }, 0), [monthlyRevenueReferrals]);
 
   // Performance by collaborator: espelha "Receita por Colaborador"
   // → usa referrer_id (indicador) e conta convertidos por status='converted'.
@@ -450,6 +478,26 @@ export default function Reports() {
                 </div>
               </div>
             )}
+            <div className="mt-3 pt-3 border-t border-border/20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-3.5 w-3.5 text-success" />
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Faturamento por convertidos</p>
+                  <p className="text-sm font-bold text-success">{formatCurrencyBRL(monthlyRevenueTotal)} · {monthlyRevenueReferrals.length} conversões</p>
+                </div>
+              </div>
+              <Select value={revenueMonth} onValueChange={(v) => setRevenueMonth(v as RevenueMonth)}>
+                <SelectTrigger className="h-9 text-sm bg-secondary/30 border-border/30 sm:w-[180px]">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current">Mês atual</SelectItem>
+                  <SelectItem value="previous">Mês anterior</SelectItem>
+                  <SelectItem value="last3">Últimos 3 meses</SelectItem>
+                  <SelectItem value="all">Todo período</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </motion.div>
 
