@@ -34,6 +34,10 @@ const getConversionEventDate = (referral: Referral) => {
   return referral.status === 'converted' && referral.client_since ? referral.client_since : null;
 };
 
+const getReportEventDate = (referral: Referral) => {
+  return getConversionEventDate(referral) ?? referral.created_at;
+};
+
 const isWithinDateRange = (dateString: string, from: Date | undefined, to: Date | undefined) => {
   if (!from && !to) return true;
   const date = new Date(dateString);
@@ -120,7 +124,10 @@ export default function Reports() {
   }, [isAdmin]);
 
   const filteredReferrals = useMemo(() => {
-    let filtered = referrals.filter((referral) => isWithinDateRange(referral.created_at, dateFrom, dateTo));
+    let filtered = referrals.filter((referral) => {
+      if ((dateFrom || dateTo) && referral.status === 'converted' && !getConversionEventDate(referral)) return false;
+      return isWithinDateRange(getReportEventDate(referral), dateFrom, dateTo);
+    });
     // Apply global filters
     if (globalStatuses.length > 0) {
       filtered = filtered.filter(r => globalStatuses.includes(r.status));
