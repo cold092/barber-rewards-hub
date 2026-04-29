@@ -26,6 +26,7 @@ import { ptBR } from 'date-fns/locale';
 
 type ReportType = 'all' | 'leads' | 'clients' | 'converted';
 type ReportBarber = 'all' | string;
+type RevenueMonth = 'current' | 'previous' | 'last3' | 'all';
 
 const isClientReferral = (referral: Referral) => referral.is_client || referral.status === 'converted';
 
@@ -65,7 +66,19 @@ export default function Reports() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [reportBarber, setReportBarber] = useState<ReportBarber>('all');
+  const [revenueMonth, setRevenueMonth] = useState<RevenueMonth>('current');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const getRevenueMonthRange = (value: RevenueMonth) => {
+    const now = new Date();
+    if (value === 'all') return { from: undefined, to: undefined };
+    if (value === 'previous') {
+      const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return { from: previousMonth, to: new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0) };
+    }
+    if (value === 'last3') return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to: now };
+    return { from: startOfMonth(now), to: now };
+  };
 
   const applyPreset = (preset: '7d' | '30d' | 'month' | 'all') => {
     const now = new Date();
