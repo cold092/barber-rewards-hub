@@ -511,6 +511,18 @@ export default function ClientPortal() {
                 </Card>
               </div>
 
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="p-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Milestone atual</p>
+                    <p className="text-sm font-semibold">{milestoneProgress.current.label}</p>
+                  </div>
+                  <Badge variant="outline" className={cn('text-[10px]', milestoneProgress.current.className)}>
+                    {milestoneProgress.next ? `${milestoneProgress.remaining} até ${milestoneProgress.next.label}` : 'Máximo'}
+                  </Badge>
+                </CardContent>
+              </Card>
+
               {/* Refer Friend Button */}
               <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>
                 <DialogTrigger asChild>
