@@ -337,6 +337,50 @@ export default function ClientPortal() {
           </Card>
         </motion.div>
 
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Card className="border-border/30 bg-card/70">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Patente</p>
+                    <p className="font-display text-base font-semibold">{milestoneProgress.current.label}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className={cn('text-[10px]', milestoneProgress.current.className)}>
+                  {convertedReferrals} convertidos
+                </Badge>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${milestoneProgress.percentage}%` }} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {milestoneProgress.next
+                  ? `${milestoneProgress.remaining} conversão(ões) para ${milestoneProgress.next.label}`
+                  : 'Patente máxima alcançada'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/30 bg-card/70">
+            <CardContent className="p-4 flex items-center gap-3 h-full">
+              <div className="p-2 rounded-lg bg-warning/10">
+                <CalendarDays className="h-4 w-4 text-warning" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Validade dos pontos</p>
+                <p className="font-semibold text-sm">{pointsValidity.label}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Contagem iniciada no primeiro ponto; campanhas podem ter regras próprias.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Tabs */}
         <Tabs defaultValue="rewards" className="w-full">
           <TabsList className="grid w-full grid-cols-3 h-auto p-1 gap-1">
