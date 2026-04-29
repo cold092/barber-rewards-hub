@@ -401,7 +401,10 @@ export default function Ranking() {
       {data.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">Nenhum cliente no ranking ainda</p>
       ) : (
-        data.map((entry, index) => (
+        data.map((entry, index) => {
+          const conversions = clientConversionCounts[entry.clientId] || 0;
+          const milestone = getMilestoneProgress(conversions).current;
+          return (
           <div
             key={entry.clientId}
             className={cn(
@@ -433,6 +436,9 @@ export default function Ranking() {
                       <Wallet className="h-3 w-3" />
                       {entry.points} pts resgatáveis
                     </p>
+                    <Badge variant="outline" className={cn('text-[10px] hidden sm:inline-flex', milestone.className)}>
+                      <ShieldCheck className="h-3 w-3 mr-1" />{milestone.label}
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -459,7 +465,8 @@ export default function Ranking() {
               )}
             </AnimatePresence>
           </div>
-        ))
+          );
+        })
       )}
     </div>
   );
