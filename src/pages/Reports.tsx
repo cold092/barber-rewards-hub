@@ -19,6 +19,7 @@ import type { Referral } from '@/types/database';
 import type { Profile } from '@/types/database';
 import ConversionTrendChart from '@/components/dashboard/ConversionTrendChart';
 import BarberPerformanceChart from '@/components/dashboard/BarberPerformanceChart';
+import MonthlyRevenueChart from '@/components/dashboard/MonthlyRevenueChart';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, startOfMonth, subDays } from 'date-fns';
