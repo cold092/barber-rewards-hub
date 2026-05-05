@@ -589,6 +589,22 @@ export default function Reports() {
           <ConversionTrendChart referrals={filteredReferrals} range={trendRange} />
         </motion.div>
 
+        {/* Monthly Revenue with excluded conversions highlight */}
+        <motion.div variants={fadeUp}>
+          {(() => {
+            const range = getRevenueMonthRange(revenueMonth);
+            const scoped = referrals.filter((r) => {
+              if (reportBarber !== 'all' && r.referrer_id !== reportBarber) return false;
+              if (globalStatuses.length > 0 && !globalStatuses.includes(r.status)) return false;
+              if (globalTags.length > 0 && !(r.tags || []).some(t => globalTags.includes(t))) return false;
+              if (globalCollaborator && r.referrer_id !== globalCollaborator) return false;
+              if (selectedTags.length > 0 && !selectedTags.some(tag => r.tags?.includes(tag))) return false;
+              return true;
+            });
+            return <MonthlyRevenueChart referrals={scoped} from={range.from} to={range.to} />;
+          })()}
+        </motion.div>
+
         <motion.div variants={fadeUp}>
           <BarberPerformanceChart referrals={referrals} barbers={barbers} />
         </motion.div>
