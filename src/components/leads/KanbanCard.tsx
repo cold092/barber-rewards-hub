@@ -51,25 +51,24 @@ export function KanbanCard({
     <div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       onClick={() => onOpenDetails(referral)}
       className={cn(
-        "group relative px-2.5 py-2 rounded-md bg-card border border-border/60",
+        "group relative px-2.5 py-2 rounded-md bg-card border border-border/60 touch-manipulation select-none",
         "hover:border-primary/50 hover:shadow-sm hover:-translate-y-px transition-all cursor-pointer",
         isDragging && "opacity-50 shadow-md ring-2 ring-primary",
         isOverdue && "border-l-2 border-l-destructive",
         isDueToday && "border-l-2 border-l-warning"
       )}
     >
-      {/* Drag handle — left edge, appears on hover */}
-      <button
-        {...attributes}
-        {...listeners}
-        onClick={(e) => e.stopPropagation()}
-        className="absolute left-0 top-0 bottom-0 w-3 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-        aria-label="Arrastar"
+      {/* Drag handle — visual affordance for desktop, hidden on touch */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-3 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity pointer-events-none"
+        aria-hidden
       >
         <GripVertical className="h-3 w-3 text-muted-foreground" />
-      </button>
+      </div>
 
       {/* Row 1: name + quick actions */}
       <div className="flex items-center justify-between gap-1.5">
