@@ -19,6 +19,7 @@ import type { Referral } from '@/types/database';
 import type { Profile } from '@/types/database';
 import ConversionTrendChart from '@/components/dashboard/ConversionTrendChart';
 import BarberPerformanceChart from '@/components/dashboard/BarberPerformanceChart';
+import MonthlyRevenueChart from '@/components/dashboard/MonthlyRevenueChart';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, startOfMonth, subDays } from 'date-fns';
@@ -586,6 +587,22 @@ export default function Reports() {
 
         <motion.div variants={fadeUp}>
           <ConversionTrendChart referrals={filteredReferrals} range={trendRange} />
+        </motion.div>
+
+        {/* Monthly Revenue with excluded conversions highlight */}
+        <motion.div variants={fadeUp}>
+          {(() => {
+            const range = getRevenueMonthRange(revenueMonth);
+            const scoped = referrals.filter((r) => {
+              if (reportBarber !== 'all' && r.referrer_id !== reportBarber) return false;
+              if (globalStatuses.length > 0 && !globalStatuses.includes(r.status)) return false;
+              if (globalTags.length > 0 && !(r.tags || []).some(t => globalTags.includes(t))) return false;
+              if (globalCollaborator && r.referrer_id !== globalCollaborator) return false;
+              if (selectedTags.length > 0 && !selectedTags.some(tag => r.tags?.includes(tag))) return false;
+              return true;
+            });
+            return <MonthlyRevenueChart referrals={scoped} from={range.from} to={range.to} />;
+          })()}
         </motion.div>
 
         <motion.div variants={fadeUp}>
