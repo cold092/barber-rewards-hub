@@ -113,7 +113,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar/90 backdrop-blur-xl border-b border-sidebar-border/50 px-4 py-3">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar/90 backdrop-blur-xl border-b border-sidebar-border/50 px-4 py-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Logo size={32} glow />
@@ -450,9 +450,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <main 
         className={cn(
-          "pt-16 lg:pt-0 min-h-screen transition-all duration-300",
+          "pt-[calc(env(safe-area-inset-top)+56px)] lg:pt-0 min-h-screen transition-all duration-300",
           collapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"
         )}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {isViewingAs && (
           <div className="sticky top-0 lg:top-0 z-20 bg-amber-500/15 border-b border-amber-500/25 px-4 py-2 flex items-center justify-between backdrop-blur-sm">
