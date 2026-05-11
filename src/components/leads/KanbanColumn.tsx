@@ -49,6 +49,7 @@ export function KanbanColumn({
       ref={setNodeRef}
       className={cn(
         "flex flex-col h-full min-h-[400px] rounded-xl transition-all duration-200 border",
+        "shrink-0 w-[85vw] max-w-[320px] snap-start md:w-auto md:max-w-none md:snap-align-none",
         isOver ? "border-primary/30 shadow-[0_0_24px_hsl(262_83%_68%/0.15)]" : "border-border/60",
         isColumnDropTarget && "ring-2 ring-primary/40"
       )}
