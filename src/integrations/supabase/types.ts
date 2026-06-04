@@ -231,7 +231,6 @@ export type Database = {
           lifetime_points: number
           name: string
           organization_id: string | null
-          phone: string | null
           updated_at: string
           user_id: string
           wallet_balance: number
@@ -242,7 +241,6 @@ export type Database = {
           lifetime_points?: number
           name?: string
           organization_id?: string | null
-          phone?: string | null
           updated_at?: string
           user_id: string
           wallet_balance?: number
@@ -253,7 +251,6 @@ export type Database = {
           lifetime_points?: number
           name?: string
           organization_id?: string | null
-          phone?: string | null
           updated_at?: string
           user_id?: string
           wallet_balance?: number

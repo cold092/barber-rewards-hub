@@ -6,7 +6,7 @@ export interface Profile {
   id: string;
   user_id: string | null;
   name: string;
-  phone: string | null;
+  
   organization_id: string | null;
   wallet_balance: number;
   lifetime_points: number;
