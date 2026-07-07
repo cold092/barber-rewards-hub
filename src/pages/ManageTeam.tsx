@@ -315,8 +315,17 @@ export default function ManageTeam() {
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-primary font-semibold tabular-nums">{member.profile.lifetime_points} pts</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-primary font-semibold tabular-nums mr-1">{member.profile.lifetime_points} pts</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-muted-foreground/50 hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => openCredsDialog(member)}
+                            title="Alterar email/senha"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                          </Button>
                           {member.role !== 'admin' && member.role !== 'owner' && (
                             <Button
                               variant="ghost"
