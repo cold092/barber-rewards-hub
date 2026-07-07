@@ -139,6 +139,57 @@ export default function ManageTeam() {
     setMemberToDelete(null);
   };
 
+  const openCredsDialog = (member: TeamMember) => {
+    setMemberToEdit(member);
+    setEditEmail('');
+    setEditPassword('');
+    setCredsDialogOpen(true);
+  };
+
+  const handleSaveCredentials = async () => {
+    if (!memberToEdit) return;
+    const emailVal = editEmail.trim();
+    const passVal = editPassword;
+    if (!emailVal && !passVal) {
+      toast.error('Informe email ou senha para atualizar');
+      return;
+    }
+    if (emailVal && !/^\S+@\S+\.\S+$/.test(emailVal)) {
+      toast.error('Email inválido');
+      return;
+    }
+    if (passVal && passVal.length < 8) {
+      toast.error('A senha precisa ter ao menos 8 caracteres');
+      return;
+    }
+    setSavingCreds(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('update-team-member-credentials', {
+        body: {
+          member_user_id: memberToEdit.profile.user_id,
+          email: emailVal || undefined,
+          password: passVal || undefined,
+        },
+      });
+      if (error) {
+        toast.error('Erro ao atualizar credenciais');
+      } else if (data?.error) {
+        toast.error(data.error);
+      } else {
+        toast.success('Credenciais atualizadas com sucesso');
+        setCredsDialogOpen(false);
+        setMemberToEdit(null);
+        setEditEmail('');
+        setEditPassword('');
+      }
+    } catch (err: any) {
+      console.error('Error updating credentials:', err);
+      toast.error(err.message || 'Erro ao atualizar credenciais');
+    }
+    setSavingCreds(false);
+  };
+
+
   if (!authLoading && !isAdmin) return <Navigate to="/" replace />;
 
   const getRoleLabel = (role: AppRole) => {
