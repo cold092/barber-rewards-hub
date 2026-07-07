@@ -68,6 +68,11 @@ export default function ManageTeam() {
   const [selectedRole, setSelectedRole] = useState<'admin' | 'barber'>('barber');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
+  const [credsDialogOpen, setCredsDialogOpen] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [savingCreds, setSavingCreds] = useState(false);
 
   useEffect(() => { loadTeamMembers(); }, []);
 
