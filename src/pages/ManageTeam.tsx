@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Mail, Lock, User, Users, Trash2, Shield, Briefcase, Crown, Sparkles } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Users, Trash2, Shield, Briefcase, Crown, Sparkles, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
