@@ -385,6 +385,62 @@ export default function ManageTeam() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </AlertDialog>
+
+      <Dialog open={credsDialogOpen} onOpenChange={setCredsDialogOpen}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-primary" />
+              Alterar credenciais
+            </DialogTitle>
+            <DialogDescription>
+              {memberToEdit
+                ? `Atualize o email e/ou a senha de ${memberToEdit.profile.name}. Deixe em branco o que não quiser mudar.`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className={labelClass}><Mail className="h-3 w-3" /> Novo email</Label>
+              <Input
+                type="email"
+                placeholder="novo@email.com"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className={inputClass}
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className={labelClass}><Lock className="h-3 w-3" /> Nova senha</Label>
+              <Input
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                className={inputClass}
+                autoComplete="new-password"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+              A alteração é imediata. Informe as novas credenciais ao membro após salvar.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCredsDialogOpen(false)} disabled={savingCreds} className="rounded-lg">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveCredentials}
+              disabled={savingCreds || (!editEmail.trim() && !editPassword)}
+              className="rounded-lg lavender-gradient text-primary-foreground"
+            >
+              {savingCreds ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
