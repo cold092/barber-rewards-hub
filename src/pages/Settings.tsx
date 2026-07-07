@@ -26,6 +26,7 @@ import {
   Bell,
   Palette,
   Building2,
+  UserCog,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
@@ -40,6 +41,7 @@ import { SystemTab } from '@/components/settings/SystemTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { AppearanceTab } from '@/components/settings/AppearanceTab';
 import { GeneralTab } from '@/components/settings/GeneralTab';
+import { AccountTab } from '@/components/settings/AccountTab';
 
 const LEAD_MESSAGE_STORAGE_KEY = 'leadMessageTemplate';
 const CLIENT_MESSAGE_STORAGE_KEY = 'clientMessageTemplate';
@@ -229,6 +231,11 @@ export default function SettingsPage() {
               <span className="hidden sm:inline">Geral</span>
               <span className="sm:hidden">Geral</span>
             </TabsTrigger>
+            <TabsTrigger value="account" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
+              <UserCog className="h-4 w-4" />
+              <span className="hidden sm:inline">Conta</span>
+              <span className="sm:hidden">Conta</span>
+            </TabsTrigger>
             <TabsTrigger value="appearance" className="gap-2 text-xs sm:text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary rounded-lg px-4 py-2.5 transition-all">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Aparência</span>
@@ -265,6 +272,11 @@ export default function SettingsPage() {
           {/* ===== GENERAL ===== */}
           <TabsContent value="general" className="mt-6">
             <GeneralTab />
+          </TabsContent>
+
+          {/* ===== ACCOUNT ===== */}
+          <TabsContent value="account" className="mt-6">
+            <AccountTab />
           </TabsContent>
 
           {/* ===== APPEARANCE ===== */}
