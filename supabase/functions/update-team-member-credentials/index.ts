@@ -135,6 +135,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Revoke all active sessions/refresh tokens for the target user so they get
+    // kicked out on the next request (access-token JWT still valid until expiry,
+    // usually <1h — but no new refresh will succeed).
+    try {
+      await adminClient.auth.admin.signOut(member_user_id, 'global');
+    } catch (signOutError) {
+      console.warn('signOut failed (non-fatal):', signOutError);
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
