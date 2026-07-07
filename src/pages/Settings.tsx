@@ -26,6 +26,7 @@ import {
   Bell,
   Palette,
   Building2,
+  UserCog,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTagConfig } from '@/contexts/TagConfigContext';
