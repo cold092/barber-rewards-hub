@@ -385,7 +385,6 @@ export default function ManageTeam() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      </AlertDialog>
 
       <Dialog open={credsDialogOpen} onOpenChange={setCredsDialogOpen}>
         <DialogContent className="glass-card">
