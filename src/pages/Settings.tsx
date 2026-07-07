@@ -274,6 +274,11 @@ export default function SettingsPage() {
             <GeneralTab />
           </TabsContent>
 
+          {/* ===== ACCOUNT ===== */}
+          <TabsContent value="account" className="mt-6">
+            <AccountTab />
+          </TabsContent>
+
           {/* ===== APPEARANCE ===== */}
           <TabsContent value="appearance" className="mt-6">
             <AppearanceTab />
