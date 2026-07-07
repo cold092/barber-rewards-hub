@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Mail, Lock, User, Users, Trash2, Shield, Briefcase, Crown, Sparkles } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Users, Trash2, Shield, Briefcase, Crown, Sparkles, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +26,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const newUserSchema = z.object({
   name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
@@ -60,6 +68,11 @@ export default function ManageTeam() {
   const [selectedRole, setSelectedRole] = useState<'admin' | 'barber'>('barber');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
+  const [credsDialogOpen, setCredsDialogOpen] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [savingCreds, setSavingCreds] = useState(false);
 
   useEffect(() => { loadTeamMembers(); }, []);
 
@@ -125,6 +138,57 @@ export default function ManageTeam() {
     setDeleteDialogOpen(false);
     setMemberToDelete(null);
   };
+
+  const openCredsDialog = (member: TeamMember) => {
+    setMemberToEdit(member);
+    setEditEmail('');
+    setEditPassword('');
+    setCredsDialogOpen(true);
+  };
+
+  const handleSaveCredentials = async () => {
+    if (!memberToEdit) return;
+    const emailVal = editEmail.trim();
+    const passVal = editPassword;
+    if (!emailVal && !passVal) {
+      toast.error('Informe email ou senha para atualizar');
+      return;
+    }
+    if (emailVal && !/^\S+@\S+\.\S+$/.test(emailVal)) {
+      toast.error('Email inválido');
+      return;
+    }
+    if (passVal && passVal.length < 8) {
+      toast.error('A senha precisa ter ao menos 8 caracteres');
+      return;
+    }
+    setSavingCreds(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('update-team-member-credentials', {
+        body: {
+          member_user_id: memberToEdit.profile.user_id,
+          email: emailVal || undefined,
+          password: passVal || undefined,
+        },
+      });
+      if (error) {
+        toast.error('Erro ao atualizar credenciais');
+      } else if (data?.error) {
+        toast.error(data.error);
+      } else {
+        toast.success('Credenciais atualizadas com sucesso');
+        setCredsDialogOpen(false);
+        setMemberToEdit(null);
+        setEditEmail('');
+        setEditPassword('');
+      }
+    } catch (err: any) {
+      console.error('Error updating credentials:', err);
+      toast.error(err.message || 'Erro ao atualizar credenciais');
+    }
+    setSavingCreds(false);
+  };
+
 
   if (!authLoading && !isAdmin) return <Navigate to="/" replace />;
 
@@ -251,8 +315,17 @@ export default function ManageTeam() {
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-primary font-semibold tabular-nums">{member.profile.lifetime_points} pts</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-primary font-semibold tabular-nums mr-1">{member.profile.lifetime_points} pts</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-muted-foreground/50 hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => openCredsDialog(member)}
+                            title="Alterar email/senha"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                          </Button>
                           {member.role !== 'admin' && member.role !== 'owner' && (
                             <Button
                               variant="ghost"
@@ -312,6 +385,61 @@ export default function ManageTeam() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={credsDialogOpen} onOpenChange={setCredsDialogOpen}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-primary" />
+              Alterar credenciais
+            </DialogTitle>
+            <DialogDescription>
+              {memberToEdit
+                ? `Atualize o email e/ou a senha de ${memberToEdit.profile.name}. Deixe em branco o que não quiser mudar.`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className={labelClass}><Mail className="h-3 w-3" /> Novo email</Label>
+              <Input
+                type="email"
+                placeholder="novo@email.com"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className={inputClass}
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className={labelClass}><Lock className="h-3 w-3" /> Nova senha</Label>
+              <Input
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                className={inputClass}
+                autoComplete="new-password"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+              A alteração é imediata. Informe as novas credenciais ao membro após salvar.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCredsDialogOpen(false)} disabled={savingCreds} className="rounded-lg">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveCredentials}
+              disabled={savingCreds || (!editEmail.trim() && !editPassword)}
+              className="rounded-lg lavender-gradient text-primary-foreground"
+            >
+              {savingCreds ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

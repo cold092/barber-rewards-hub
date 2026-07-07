@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.remove-team-member]
 verify_jwt = false
+
+[functions.update-team-member-credentials]
+verify_jwt = false
